@@ -1,0 +1,120 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --primary: #0d4f8b;
+  --primary-foreground: #ffffff;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+}
+
+/* Word-style policy document preview (matches docx-export typography) */
+.policy-word-preview {
+  font-family: Calibri, Arial, sans-serif;
+  font-size: 10pt;
+  line-height: 1.15;
+  color: #000;
+  max-width: 8.5in;
+}
+
+.policy-word-preview h1,
+.policy-word-preview h2,
+.policy-word-preview h3 {
+  font-family: Calibri, Arial, sans-serif;
+  font-weight: bold;
+  color: #000;
+  margin: 0.75em 0 0.4em;
+}
+
+.policy-word-preview h1 {
+  font-size: 16pt;
+}
+
+.policy-word-preview h1.policy-title {
+  text-align: center;
+  margin-top: 0;
+}
+
+.policy-word-preview h2 {
+  font-size: 14pt;
+}
+
+.policy-word-preview h3 {
+  font-size: 12pt;
+}
+
+.policy-word-preview p {
+  margin: 0 0 0.6em;
+}
+
+.policy-word-preview ul {
+  margin: 0 0 0.6em;
+  padding-left: 1.5em;
+  list-style-type: disc;
+}
+
+.policy-word-preview li {
+  margin-bottom: 0.25em;
+}
+
+.policy-word-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5em 0 0.75em;
+  font-size: 10pt;
+}
+
+.policy-word-preview th,
+.policy-word-preview td {
+  border: 1px solid #aaa;
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.policy-word-preview th {
+  background-color: #d9e2f3;
+  font-weight: normal;
+}
+
+.policy-word-preview hr {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 1em 0;
+}
+
+.policy-word-preview strong {
+  font-weight: bold;
+}
+
+.policy-word-preview em {
+  font-style: italic;
+}
+
+.policy-word-preview .policy-contents-table td:last-child,
+.policy-word-preview .policy-contents-table th:last-child {
+  width: 4em;
+  text-align: right;
+  color: #666;
+}

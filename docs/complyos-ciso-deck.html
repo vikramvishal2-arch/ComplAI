@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ComplAI — CISO & CIO Deck</title>
+  <style>
+    :root {
+      --brand: #2563eb;
+      --brand-dark: #1d4ed8;
+      --brand-light: #dbeafe;
+      --slate-900: #0f172a;
+      --slate-700: #334155;
+      --slate-500: #64748b;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --red: #dc2626;
+      --red-bg: #fef2f2;
+      --amber: #d97706;
+      --amber-bg: #fffbeb;
+      --green: #059669;
+      --green-bg: #ecfdf5;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: #0b1220;
+      color: var(--slate-900);
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .deck { width: 100vw; height: 100vh; position: relative; }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      padding: 2.25rem 3rem 2rem;
+      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 60%, var(--brand-light) 100%);
+    }
+
+    .slide.active { display: flex; flex-direction: column; }
+
+    .slide--hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 42%, #2563eb 100%);
+      color: white;
+    }
+
+    .slide-header { margin-bottom: 1.1rem; }
+    .slide-header h2 {
+      font-size: clamp(1.55rem, 2.6vw, 2.15rem);
+      font-weight: 800;
+      line-height: 1.15;
+    }
+    .slide-header p {
+      margin-top: 0.35rem;
+      color: var(--slate-500);
+      font-size: 0.95rem;
+    }
+
+    .slide-body { flex: 1; display: flex; gap: 1.25rem; min-height: 0; }
+    .slide-body--split { align-items: stretch; }
+    .col-text { flex: 0 0 38%; display: flex; flex-direction: column; gap: 0.75rem; }
+    .col-visual { flex: 1; min-width: 0; }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #93c5fd;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero-layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .hero-layout h1 {
+      font-size: clamp(2rem, 3.4vw, 3rem);
+      line-height: 1.08;
+      font-weight: 800;
+    }
+
+    .hero-layout .subtitle {
+      margin-top: 0.85rem;
+      font-size: clamp(0.95rem, 1.5vw, 1.2rem);
+      line-height: 1.5;
+      color: #cbd5e1;
+      max-width: 28rem;
+    }
+
+    .pill-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+    .pill {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .stat-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: 0.75rem;
+      padding: 0.65rem 0.85rem;
+      box-shadow: 0 4px 14px rgba(15,23,42,0.05);
+    }
+    .stat-chip strong {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--brand);
+      line-height: 1;
+    }
+    .stat-chip span { font-size: 0.78rem; color: var(--slate-700); line-height: 1.3; }
+
+    .bullet {
+      display: flex;
+      gap: 0.55rem;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      color: var(--slate-700);
+    }
+    .bullet-icon {
+      flex-shrink: 0;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 800;
+      margin-top: 0.1rem;
+    }
+    .bullet-icon--red { background: var(--red-bg); color: var(--red); }
+    .bullet-icon--green { background: var(--green-bg); color: var(--green); }
+    .bullet-icon--blue { background: var(--brand-light); color: var(--brand); }
+
+    .infographic {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: 1rem;
+      padding: 1rem;
+      height: 100%;
+      box-shadow: 0 10px 30px rgba(15,23,42,0.07);
+      display: flex;
+      flex-direction: column;
+    }
+    .infographic-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--slate-500);
+      margin-bottom: 0.5rem;
+    }
+    .infographic svg { width: 100%; flex: 1; min-height: 0; }
+
+    .value-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      flex: 1;
+    }
+    .value-card {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: 0.85rem;
+      padding: 0.85rem 1rem;
+      box-shadow: 0 6px 18px rgba(15,23,42,0.05);
+    }
+    .value-card h3 {
+      font-size: 0.88rem;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .value-card p { font-size: 0.78rem; line-height: 1.45; color: var(--slate-700); }
+    .value-card--highlight {
+      grid-column: 1 / -1;
+      background: linear-gradient(90deg, #eff6ff, #ecfdf5);
+      border-color: #bfdbfe;
+      text-align: center;
+    }
+    .value-card--highlight p { font-size: 0.92rem; max-width: 40rem; margin: 0.35rem auto 0; }
+
+    .metric-bar { margin-top: 0.5rem; }
+    .metric-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+      font-size: 0.72rem;
+      color: var(--slate-700);
+    }
+    .metric-track {
+      flex: 1;
+      height: 0.55rem;
+      background: var(--slate-100);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .metric-fill { height: 100%; border-radius: 999px; }
+    .metric-fill--before { background: linear-gradient(90deg, #f87171, #ef4444); width: 85%; }
+    .metric-fill--after { background: linear-gradient(90deg, #34d399, #059669); width: 28%; }
+
+    .footer {
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--slate-500);
+    }
+    .slide--hero .footer { color: #94a3b8; }
+    .footer .confidential { font-style: italic; }
+
+    .slide-chrome-header {
+      position: absolute;
+      top: 0.65rem;
+      right: 1.5rem;
+      z-index: 5;
+    }
+    .slide-chrome-header img {
+      height: 1.75rem;
+      width: auto;
+      max-width: 8.5rem;
+      object-fit: contain;
+    }
+
+    .nav-hint kbd {
+      background: rgba(0,0,0,0.06);
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 0.08rem 0.3rem;
+      font-size: 0.68rem;
+    }
+    .slide--hero .nav-hint kbd {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.2);
+      color: #cbd5e1;
+    }
+
+    .progress {
+      position: fixed;
+      bottom: 0; left: 0;
+      height: 4px;
+      background: var(--brand);
+      transition: width 0.25s ease;
+      z-index: 10;
+    }
+
+    @media (max-width: 960px) {
+      .slide { padding: 1.5rem; }
+      .hero-layout, .slide-body { flex-direction: column; grid-template-columns: 1fr; }
+      .col-text { flex: none; }
+    }
+
+    @media print {
+      @page { size: landscape; margin: 0; }
+      body { overflow: visible; background: white; height: auto; }
+      .deck { width: 100%; height: auto; position: static; }
+      .slide {
+        display: flex !important;
+        position: relative;
+        page-break-after: always;
+        break-after: page;
+        width: 100vw;
+        height: 100vh;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+      .progress, .nav-hint { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+
+    <!-- SLIDE 1: Title + hub infographic -->
+    <section class="slide slide--hero active">
+      <div class="slide-chrome-header">
+        <img src="../public/company-logo.png" alt="Propel Ready Solutions" />
+      </div>
+      <div class="hero-layout">
+        <div>
+          <span class="badge">Governance · Risk · Compliance</span>
+          <h1>ComplAI<br/>One Stop GRC for CISOs &amp; CIOs</h1>
+          <p class="subtitle">
+            The leadership portal that unifies frameworks, controls, and risk —
+            so security executives answer the board in minutes, not weeks.
+          </p>
+          <div class="pill-row">
+            <span class="pill">SOC 2 · ISO 27001 · 21+ frameworks</span>
+            <span class="pill">RAG leadership view</span>
+            <span class="pill">Risk-to-control traceability</span>
+          </div>
+        </div>
+        <div class="infographic" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); box-shadow: none;">
+          <div class="infographic-title" style="color:#93c5fd;">One platform · five outcomes</div>
+          <svg viewBox="0 0 520 340" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="hubGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#3b82f6"/>
+                <stop offset="100%" stop-color="#1d4ed8"/>
+              </linearGradient>
+              <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <!-- connection lines -->
+            <g stroke="#60a5fa" stroke-width="2" stroke-dasharray="6 4" opacity="0.7">
+              <line x1="260" y1="170" x2="100" y2="70"/>
+              <line x1="260" y1="170" x2="420" y2="70"/>
+              <line x1="260" y1="170" x2="80" y2="240"/>
+              <line x1="260" y1="170" x2="440" y2="240"/>
+              <line x1="260" y1="170" x2="260" y2="300"/>
+            </g>
+            <!-- center hub -->
+            <circle cx="260" cy="170" r="52" fill="url(#hubGrad)" filter="url(#glow)"/>
+            <text x="260" y="162" text-anchor="middle" fill="white" font-size="13" font-weight="800">ComplAI</text>
+            <text x="260" y="180" text-anchor="middle" fill="#bfdbfe" font-size="9">GRC Portal</text>
+            <!-- nodes -->
+            <g>
+              <rect x="40" y="40" width="120" height="52" rx="10" fill="#1e3a8a" stroke="#93c5fd"/>
+              <text x="100" y="62" text-anchor="middle" fill="white" font-size="10" font-weight="700">Frameworks</text>
+              <text x="100" y="78" text-anchor="middle" fill="#93c5fd" font-size="8">SOC 2 · ISO 27001</text>
+            </g>
+            <g>
+              <rect x="360" y="40" width="120" height="52" rx="10" fill="#1e3a8a" stroke="#93c5fd"/>
+              <text x="420" y="62" text-anchor="middle" fill="white" font-size="10" font-weight="700">Controls</text>
+              <text x="420" y="78" text-anchor="middle" fill="#93c5fd" font-size="8">154+ per tenant</text>
+            </g>
+            <g>
+              <rect x="20" y="215" width="120" height="52" rx="10" fill="#1e3a8a" stroke="#93c5fd"/>
+              <text x="80" y="237" text-anchor="middle" fill="white" font-size="10" font-weight="700">Risk Register</text>
+              <text x="80" y="253" text-anchor="middle" fill="#93c5fd" font-size="8">Linked to controls</text>
+            </g>
+            <g>
+              <rect x="380" y="215" width="120" height="52" rx="10" fill="#1e3a8a" stroke="#93c5fd"/>
+              <text x="440" y="237" text-anchor="middle" fill="white" font-size="10" font-weight="700">Leadership</text>
+              <text x="440" y="253" text-anchor="middle" fill="#93c5fd" font-size="8">RAG dashboard</text>
+            </g>
+            <g>
+              <rect x="190" y="288" width="140" height="44" rx="10" fill="#065f46" stroke="#6ee7b7"/>
+              <text x="260" y="308" text-anchor="middle" fill="white" font-size="10" font-weight="700">Audit Ready</text>
+              <text x="260" y="322" text-anchor="middle" fill="#a7f3d0" font-size="8">Evidence · Export · Proof</text>
+            </g>
+            <!-- mini flow arrows -->
+            <path d="M175 95 Q220 130 210 118" fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#arrow)"/>
+            <defs><marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#34d399"/></marker></defs>
+          </svg>
+        </div>
+      </div>
+      <footer class="footer">
+        <span>Slide 1 of 4 · Introduction</span>
+        <span class="confidential">Confidential</span>
+      </footer>
+    </section>
+
+    <!-- SLIDE 2: Challenges + fragmented tools infographic -->
+    <section class="slide">
+      <div class="slide-chrome-header">
+        <img src="../public/company-logo.png" alt="Propel Ready Solutions" />
+      </div>
+      <header class="slide-header">
+        <h2>The challenge — GRC is broken across too many tools</h2>
+        <p>CISOs and CIOs lose visibility, time, and audit confidence when data lives in silos.</p>
+      </header>
+      <div class="slide-body slide-body--split">
+        <div class="col-text">
+          <div class="stat-chip">
+            <strong>5+</strong>
+            <span>disconnected tools typical per org (spreadsheets, risk tools, shared drives, ticketing, email)</span>
+          </div>
+          <div class="stat-chip">
+            <strong>40h+</strong>
+            <span>lost per audit cycle reconciling controls, risks, and evidence manually</span>
+          </div>
+          <div class="stat-chip">
+            <strong>?</strong>
+            <span>board question <em>"Are we green?"</em> — often no real-time, domain-level answer</span>
+          </div>
+          <div class="bullet"><span class="bullet-icon bullet-icon--red">!</span><span>Risks float without control linkage — audit gaps stay hidden until crunch time.</span></div>
+          <div class="bullet"><span class="bullet-icon bullet-icon--red">!</span><span>Open issues can mask "audit ready" status — leadership sees green, auditors see red.</span></div>
+          <div class="bullet"><span class="bullet-icon bullet-icon--red">!</span><span>IdAM, SIEM, VAPT evidence collected late — reactive, not continuous.</span></div>
+        </div>
+        <div class="col-visual">
+          <div class="infographic">
+            <div class="infographic-title">Today's reality — fragmented GRC stack</div>
+            <svg viewBox="0 0 560 300" xmlns="http://www.w3.org/2000/svg">
+              <!-- silo boxes -->
+              <g font-size="9" font-weight="600">
+                <rect x="20" y="30" width="95" height="55" rx="8" fill="#fef2f2" stroke="#fca5a5"/>
+                <text x="67" y="55" text-anchor="middle" fill="#991b1b">Excel</text>
+                <text x="67" y="70" text-anchor="middle" fill="#b91c1c" font-size="7">Controls</text>
+
+                <rect x="130" y="20" width="95" height="55" rx="8" fill="#fff7ed" stroke="#fdba74"/>
+                <text x="177" y="45" text-anchor="middle" fill="#9a3412">Risk Tool</text>
+                <text x="177" y="60" text-anchor="middle" fill="#c2410c" font-size="7">Separate DB</text>
+
+                <rect x="240" y="35" width="95" height="55" rx="8" fill="#fefce8" stroke="#fde047"/>
+                <text x="287" y="60" text-anchor="middle" fill="#854d0e">SharePoint</text>
+                <text x="287" y="75" text-anchor="middle" fill="#a16207" font-size="7">Evidence</text>
+
+                <rect x="350" y="25" width="95" height="55" rx="8" fill="#f5f3ff" stroke="#c4b5fd"/>
+                <text x="397" y="50" text-anchor="middle" fill="#5b21b6">Jira / ITSM</text>
+                <text x="397" y="65" text-anchor="middle" fill="#6d28d9" font-size="7">Issues</text>
+
+                <rect x="460" y="40" width="85" height="55" rx="8" fill="#f0fdf4" stroke="#86efac"/>
+                <text x="502" y="65" text-anchor="middle" fill="#166534">Email</text>
+                <text x="502" y="80" text-anchor="middle" fill="#15803d" font-size="7">Status updates</text>
+              </g>
+              <!-- broken links -->
+              <g stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.8">
+                <line x1="115" y1="57" x2="130" y2="47"/>
+                <line x1="225" y1="47" x2="240" y2="62"/>
+                <line x1="335" y1="62" x2="350" y2="52"/>
+                <line x1="445" y1="52" x2="460" y2="67"/>
+              </g>
+              <!-- X marks on connections -->
+              <g fill="#dc2626" font-size="14" font-weight="800">
+                <text x="120" y="44">✕</text>
+                <text x="230" y="58">✕</text>
+                <text x="340" y="48">✕</text>
+                <text x="450" y="58">✕</text>
+              </g>
+              <!-- CISO confused -->
+              <rect x="180" y="130" width="200" height="70" rx="12" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+              <text x="280" y="158" text-anchor="middle" fill="#991b1b" font-size="11" font-weight="700">CISO / CIO</text>
+              <text x="280" y="178" text-anchor="middle" fill="#b91c1c" font-size="9">"Which number do I trust?"</text>
+              <text x="280" y="192" text-anchor="middle" fill="#dc2626" font-size="8">No single source of truth</text>
+              <!-- dashed lines down -->
+              <g stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.6">
+                <line x1="67" y1="85" x2="230" y2="130"/>
+                <line x1="177" y1="75" x2="250" y2="130"/>
+                <line x1="287" y1="90" x2="280" y2="130"/>
+                <line x1="397" y1="80" x2="310" y2="130"/>
+                <line x1="502" y1="95" x2="330" y2="130"/>
+              </g>
+              <!-- impact bars -->
+              <text x="30" y="240" fill="#64748b" font-size="8" font-weight="700">AUDIT PREP TIME</text>
+              <rect x="30" y="248" width="500" height="14" rx="7" fill="#f1f5f9"/>
+              <rect x="30" y="248" width="425" height="14" rx="7" fill="#ef4444" opacity="0.85"/>
+              <text x="465" y="259" fill="#991b1b" font-size="8" font-weight="700">85% manual</text>
+
+              <text x="30" y="282" fill="#64748b" font-size="8" font-weight="700">LEADERSHIP CONFIDENCE</text>
+              <rect x="30" y="290" width="500" height="14" rx="7" fill="#f1f5f9"/>
+              <rect x="30" y="290" width="175" height="14" rx="7" fill="#f59e0b" opacity="0.85"/>
+              <text x="220" y="301" fill="#92400e" font-size="8" font-weight="700">Low — stale data</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <footer class="footer">
+        <span>Slide 2 of 4 · The problem</span>
+        <span class="confidential">Confidential</span>
+      </footer>
+    </section>
+
+    <!-- SLIDE 3: What ComplAI provides + platform infographic -->
+    <section class="slide">
+      <div class="slide-chrome-header">
+        <img src="../public/company-logo.png" alt="Propel Ready Solutions" />
+      </div>
+      <header class="slide-header">
+        <h2>What ComplAI provides — one portal, full GRC lifecycle</h2>
+        <p>From framework activation to audit-ready proof — designed for how CISOs and CIOs actually work.</p>
+      </header>
+      <div class="slide-body slide-body--split">
+        <div class="col-text">
+          <div class="bullet"><span class="bullet-icon bullet-icon--blue">1</span><span><strong>Leadership dashboard</strong> — RAG by domain &amp; framework, click-to-filter charts, path-to-green actions.</span></div>
+          <div class="bullet"><span class="bullet-icon bullet-icon--blue">2</span><span><strong>Control register</strong> — per-control compliance method, remediation, evidence, audit-ready rules.</span></div>
+          <div class="bullet"><span class="bullet-icon bullet-icon--blue">3</span><span><strong>Risk register</strong> — inherent &amp; present scoring; every risk/issue linked to a control.</span></div>
+          <div class="bullet"><span class="bullet-icon bullet-icon--blue">4</span><span><strong>Export &amp; integrate</strong> — CSV for auditors; architecture for IdAM, SIEM, access tools.</span></div>
+          <div class="stat-chip" style="margin-top: 0.35rem;">
+            <strong>21+</strong>
+            <span>frameworks prebuilt · SOC 2 (61 controls) · ISO 27001 (93 controls) enabled by default</span>
+          </div>
+        </div>
+        <div class="col-visual">
+          <div class="infographic">
+            <div class="infographic-title">Platform view — leadership to control-level detail</div>
+            <svg viewBox="0 0 560 300" xmlns="http://www.w3.org/2000/svg">
+              <!-- dashboard mock -->
+              <rect x="10" y="10" width="340" height="130" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+              <text x="22" y="28" fill="#334155" font-size="9" font-weight="700">Leadership Dashboard</text>
+              <!-- donut RAG -->
+              <circle cx="70" cy="85" r="38" fill="none" stroke="#e2e8f0" stroke-width="14"/>
+              <circle cx="70" cy="85" r="38" fill="none" stroke="#059669" stroke-width="14" stroke-dasharray="95 144" stroke-dashoffset="0" transform="rotate(-90 70 85)"/>
+              <circle cx="70" cy="85" r="38" fill="none" stroke="#d97706" stroke-width="14" stroke-dasharray="48 191" stroke-dashoffset="-95" transform="rotate(-90 70 85)"/>
+              <circle cx="70" cy="85" r="38" fill="none" stroke="#dc2626" stroke-width="14" stroke-dasharray="24 215" stroke-dashoffset="-143" transform="rotate(-90 70 85)"/>
+              <text x="70" y="82" text-anchor="middle" fill="#0f172a" font-size="10" font-weight="800">RAG</text>
+              <text x="70" y="94" text-anchor="middle" fill="#64748b" font-size="7">Posture</text>
+              <!-- legend -->
+              <circle cx="130" cy="55" r="4" fill="#059669"/><text x="140" y="58" fill="#334155" font-size="7">Green 55%</text>
+              <circle cx="130" cy="72" r="4" fill="#d97706"/><text x="140" y="75" fill="#334155" font-size="7">Amber 28%</text>
+              <circle cx="130" cy="89" r="4" fill="#dc2626"/><text x="140" y="92" fill="#334155" font-size="7">Red 17%</text>
+              <!-- bar chart -->
+              <text x="130" y="108" fill="#64748b" font-size="7" font-weight="600">By domain</text>
+              <rect x="130" y="114" width="80" height="8" rx="2" fill="#059669"/>
+              <rect x="130" y="126" width="55" height="8" rx="2" fill="#d97706"/>
+              <rect x="130" y="138" width="35" height="8" rx="2" fill="#dc2626"/>
+              <!-- attention list -->
+              <rect x="230" y="38" width="110" height="90" rx="6" fill="#fff7ed" stroke="#fed7aa"/>
+              <text x="240" y="52" fill="#9a3412" font-size="7" font-weight="700">Needs attention</text>
+              <text x="240" y="66" fill="#c2410c" font-size="6">• Access mgmt — Red</text>
+              <text x="240" y="78" fill="#c2410c" font-size="6">• Change control — Amber</text>
+              <text x="240" y="90" fill="#c2410c" font-size="6">• 3 open risks block audit</text>
+              <text x="240" y="108" fill="#059669" font-size="6" font-weight="600">→ Path to green</text>
+
+              <!-- risk-control link diagram -->
+              <rect x="10" y="155" width="340" height="135" rx="10" fill="#eff6ff" stroke="#93c5fd"/>
+              <text x="22" y="173" fill="#1e40af" font-size="9" font-weight="700">Risk ↔ Control linkage</text>
+              <!-- control box -->
+              <rect x="30" y="195" width="110" height="50" rx="8" fill="#2563eb"/>
+              <text x="85" y="215" text-anchor="middle" fill="white" font-size="8" font-weight="700">CC6.1</text>
+              <text x="85" y="230" text-anchor="middle" fill="#bfdbfe" font-size="7">Logical Access</text>
+              <!-- bidirectional arrow -->
+              <line x1="145" y1="220" x2="195" y2="220" stroke="#2563eb" stroke-width="2"/>
+              <polygon points="195,220 188,216 188,224" fill="#2563eb"/>
+              <line x1="195" y1="220" x2="145" y2="220" stroke="#2563eb" stroke-width="2"/>
+              <polygon points="145,220 152,216 152,224" fill="#2563eb"/>
+              <!-- risk box -->
+              <rect x="200" y="185" width="130" height="70" rx="8" fill="#fef2f2" stroke="#fca5a5"/>
+              <text x="265" y="205" text-anchor="middle" fill="#991b1b" font-size="8" font-weight="700">Risk: Privileged access</text>
+              <text x="265" y="220" text-anchor="middle" fill="#b91c1c" font-size="7">Inherent: High (15)</text>
+              <text x="265" y="234" text-anchor="middle" fill="#059669" font-size="7">Present: Medium (8)</text>
+              <text x="265" y="248" text-anchor="middle" fill="#64748b" font-size="6">Status: Treating</text>
+              <!-- audit gate -->
+              <rect x="30" y="260" width="300" height="22" rx="6" fill="#ecfdf5" stroke="#6ee7b7"/>
+              <text x="180" y="275" text-anchor="middle" fill="#065f46" font-size="7" font-weight="700">🔒 Audit Ready blocked until linked risks &amp; issues are resolved</text>
+
+              <!-- right column: flow -->
+              <rect x="365" y="10" width="185" height="280" rx="10" fill="#f0fdf4" stroke="#86efac"/>
+              <text x="380" y="30" fill="#166534" font-size="9" font-weight="700">Continuous GRC flow</text>
+              <g font-size="8">
+                <rect x="380" y="42" width="155" height="32" rx="6" fill="white" stroke="#bbf7d0"/>
+                <text x="390" y="58" fill="#166534" font-weight="600">① Activate frameworks</text>
+                <text x="390" y="68" fill="#64748b" font-size="7">SOC 2 · ISO 27001 · DPDP…</text>
+
+                <text x="457" y="88" fill="#059669" font-size="10">↓</text>
+
+                <rect x="380" y="94" width="155" height="32" rx="6" fill="white" stroke="#bbf7d0"/>
+                <text x="390" y="110" fill="#166534" font-weight="600">② Plan per control</text>
+                <text x="390" y="120" fill="#64748b" font-size="7">Policy · Tech · Procedure</text>
+
+                <text x="457" y="140" fill="#059669" font-size="10">↓</text>
+
+                <rect x="380" y="146" width="155" height="32" rx="6" fill="white" stroke="#bbf7d0"/>
+                <text x="390" y="162" fill="#166534" font-weight="600">③ Track risks &amp; remediate</text>
+                <text x="390" y="172" fill="#64748b" font-size="7">Linked · Scored · Owned</text>
+
+                <text x="457" y="192" fill="#059669" font-size="10">↓</text>
+
+                <rect x="380" y="198" width="155" height="32" rx="6" fill="white" stroke="#bbf7d0"/>
+                <text x="390" y="214" fill="#166534" font-weight="600">④ Attach evidence</text>
+                <text x="390" y="224" fill="#64748b" font-size="7">Upload · Integrate · Export</text>
+
+                <text x="457" y="244" fill="#059669" font-size="10">↓</text>
+
+                <rect x="380" y="250" width="155" height="32" rx="6" fill="#059669"/>
+                <text x="457" y="266" text-anchor="middle" fill="white" font-weight="700" font-size="8">⑤ Audit Ready ✓</text>
+                <text x="457" y="276" text-anchor="middle" fill="#a7f3d0" font-size="7">Defensible proof</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <footer class="footer">
+        <span>Slide 3 of 4 · Product capabilities</span>
+        <span class="confidential">Confidential</span>
+      </footer>
+    </section>
+
+    <!-- SLIDE 4: Why purchase + ROI infographic -->
+    <section class="slide">
+      <div class="slide-chrome-header">
+        <img src="../public/company-logo.png" alt="Propel Ready Solutions" />
+      </div>
+      <header class="slide-header">
+        <h2>Why purchase ComplAI — the executive business case</h2>
+        <p>Reduce risk, cut audit friction, and give the board a number they can trust.</p>
+      </header>
+      <div class="slide-body" style="flex-direction: column; gap: 0.85rem;">
+        <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 0.85rem; flex: 1; min-height: 0;">
+          <!-- Before / After -->
+          <div class="infographic">
+            <div class="infographic-title">Before vs. after ComplAI</div>
+            <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+              <!-- BEFORE -->
+              <text x="95" y="22" text-anchor="middle" fill="#991b1b" font-size="10" font-weight="800">BEFORE</text>
+              <rect x="15" y="30" width="160" height="155" rx="10" fill="#fef2f2" stroke="#fca5a5"/>
+              <text x="95" y="55" text-anchor="middle" fill="#b91c1c" font-size="8">Quarterly fire drill</text>
+              <!-- timeline zigzag -->
+              <path d="M35 75 L65 95 L95 70 L125 100 L155 80" fill="none" stroke="#ef4444" stroke-width="2"/>
+              <circle cx="35" cy="75" r="4" fill="#ef4444"/>
+              <circle cx="155" cy="80" r="4" fill="#ef4444"/>
+              <text x="35" y="115" fill="#64748b" font-size="6">Scramble</text>
+              <text x="130" y="115" fill="#64748b" font-size="6">Audit</text>
+              <text x="95" y="140" text-anchor="middle" fill="#991b1b" font-size="7" font-weight="600">Weeks of manual prep</text>
+              <text x="95" y="155" text-anchor="middle" fill="#dc2626" font-size="7">High stress · High cost</text>
+              <text x="95" y="172" text-anchor="middle" fill="#64748b" font-size="6">Repeat every cycle</text>
+
+              <!-- arrow -->
+              <text x="200" y="105" text-anchor="middle" fill="#2563eb" font-size="22" font-weight="800">→</text>
+
+              <!-- AFTER -->
+              <text x="305" y="22" text-anchor="middle" fill="#065f46" font-size="10" font-weight="800">AFTER</text>
+              <rect x="225" y="30" width="160" height="155" rx="10" fill="#ecfdf5" stroke="#6ee7b7"/>
+              <text x="305" y="55" text-anchor="middle" fill="#047857" font-size="8">Continuous GRC</text>
+              <!-- flat steady line -->
+              <line x1="245" y1="90" x2="365" y2="90" stroke="#059669" stroke-width="3"/>
+              <circle cx="245" cy="90" r="4" fill="#059669"/>
+              <circle cx="305" cy="90" r="5" fill="#2563eb"/>
+              <circle cx="365" cy="90" r="4" fill="#059669"/>
+              <text x="245" y="108" fill="#64748b" font-size="6">Track</text>
+              <text x="292" y="108" fill="#64748b" font-size="6">Lead</text>
+              <text x="350" y="108" fill="#64748b" font-size="6">Prove</text>
+              <text x="305" y="140" text-anchor="middle" fill="#065f46" font-size="7" font-weight="600">Real-time RAG dashboard</text>
+              <text x="305" y="155" text-anchor="middle" fill="#059669" font-size="7">Audit-ready on demand</text>
+              <text x="305" y="172" text-anchor="middle" fill="#64748b" font-size="6">One export · One truth</text>
+            </svg>
+            <div class="metric-bar" style="padding: 0 0.5rem 0.5rem;">
+              <div class="metric-row"><span>Audit prep effort</span></div>
+              <div class="metric-row"><span style="width:3rem">Before</span><div class="metric-track"><div class="metric-fill metric-fill--before"></div></div></div>
+              <div class="metric-row"><span style="width:3rem">After</span><div class="metric-track"><div class="metric-fill metric-fill--after"></div></div></div>
+            </div>
+          </div>
+
+          <!-- Purchase decision matrix -->
+          <div class="infographic">
+            <div class="infographic-title">Why CISOs &amp; CIOs buy — decision drivers</div>
+            <svg viewBox="0 0 400 230" xmlns="http://www.w3.org/2000/svg">
+              <!-- quadrant chart -->
+              <rect x="20" y="25" width="360" height="190" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+              <line x1="200" y1="25" x2="200" y2="215" stroke="#cbd5e1" stroke-dasharray="4"/>
+              <line x1="20" y1="120" x2="380" y2="120" stroke="#cbd5e1" stroke-dasharray="4"/>
+              <text x="200" y="18" text-anchor="middle" fill="#64748b" font-size="7" font-weight="600">IMPACT ON ORGANIZATION →</text>
+              <text x="12" y="120" text-anchor="middle" fill="#64748b" font-size="7" font-weight="600" transform="rotate(-90 12 120)">← URGENCY</text>
+
+              <!-- bubbles -->
+              <circle cx="290" cy="65" r="42" fill="#2563eb" opacity="0.15"/>
+              <circle cx="290" cy="65" r="28" fill="#2563eb" opacity="0.35"/>
+              <text x="290" y="62" text-anchor="middle" fill="#1e40af" font-size="7" font-weight="700">Board</text>
+              <text x="290" y="73" text-anchor="middle" fill="#1e40af" font-size="7" font-weight="700">confidence</text>
+
+              <circle cx="110" cy="75" r="32" fill="#059669" opacity="0.2"/>
+              <text x="110" y="72" text-anchor="middle" fill="#065f46" font-size="7" font-weight="700">Audit</text>
+              <text x="110" y="83" text-anchor="middle" fill="#065f46" font-size="7" font-weight="700">pass rate</text>
+
+              <circle cx="300" cy="155" r="36" fill="#d97706" opacity="0.2"/>
+              <text x="300" y="152" text-anchor="middle" fill="#92400e" font-size="7" font-weight="700">Risk</text>
+              <text x="300" y="163" text-anchor="middle" fill="#92400e" font-size="7" font-weight="700">visibility</text>
+
+              <circle cx="120" cy="165" r="30" fill="#7c3aed" opacity="0.2"/>
+              <text x="120" y="162" text-anchor="middle" fill="#5b21b6" font-size="7" font-weight="700">Team</text>
+              <text x="120" y="173" text-anchor="middle" fill="#5b21b6" font-size="7" font-weight="700">efficiency</text>
+
+              <!-- ComplAI star -->
+              <circle cx="200" cy="120" r="22" fill="#2563eb"/>
+              <text x="200" y="117" text-anchor="middle" fill="white" font-size="7" font-weight="800">ComplAI</text>
+              <text x="200" y="128" text-anchor="middle" fill="#bfdbfe" font-size="6">delivers all 4</text>
+            </svg>
+          </div>
+        </div>
+
+        <div class="value-grid">
+          <div class="value-card">
+            <h3>🎯 Single pane of glass</h3>
+            <p>One login for posture, risks, and compliance — answer the board without reconciling 5 tools.</p>
+          </div>
+          <div class="value-card">
+            <h3>📉 Faster red → green</h3>
+            <p>Domain RAG + path-to-green actions focus budget and people where impact is highest.</p>
+          </div>
+          <div class="value-card">
+            <h3>📋 Defensible audit trail</h3>
+            <p>Risks tied to controls, evidence per context, CSV export — auditors get proof, not stories.</p>
+          </div>
+          <div class="value-card">
+            <h3>⚙️ Your stack, your way</h3>
+            <p>Customer-defined compliance per control — flexible for your environment, structured for SOC 2 &amp; ISO.</p>
+          </div>
+          <div class="value-card value-card--highlight">
+            <h3 style="justify-content: center; font-size: 1rem;">Purchase ComplAI when you need to lead GRC — not chase it</h3>
+            <p><strong>Track risk. Prove control. Walk into every audit with confidence.</strong></p>
+          </div>
+        </div>
+      </div>
+      <footer class="footer">
+        <span>Slide 4 of 4 · Business case</span>
+        <span class="confidential">Confidential</span>
+      </footer>
+    </section>
+
+  </div>
+
+  <div class="progress" id="progress" style="width: 25%"></div>
+
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    let current = 0;
+
+    function show(index) {
+      current = Math.max(0, Math.min(index, slides.length - 1));
+      slides.forEach((s, i) => s.classList.toggle('active', i === current));
+      document.getElementById('progress').style.width = `${((current + 1) / slides.length) * 100}%`;
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); show(current + 1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); show(current - 1); }
+      if (e.key === 'Home') { e.preventDefault(); show(0); }
+      if (e.key === 'End') { e.preventDefault(); show(slides.length - 1); }
+      if (e.key === 'f' || e.key === 'F') {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
+      }
+      if (e.key === 'p' || e.key === 'P') window.print();
+    });
+
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+    document.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (dx > 50) show(current - 1);
+      if (dx < -50) show(current + 1);
+    });
+  </script>
+</body>
+</html>

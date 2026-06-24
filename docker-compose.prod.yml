@@ -1,0 +1,42 @@
+# Production stack: PostgreSQL + ComplAI app
+# Usage:
+#   1. Copy .env.production.example to .env.production and fill values
+#   2. docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+#   3. docker compose -f docker-compose.prod.yml exec app npx prisma db push
+#   4. docker compose -f docker-compose.prod.yml exec app npx tsx prisma/seed.ts
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-grc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}
+      POSTGRES_DB: ${POSTGRES_DB:-grc_platform}
+    volumes:
+      - grc_postgres_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-grc} -d ${POSTGRES_DB:-grc_platform}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:3000:3000'
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-grc}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-grc_platform}?schema=public
+      NEXT_PUBLIC_INTEGRATION_HELP_BASE_URL: ${NEXT_PUBLIC_INTEGRATION_HELP_BASE_URL:-https://propelreadysolutions.in/help/integrations}
+      AI_ENABLED: ${AI_ENABLED:-false}
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+
+volumes:
+  grc_postgres_prod:

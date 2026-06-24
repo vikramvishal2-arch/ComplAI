@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.production.example
+*.md
+!README.md
+terminals
+.cursor
+agent-transcripts
+assets
