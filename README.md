@@ -2,7 +2,7 @@
 
 
 
-A sellable MVP for governance, risk, and compliance (GRC) — similar in scope to [Scrut](https://www.scrut.io) framework coverage, with **customer-defined compliance** for each control.
+A platform for governance, risk, and compliance (GRC) — with broad framework coverage and **customer-defined compliance** for each control.
 
 
 
@@ -26,7 +26,7 @@ Built for **Propel Ready Solutions**.
 
 - **24 security & privacy frameworks** (SOC 2, ISO 27001, GDPR, Chronicle, HIPAA, India DPDP, SEBI CSCRF, ME Privacy, DORA, NIS2, and more)
 
-- Both SOC 2 and ISO 27001 are **enabled by default** for every customer tenant (MVP requirement)
+- Both SOC 2 and ISO 27001 are **enabled by default** for every customer tenant
 
 - **Per-control compliance planning**: customers choose *how* they comply (policy, technical control, procedure, training, etc.)
 
@@ -40,7 +40,7 @@ Built for **Propel Ready Solutions**.
 
 - **Compliance export** (JSON / CSV) for auditors
 
-- **Intelligence hub** — AI copilot, gap analysis, questionnaire auto-fill (Scrut-style)
+- **Intelligence hub** — AI copilot, gap analysis, questionnaire auto-fill
 
 - **Continuous monitoring** — AWS & Azure lab checks mapped to SOC 2 / ISO controls
 
@@ -240,7 +240,7 @@ npm run db:up
 
 
 
-## Intelligence (Scrut-style AI)
+## Intelligence (AI)
 
 
 
@@ -306,7 +306,7 @@ Unlike rigid checklist tools, **ComplAI lets each customer decide how they satis
 
 
 
-- `organizations` — tenant (single default org for MVP)
+- `organizations` — tenant (single default org)
 
 - `framework_activations` — which frameworks are enabled
 
@@ -316,7 +316,7 @@ Unlike rigid checklist tools, **ComplAI lets each customer decide how they satis
 
 
 
-## Next phase (post-MVP)
+## Next phase (roadmap)
 
 
 
