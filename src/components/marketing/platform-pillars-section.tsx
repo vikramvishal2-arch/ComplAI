@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { INTEGRATION_HELP_BASE_URL, PRODUCT_NAME } from '@/lib/brand';
+import { INTEGRATION_HELP_BASE_URL } from '@/lib/brand';
+import { ComplAIText } from '@/components/marketing/complai-brand-link';
 
 const pillars = [
   {
@@ -45,7 +46,7 @@ export function PlatformPillarsSection() {
   const pillar = pillars[active];
 
   return (
-    <section id="platform" className="border-y border-slate-200 bg-scrut-navy py-16 text-white sm:py-24">
+    <section id="platform" className="border-y border-white/10 bg-marketing-surface py-16 text-white sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap gap-2 border-b border-white/10 pb-6">
           {pillars.map((p, i) => (
@@ -56,7 +57,7 @@ export function PlatformPillarsSection() {
               className={cn(
                 'rounded-full px-4 py-2 text-xs font-semibold transition-all sm:text-sm',
                 active === i
-                  ? 'bg-scrut-gradient text-scrut-navy'
+                  ? 'bg-scrut-gradient text-black'
                   : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
               )}
             >
@@ -71,7 +72,9 @@ export function PlatformPillarsSection() {
               {pillar.eyebrow}
             </p>
             <h3 className="mt-4 text-2xl font-bold leading-snug sm:text-3xl">{pillar.title}</h3>
-            <p className="mt-4 text-white/70 leading-relaxed">{pillar.description}</p>
+            <p className="mt-4 text-zinc-400 leading-relaxed">
+              <ComplAIText>{pillar.description}</ComplAIText>
+            </p>
             <Link
               href={pillar.href}
               {...(pillar.href.startsWith('http')

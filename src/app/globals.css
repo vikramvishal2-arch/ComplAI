@@ -17,10 +17,62 @@
   --danger: #dc2626;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 7.5rem;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: 'Inter', system-ui, sans-serif;
+}
+
+@layer components {
+  /* ComplAI marketing — grey → black gradient surfaces */
+  .marketing-body {
+    @apply bg-marketing-surface text-zinc-100;
+  }
+
+  .marketing-heading {
+    @apply text-zinc-50;
+  }
+
+  .marketing-muted {
+    @apply text-zinc-400;
+  }
+
+  .marketing-accent {
+    @apply text-scrut-teal;
+  }
+
+  .marketing-accent-secondary {
+    @apply text-scrut-blue;
+  }
+
+  .marketing-section {
+    @apply bg-marketing-surface;
+  }
+
+  .marketing-section-alt {
+    @apply bg-marketing-surface-alt;
+  }
+
+  .marketing-card {
+    @apply rounded-2xl border border-white/10 bg-scrut-navy-light/70;
+  }
+
+  .marketing-divider {
+    @apply border-white/10;
+  }
+
+  .landing-hero-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5em;
+    line-height: 1.3;
+  }
 }
 
 @layer utilities {

@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { PRODUCT_NAME } from '@/lib/brand';
+import { ComplAIBrandLink } from '@/components/marketing/complai-brand-link';
 
 export function AnnouncementBar() {
   return (
     <div className="border-b border-white/10 bg-scrut-navy-light">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-2.5 text-center text-sm text-white/90">
         <span>
-          Meet {PRODUCT_NAME} Intelligence: Your AI-powered teammate for risk &amp; compliance
+          Meet <ComplAIBrandLink inheritWeight /> Intelligence: Your AI-powered teammate for risk
+          &amp; compliance
         </span>
         <Link
           href="/solutions#intelligence"

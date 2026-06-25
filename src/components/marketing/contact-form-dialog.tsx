@@ -1,11 +1,20 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ChevronDown, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  COUNTRY_DIAL_CODES,
+  countryCodeToFlag,
+  formatPhoneWithDialCode,
+  getDialCodeForCountry,
+  getPhoneDigits,
+  isTenDigitPhone,
+} from '@/lib/data/country-dial-codes';
 
 export type ContactFormData = {
   name: string;
+  countryCode: string;
   phone: string;
   email: string;
   requirement: string;
@@ -18,10 +27,13 @@ type ContactFormDialogProps = {
 
 const emptyForm: ContactFormData = {
   name: '',
+  countryCode: COUNTRY_DIAL_CODES[0].code,
   phone: '',
   email: '',
   requirement: '',
 };
+const fieldClassName =
+  'mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-black placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20';
 
 export function ContactFormDialog({ open, onOpenChange }: ContactFormDialogProps) {
   const [form, setForm] = useState<ContactFormData>(emptyForm);
@@ -55,13 +67,24 @@ export function ContactFormDialog({ open, onOpenChange }: ContactFormDialogProps
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!isTenDigitPhone(form.phone)) {
+      setError('Please enter a valid 10-digit phone number.');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          requirement: form.requirement,
+          phone: formatPhoneWithDialCode(getDialCodeForCountry(form.countryCode), form.phone),
+        }),
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
@@ -84,7 +107,7 @@ export function ContactFormDialog({ open, onOpenChange }: ContactFormDialogProps
       <button
         type="button"
         aria-label="Close contact form"
-        className="absolute inset-0 bg-scrut-navy/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={() => onOpenChange(false)}
       />
 
@@ -95,13 +118,13 @@ export function ContactFormDialog({ open, onOpenChange }: ContactFormDialogProps
         className="relative z-10 w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl"
       >
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 id="contact-form-title" className="text-lg font-semibold text-scrut-navy">
+          <h2 id="contact-form-title" className="text-lg font-semibold text-black">
             Contact us
           </h2>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+            className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-black"
           >
             <X className="h-5 w-5" />
           </button>
@@ -109,14 +132,14 @@ export function ContactFormDialog({ open, onOpenChange }: ContactFormDialogProps
 
         {success ? (
           <div className="px-6 py-10 text-center">
-            <p className="text-lg font-semibold text-scrut-navy">Thank you for reaching out</p>
+            <p className="text-lg font-semibold text-black">Thank you for reaching out</p>
             <p className="mt-2 text-sm text-slate-600">
               We received your message and will get back to you shortly.
             </p>
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="mt-6 text-sm font-semibold text-scrut-navy hover:underline"
+              className="mt-6 text-sm font-semibold text-black hover:underline"
             >
               Close
             </button>
@@ -131,14 +154,11 @@ export function ContactFormDialog({ open, onOpenChange }: ContactFormDialogProps
               onChange={(v) => setForm((f) => ({ ...f, name: v }))}
               placeholder="Your full name"
             />
-            <Field
-              id="contact-phone"
-              label="Phone"
-              required
-              type="tel"
-              value={form.phone}
-              onChange={(v) => setForm((f) => ({ ...f, phone: v }))}
-              placeholder="+91 98765 43210"
+            <PhoneField
+              countryCode={form.countryCode}
+              phone={form.phone}
+              onCountryCodeChange={(countryCode) => setForm((f) => ({ ...f, countryCode }))}
+              onPhoneChange={(phone) => setForm((f) => ({ ...f, phone }))}
             />
             <Field
               id="contact-email"
@@ -150,8 +170,8 @@ export function ContactFormDialog({ open, onOpenChange }: ContactFormDialogProps
               placeholder="you@company.com"
             />
             <div>
-              <label htmlFor="contact-requirement" className="block text-sm font-medium text-slate-700">
-                Requirement <span className="text-red-500">*</span>
+              <label htmlFor="contact-requirement" className="block text-sm font-medium text-black">
+                Requirement <span className="text-red-600">*</span>
               </label>
               <textarea
                 id="contact-requirement"
@@ -160,7 +180,7 @@ export function ContactFormDialog({ open, onOpenChange }: ContactFormDialogProps
                 value={form.requirement}
                 onChange={(e) => setForm((f) => ({ ...f, requirement: e.target.value }))}
                 placeholder="Tell us about your GRC needs — frameworks, timelines, team size, etc."
-                className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-scrut-blue focus:outline-none focus:ring-2 focus:ring-scrut-blue/20"
+                className={fieldClassName}
               />
             </div>
 
@@ -174,7 +194,7 @@ export function ContactFormDialog({ open, onOpenChange }: ContactFormDialogProps
               type="submit"
               disabled={submitting}
               className={cn(
-                'inline-flex w-full items-center justify-center rounded-full bg-scrut-gradient px-6 py-3 text-sm font-semibold text-scrut-navy shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60'
+                'inline-flex w-full items-center justify-center rounded-full bg-scrut-gradient px-6 py-3 text-sm font-semibold text-black shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60'
               )}
             >
               {submitting ? 'Submitting…' : 'Submit enquiry'}
@@ -182,6 +202,120 @@ export function ContactFormDialog({ open, onOpenChange }: ContactFormDialogProps
           </form>
         )}
       </div>
+    </div>
+  );
+}
+
+function CountryCodePicker({
+  countryCode,
+  onCountryCodeChange,
+}: {
+  countryCode: string;
+  onCountryCodeChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const selected =
+    COUNTRY_DIAL_CODES.find((country) => country.code === countryCode) ?? COUNTRY_DIAL_CODES[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative shrink-0">
+      <button
+        type="button"
+        id="contact-country-code"
+        aria-label="Country code"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className="flex min-w-[6.75rem] items-center gap-2 rounded-xl border border-slate-300 bg-white px-2.5 py-2.5 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 sm:min-w-[7.5rem]"
+      >
+        <span className="text-lg leading-none" aria-hidden>
+          {countryCodeToFlag(selected.code)}
+        </span>
+        <span className="font-medium">{selected.dial}</span>
+        <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-slate-500" aria-hidden />
+      </button>
+
+      {open && (
+        <ul
+          role="listbox"
+          aria-label="Country codes"
+          className="absolute left-0 top-[calc(100%+0.25rem)] z-20 max-h-56 w-64 overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+        >
+          {COUNTRY_DIAL_CODES.map((country) => {
+            const active = country.code === countryCode;
+            return (
+              <li key={country.code} role="option" aria-selected={active}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onCountryCodeChange(country.code);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    'flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-black hover:bg-slate-50',
+                    active && 'bg-emerald-50'
+                  )}
+                >
+                  <span className="text-lg leading-none">{countryCodeToFlag(country.code)}</span>
+                  <span className="w-12 shrink-0 font-medium">{country.dial}</span>
+                  <span className="truncate text-slate-600">{country.name}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function PhoneField({
+  countryCode,
+  phone,
+  onCountryCodeChange,
+  onPhoneChange,
+}: {
+  countryCode: string;
+  phone: string;
+  onCountryCodeChange: (value: string) => void;
+  onPhoneChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <label htmlFor="contact-phone" className="block text-sm font-medium text-black">
+        Phone <span className="text-red-600">*</span>
+      </label>
+      <div className="mt-1.5 flex gap-2">
+        <CountryCodePicker countryCode={countryCode} onCountryCodeChange={onCountryCodeChange} />
+        <input
+          id="contact-phone"
+          type="tel"
+          required
+          inputMode="numeric"
+          autoComplete="tel-national"
+          minLength={10}
+          maxLength={10}
+          pattern="\d{10}"
+          title="Enter a 10-digit phone number"
+          value={phone}
+          onChange={(e) => onPhoneChange(getPhoneDigits(e.target.value).slice(0, 10))}
+          placeholder="9876543210"
+          className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-black placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+        />
+      </div>
+      <p className="mt-1 text-xs text-slate-500">10-digit mobile number</p>
     </div>
   );
 }
@@ -205,8 +339,8 @@ function Field({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700">
-        {label} {required && <span className="text-red-500">*</span>}
+      <label htmlFor={id} className="block text-sm font-medium text-black">
+        {label} {required && <span className="text-red-600">*</span>}
       </label>
       <input
         id={id}
@@ -215,7 +349,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-scrut-blue focus:outline-none focus:ring-2 focus:ring-scrut-blue/20"
+        className={fieldClassName}
       />
     </div>
   );

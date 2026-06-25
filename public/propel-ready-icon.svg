@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 64" fill="none" role="img" aria-label="Propel Ready">
+  <defs>
+    <linearGradient id="pr-arrow" x1="4" y1="58" x2="78" y2="6" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1a4278"/>
+      <stop offset="0.35" stop-color="#2563eb"/>
+      <stop offset="0.72" stop-color="#0ea5e9"/>
+      <stop offset="1" stop-color="#16a34a"/>
+    </linearGradient>
+    <linearGradient id="pr-ready" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#15803d"/>
+      <stop offset="1" stop-color="#22c55e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Globe mesh -->
+  <g opacity="0.95">
+    <path d="M28 26c2.5-5 7-8.5 13-8.5s10.5 3.5 13 8.5" stroke="#3b82f6" stroke-width="0.75" opacity="0.55"/>
+    <path d="M26 30c4-4.5 9-7 16-7s12 2.5 16 7" stroke="#3b82f6" stroke-width="0.75" opacity="0.5"/>
+    <path d="M28 34c2.5 4.5 7 7.5 13 7.5s10.5-3 13-7.5" stroke="#3b82f6" stroke-width="0.75" opacity="0.45"/>
+    <path d="M41 12v24M33 15v22M49 15v22M30 22h22M28 30h26" stroke="#60a5fa" stroke-width="0.6" opacity="0.38"/>
+    <path d="M31 18l20 16M51 18L31 34" stroke="#60a5fa" stroke-width="0.55" opacity="0.32"/>
+  </g>
+
+  <!-- Network nodes -->
+  <circle cx="41" cy="12.5" r="2" fill="#1a4278"/>
+  <circle cx="51.5" cy="16" r="1.65" fill="#2563eb"/>
+  <circle cx="54.5" cy="24" r="1.45" fill="#2563eb" opacity="0.92"/>
+  <circle cx="52" cy="31.5" r="1.55" fill="#2563eb" opacity="0.85"/>
+  <circle cx="45" cy="36.5" r="1.6" fill="#1a4278"/>
+  <circle cx="37" cy="36" r="1.55" fill="#1a4278"/>
+  <circle cx="30.5" cy="31" r="1.65" fill="#2563eb"/>
+  <circle cx="28.5" cy="23" r="1.7" fill="#1a4278"/>
+  <circle cx="31.5" cy="16" r="1.55" fill="#2563eb"/>
+  <circle cx="37" cy="13" r="1.35" fill="#3b82f6"/>
+  <circle cx="41" cy="24" r="1.25" fill="#2563eb" opacity="0.75"/>
+  <circle cx="47" cy="24" r="1.15" fill="#3b82f6" opacity="0.7"/>
+
+  <!-- Dissolving nodes -->
+  <circle cx="57" cy="20" r="1.1" fill="#3b82f6" opacity="0.55"/>
+  <circle cx="59" cy="26" r="0.95" fill="#2563eb" opacity="0.45"/>
+  <circle cx="56.5" cy="30" r="0.85" fill="#3b82f6" opacity="0.35"/>
+  <circle cx="60" cy="23" r="0.75" fill="#60a5fa" opacity="0.3"/>
+  <circle cx="58" cy="33" r="0.7" fill="#2563eb" opacity="0.25"/>
+
+  <!-- Mesh links -->
+  <path
+    d="M41 12.5L51.5 16L54.5 24L52 31.5L45 36.5L37 36L30.5 31L28.5 23L31.5 16L37 13L41 12.5M41 12.5L41 36.5M31.5 16L52 31.5M51.5 16L37 36M28.5 23L54.5 24M41 24L51.5 16M41 24L31.5 16"
+    stroke="#2563eb"
+    stroke-width="0.75"
+    opacity="0.48"
+  />
+
+  <!-- Pixel burst on arrow curve -->
+  <rect x="34" y="38.5" width="2.2" height="2.2" fill="#16a34a" opacity="0.85" transform="rotate(18 35.1 39.6)"/>
+  <rect x="37" y="40.5" width="2" height="2" fill="#2563eb" opacity="0.7" transform="rotate(-12 38 41.5)"/>
+  <rect x="39.5" y="42" width="1.8" height="1.8" fill="#16a34a" opacity="0.75" transform="rotate(8 40.4 42.9)"/>
+  <rect x="42" y="43" width="1.6" height="1.6" fill="#22c55e" opacity="0.65"/>
+  <rect x="44" y="43.5" width="1.4" height="1.4" fill="#2563eb" opacity="0.5" transform="rotate(15 44.7 44.2)"/>
+  <rect x="46" y="44" width="1.2" height="1.2" fill="#16a34a" opacity="0.4"/>
+
+  <!-- Main arrow -->
+  <path
+    d="M4 58.5C8.5 54 12.5 48.5 16.5 43.5C20.5 38.5 25 34 30 30C34.5 26.5 39.5 22.5 45.5 18.5C51 15 56.5 12.5 62 10.5C67 8.8 72 8 76.5 7.5"
+    stroke="url(#pr-arrow)"
+    stroke-width="5.2"
+    stroke-linecap="round"
+    fill="none"
+  />
+  <path d="M70.5 5.5L79 8.5L73.5 15.5Z" fill="url(#pr-ready)"/>
+
+  <!-- Tail pixels -->
+  <rect x="7" y="54.5" width="2.6" height="2.6" fill="#1a4278" opacity="0.9" transform="rotate(-18 8.3 55.8)"/>
+  <rect x="10.5" y="51.5" width="2.3" height="2.3" fill="#2563eb" opacity="0.8" transform="rotate(10 11.65 52.65)"/>
+  <rect x="13.5" y="48.5" width="2.1" height="2.1" fill="#16a34a" opacity="0.75" transform="rotate(-6 14.55 49.55)"/>
+  <rect x="16" y="45.5" width="1.9" height="1.9" fill="#2563eb" opacity="0.65"/>
+  <rect x="18.5" y="42.5" width="1.7" height="1.7" fill="#22c55e" opacity="0.55"/>
+</svg>

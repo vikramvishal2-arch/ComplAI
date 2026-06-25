@@ -1,5 +1,5 @@
 import { FileText, Layers, Plug, BarChart3 } from 'lucide-react';
-import { PRODUCT_NAME } from '@/lib/brand';
+import { ComplAIBrandLink } from '@/components/marketing/complai-brand-link';
 
 const steps = [
   {
@@ -34,13 +34,13 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="border-y border-slate-200 bg-slate-50 py-16 sm:py-24">
+    <section id="how-it-works" className="border-y border-white/10 bg-scrut-navy-light/50 py-16 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            How {PRODUCT_NAME} works
+          <h2 className="text-3xl font-bold tracking-tight text-zinc-100 sm:text-4xl">
+            How <ComplAIBrandLink inheritWeight /> works
           </h2>
-          <p className="mt-4 text-lg text-slate-600">
+          <p className="mt-4 text-lg text-zinc-400">
             From framework selection to executive reporting — a continuous compliance loop, not a
             once-a-year audit scramble.
           </p>
@@ -52,11 +52,11 @@ export function HowItWorksSection() {
             return (
               <div key={item.step} className="relative">
                 <span className="text-xs font-bold text-brand-600">{item.step}</span>
-                <div className="mt-2 flex h-10 w-10 items-center justify-center rounded-lg bg-white border border-slate-200 shadow-sm">
+                <div className="mt-2 flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-scrut-navy-light/80 shadow-sm">
                   <Icon className="h-5 w-5 text-brand-600" />
                 </div>
-                <h3 className="mt-4 text-lg font-semibold text-slate-900">{item.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.description}</p>
+                <h3 className="mt-4 text-lg font-semibold text-zinc-100">{item.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{item.description}</p>
               </div>
             );
           })}

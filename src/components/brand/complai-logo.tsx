@@ -48,7 +48,8 @@ export function ComplAILogo({
           />
           <div className="min-w-0 leading-tight">
             <p className="truncate text-base font-bold tracking-tight text-slate-900">
-              Compl<span className="text-brand-500">AI</span>
+              <span className="text-emerald-600">Compl</span>
+              <span className="text-emerald-500">AI</span>
             </p>
             {showTagline && (
               <p className="truncate text-[11px] text-slate-500">GRC Compliance Platform</p>
@@ -71,7 +72,7 @@ export function ComplAILogo({
     <Link
       href={href}
       className={cn(
-        'block min-w-0 transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 rounded-lg',
+        'block min-w-0 transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 rounded-lg',
         className
       )}
       aria-label={`${PRODUCT_NAME} — go to leadership dashboard`}

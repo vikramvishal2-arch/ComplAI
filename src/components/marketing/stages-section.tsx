@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { PRODUCT_NAME } from '@/lib/brand';
+import { ComplAIBrandLink } from '@/components/marketing/complai-brand-link';
 
 const stages = [
   {
@@ -28,12 +28,13 @@ export function StagesSection() {
     <section className="py-16 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-scrut-navy sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-zinc-100 sm:text-4xl">
             Your goals, your stage. We help you level up.
           </h2>
-          <p className="mt-4 text-lg text-slate-600">
+          <p className="mt-4 text-lg text-zinc-400">
             Whether you need to get compliant yesterday to close a deal, or build a security program
-            that adapts to your unique risk, {PRODUCT_NAME}&apos;s got you covered.
+            that adapts to your unique risk, <ComplAIBrandLink inheritWeight />&apos;s got you
+            covered.
           </p>
         </div>
 
@@ -42,11 +43,11 @@ export function StagesSection() {
             <Link
               key={stage.title}
               href={stage.href}
-              className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-scrut-teal/30 hover:shadow-md"
+              className="group flex flex-col rounded-2xl border border-white/10 bg-scrut-navy-light/70 p-6 shadow-sm transition-all hover:border-scrut-teal/30 hover:shadow-md"
             >
-              <h3 className="text-lg font-semibold text-scrut-navy">{stage.title}</h3>
-              <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600">{stage.body}</p>
-              <span className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-scrut-navy group-hover:text-scrut-blue">
+              <h3 className="text-lg font-semibold text-zinc-100">{stage.title}</h3>
+              <p className="mt-3 flex-1 text-sm leading-relaxed text-zinc-400">{stage.body}</p>
+              <span className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-zinc-100 group-hover:text-scrut-blue">
                 {stage.cta}
                 <ArrowRight className="h-4 w-4" />
               </span>

@@ -3,8 +3,8 @@ import {
   COMPLAI_ICON,
   INTEGRATION_HELP_BASE_URL,
   ORGANIZATION_NAME,
-  PRODUCT_NAME,
 } from '@/lib/brand';
+import { ComplAIBrandLink, ComplAIStyled } from '@/components/marketing/complai-brand-link';
 import { FRAMEWORK_GUIDES, MARKETING_SOLUTIONS } from '@/lib/data/marketing-resources';
 import { PLATFORM_CAPABILITIES } from '@/lib/data/marketing-platform';
 
@@ -20,20 +20,18 @@ const solutionLinks = MARKETING_SOLUTIONS.slice(0, 5).map((s) => ({
 
 export function MarketingFooter() {
   return (
-    <footer className="border-t border-white/10 bg-scrut-navy text-white/70">
+    <footer className="border-t border-white/10 bg-marketing-surface-alt text-white/70">
       <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-2.5">
+            <Link href="/platform" className="flex items-center gap-2.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={COMPLAI_ICON} alt="" aria-hidden className="h-9 w-9 shrink-0" />
               <div>
-                <p className="font-bold text-white">
-                  Compl<span className="text-scrut-teal">AI</span>
-                </p>
+                <ComplAIStyled />
                 <p className="text-xs text-white/50">{ORGANIZATION_NAME}</p>
               </div>
-            </div>
+            </Link>
             <p className="mt-4 text-sm leading-relaxed">Connect. Secure. Advance.</p>
           </div>
 
@@ -106,7 +104,7 @@ export function MarketingFooter() {
             <ul className="mt-4 space-y-2 text-sm">
               <li>
                 <Link href="/why-complai" className="hover:text-scrut-teal">
-                  Why ComplAI
+                  Why <ComplAIStyled className="font-medium" />
                 </Link>
               </li>
               <li>
@@ -145,7 +143,9 @@ export function MarketingFooter() {
 
         <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-8 text-sm text-white/45 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} {ORGANIZATION_NAME}. All rights reserved.</p>
-          <p>{PRODUCT_NAME} — GRC Compliance Platform</p>
+          <p>
+            <ComplAIBrandLink /> — GRC Compliance Platform
+          </p>
         </div>
       </div>
     </footer>

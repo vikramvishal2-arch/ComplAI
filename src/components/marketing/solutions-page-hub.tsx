@@ -12,7 +12,7 @@ import {
   Building2,
   type LucideIcon,
 } from 'lucide-react';
-import { PRODUCT_NAME } from '@/lib/brand';
+import { ComplAIBrandLink } from '@/components/marketing/complai-brand-link';
 import { MARKETING_SOLUTIONS } from '@/lib/data/marketing-resources';
 
 const solutionIconById: Record<string, LucideIcon> = {
@@ -39,7 +39,7 @@ const solutionTaglines: Record<string, string> = {
 
 export function SolutionsPageHub() {
   return (
-    <section className="border-b border-white/10 bg-scrut-navy">
+    <section className="border-b border-white/10 bg-marketing-surface-alt">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,220px)_1fr] lg:gap-12">
           <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 sm:p-6">
@@ -48,8 +48,8 @@ export function SolutionsPageHub() {
             </div>
             <h2 className="mt-4 text-base font-bold text-white">GRC by workflow</h2>
             <p className="mt-2 text-sm leading-relaxed text-white/60">
-              Pick the outcome you need — {PRODUCT_NAME} covers compliance, audits, risk, and more
-              from one workspace.
+              Pick the outcome you need — <ComplAIBrandLink inheritWeight /> covers compliance,
+              audits, risk, and more from one workspace.
             </p>
             <Link
               href="/platform"

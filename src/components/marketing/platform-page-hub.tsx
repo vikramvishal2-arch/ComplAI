@@ -13,7 +13,8 @@ import {
   Building2,
   type LucideIcon,
 } from 'lucide-react';
-import { COMPLAI_ICON, PRODUCT_NAME } from '@/lib/brand';
+import { COMPLAI_ICON } from '@/lib/brand';
+import { ComplAIBrandLink, ComplAIText } from '@/components/marketing/complai-brand-link';
 import {
   PLATFORM_FEATURED,
   PLATFORM_MENU_CARDS,
@@ -64,7 +65,7 @@ function HubLink({
 
 export function PlatformPageHub() {
   return (
-    <section className="border-b border-white/10 bg-scrut-navy">
+    <section className="border-b border-white/10 bg-marketing-surface-alt">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,220px)_1fr_minmax(0,260px)] lg:gap-8 xl:gap-12">
           {/* Featured highlight */}
@@ -84,10 +85,10 @@ export function PlatformPageHub() {
               />
             </div>
             <h2 className="mt-5 text-base font-bold text-white group-hover:text-scrut-teal">
-              {PLATFORM_FEATURED.title}
+              <ComplAIText linked={false}>{PLATFORM_FEATURED.title}</ComplAIText>
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-white/60">
-              {PLATFORM_FEATURED.description}
+              <ComplAIText linked={false}>{PLATFORM_FEATURED.description}</ComplAIText>
             </p>
           </HubLink>
 
@@ -130,10 +131,10 @@ export function PlatformPageHub() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-white group-hover:text-scrut-teal">
-                      {item.title}
+                      <ComplAIText linked={false}>{item.title}</ComplAIText>
                     </p>
                     <p className="mt-0.5 text-xs leading-relaxed text-white/50">
-                      {item.description}
+                      <ComplAIText linked={false}>{item.description}</ComplAIText>
                     </p>
                   </div>
                 </HubLink>
@@ -143,7 +144,8 @@ export function PlatformPageHub() {
         </div>
 
         <p className="mt-8 hidden text-center text-xs text-white/40 lg:block">
-          Jump to a capability above, or scroll to explore the full {PRODUCT_NAME} platform below.
+          Jump to a capability above, or scroll to explore the full{' '}
+          <ComplAIBrandLink inheritWeight className="text-xs" /> platform below.
         </p>
       </div>
     </section>

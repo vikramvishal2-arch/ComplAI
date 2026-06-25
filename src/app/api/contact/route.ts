@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-
-export type ContactInquiryPayload = {
-  name: string;
-  phone: string;
-  email: string;
-  requirement: string;
-};
+import { isTenDigitPhone } from '@/lib/data/country-dial-codes';
+import type { ContactInquiryPayload } from '@/lib/email/contact-inquiry-types';
+import { sendContactInquiryEmail } from '@/lib/email/send-contact-inquiry-email';
+export type { ContactInquiryPayload } from '@/lib/email/contact-inquiry-types';
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -31,6 +28,16 @@ function parseBody(body: unknown): ContactInquiryPayload | null {
   };
 }
 
+async function saveInquiry(payload: ContactInquiryPayload): Promise<void> {
+  try {
+    await prisma.contactInquiry.create({
+      data: payload,
+    });
+  } catch (error) {
+    console.error('POST /api/contact — database save failed (email will still be attempted)', error);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const payload = parseBody(await request.json());
@@ -48,19 +55,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Please enter a valid email address' }, { status: 400 });
     }
 
-    if (name.length > 200 || phone.length > 40 || email.length > 320 || requirement.length > 5000) {
+    const localDigits = phone.replace(/\D/g, '').slice(-10);
+    if (!isTenDigitPhone(localDigits)) {
+      return NextResponse.json({ error: 'Please enter a valid 10-digit phone number.' }, { status: 400 });
+    }
+
+    if (name.length > 200 || phone.length > 48 || email.length > 320 || requirement.length > 5000) {
       return NextResponse.json({ error: 'One or more fields are too long' }, { status: 400 });
     }
 
-    await prisma.contactInquiry.create({
-      data: { name, phone, email, requirement },
-    });
+    await sendContactInquiryEmail(payload);
+    await saveInquiry(payload);
 
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('POST /api/contact', error);
     return NextResponse.json(
-      { error: 'Unable to save your enquiry. Please try again later.' },
+      {
+        error:
+          'We could not send your enquiry. Please try again in a moment or contact us at tech@propelreadysolutions.in.',
+      },
       { status: 503 }
     );
   }

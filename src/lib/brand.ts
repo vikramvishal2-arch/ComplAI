@@ -17,8 +17,18 @@ export const COMPLAI_ICON_ALTERNATES = {
   /** Shield with stacked control bars + check */
   controlStack: '/complai-icon-v4.svg',
 } as const;
-/** Company logo (Propel Ready Solutions wordmark). */
+/** Propel Ready icon mark (globe + arrow — transparent PNG, white background removed). */
+export const PROPEL_READY_ICON = '/propel-ready-logo-transparent.png';
+
+/** White icon mark for very dark backgrounds where the colored mark lacks contrast. */
+export const PROPEL_READY_ICON_WHITE = '/propel-ready-icon-white.svg';
+
+/** PNG lockup — avoid in UI; use PROPEL_READY_ICON + PropelReadyWordmark instead. */
+export const PROPEL_READY_LOCKUP = '/propel-ready-lockup.png';
+
+/** Legacy full lockup PNGs — same artwork as PROPEL_READY_LOCKUP. */
 export const COMPANY_LOGO = '/company-logo.png';
+export const COMPANY_LOGO_FULL = '/company-logo-full.png';
 
 export const PRODUCT_TITLE = `${PRODUCT_NAME} — ${PRODUCT_TAGLINE}`;
 export const PRODUCT_DESCRIPTION = `${PRODUCT_NAME} — manage security frameworks and define how your organization complies with each control. Built for ${ORGANIZATION_NAME}.`;

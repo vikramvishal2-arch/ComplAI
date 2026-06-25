@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { MarketingShell } from '@/components/marketing/marketing-shell';
 import { CompanyPageContent } from '@/components/marketing/company-page-content';
@@ -18,7 +19,9 @@ export default async function CompanyPage({ searchParams }: CompanyPageProps) {
 
   return (
     <MarketingShell>
-      <CompanyPageContent openContactOnMount={openContactOnMount} />
+      <Suspense fallback={<div className="min-h-[50vh]" aria-hidden />}>
+        <CompanyPageContent openContactOnMount={openContactOnMount} />
+      </Suspense>
     </MarketingShell>
   );
 }

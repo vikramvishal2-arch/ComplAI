@@ -206,7 +206,7 @@ export const PLATFORM_SIDEBAR_LINKS: PlatformSidebarLink[] = [
   {
     title: 'Explore the platform',
     description: 'Built to power every GRC workflow.',
-    href: '#features',
+    href: '#dashboard',
   },
   {
     title: 'Why ComplAI',

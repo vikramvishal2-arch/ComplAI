@@ -6,12 +6,13 @@ import {
   FRAMEWORK_GUIDES,
   MARKETING_FAQS,
 } from '@/lib/data/marketing-resources';
-import { ORGANIZATION_NAME, PRODUCT_NAME } from '@/lib/brand';
+import { ORGANIZATION_NAME } from '@/lib/brand';
+import { ComplAIBrandLink } from '@/components/marketing/complai-brand-link';
 
 export function ResourcesPageContent() {
   return (
     <>
-      <section className="bg-scrut-navy bg-scrut-hero py-16 text-white sm:py-20">
+      <section className="bg-scrut-hero py-16 text-white sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-scrut-teal">Resources</p>
           <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
@@ -30,11 +31,13 @@ export function ResourcesPageContent() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-scrut-gradient">
-              <HelpCircle className="h-5 w-5 text-scrut-navy" />
+              <HelpCircle className="h-5 w-5 text-zinc-100" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-scrut-navy sm:text-3xl">FAQs</h2>
-              <p className="text-sm text-slate-600">Common questions about GRC and {PRODUCT_NAME}</p>
+              <h2 className="text-2xl font-bold text-zinc-100 sm:text-3xl">FAQs</h2>
+              <p className="text-sm text-zinc-400">
+                Common questions about GRC and <ComplAIBrandLink inheritWeight />
+              </p>
             </div>
           </div>
           <div className="mt-8 max-w-3xl">
@@ -43,18 +46,19 @@ export function ResourcesPageContent() {
         </div>
       </section>
 
-      <section id="frameworks" className="scroll-mt-24 border-t border-slate-200 bg-[#f4f7fb] py-16 sm:py-20">
+      <section id="frameworks" className="scroll-mt-24 border-t border-white/10 bg-marketing-surface-alt py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-scrut-gradient">
-              <BookOpen className="h-5 w-5 text-scrut-navy" />
+              <BookOpen className="h-5 w-5 text-zinc-100" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-scrut-navy sm:text-3xl">
+              <h2 className="text-2xl font-bold text-zinc-100 sm:text-3xl">
                 Compliance framework guides
               </h2>
-              <p className="text-sm text-slate-600">
-                Overview, scope, timelines, and how {PRODUCT_NAME} supports each framework
+              <p className="text-sm text-zinc-400">
+                Overview, scope, timelines, and how <ComplAIBrandLink inheritWeight /> supports
+                each framework
               </p>
             </div>
           </div>
@@ -64,18 +68,18 @@ export function ResourcesPageContent() {
               <Link
                 key={guide.slug}
                 href={`/resources/${guide.slug}`}
-                className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-scrut-teal/30 hover:shadow-md"
+                className="group flex flex-col rounded-2xl border border-white/10 bg-scrut-navy-light/70 p-6 shadow-sm transition-all hover:border-scrut-teal/30 hover:shadow-md"
               >
                 <p className="text-xs font-semibold uppercase tracking-wide text-scrut-teal">
                   {guide.shortName} Hub
                 </p>
-                <h3 className="mt-2 text-lg font-bold text-scrut-navy group-hover:text-scrut-blue">
+                <h3 className="mt-2 text-lg font-bold text-zinc-100 group-hover:text-scrut-blue">
                   {guide.title}
                 </h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-zinc-400">
                   {guide.tagline}
                 </p>
-                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-scrut-navy">
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-zinc-100">
                   Read guide
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </span>
@@ -83,9 +87,9 @@ export function ResourcesPageContent() {
             ))}
           </div>
 
-          <p className="mt-10 text-center text-sm text-slate-600">
+          <p className="mt-10 text-center text-sm text-zinc-400">
             Want help choosing a framework?{' '}
-            <Link href="/company?contact=1" className="font-semibold text-scrut-navy hover:underline">
+            <Link href="/company?contact=1" className="font-semibold text-zinc-100 hover:underline">
               Contact our team
             </Link>
           </p>

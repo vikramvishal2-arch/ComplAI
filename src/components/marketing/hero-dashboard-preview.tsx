@@ -1,163 +1,164 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { PRODUCT_NAME } from '@/lib/brand';
+import { ComplAIBrandLink, ComplAIStyled } from '@/components/marketing/complai-brand-link';
 
-type ViewMode = 'before' | 'after';
+type RagLevel = 'green' | 'amber' | 'red';
 
-const beforeMetrics = [
-  { label: 'Policy versions', value: 'Unknown' },
-  { label: 'Framework coverage', value: 'Manual' },
-  { label: 'Open audit gaps', value: '???' },
-  { label: 'Evidence status', value: 'Scattered' },
-  { label: 'Approval state', value: 'Email' },
-  { label: 'Risk visibility', value: 'Low' },
+type RiskDimension = {
+  id: string;
+  label: string;
+  score: number;
+  level: RagLevel;
+  openItems: number;
+};
+
+const RISK_DIMENSIONS: RiskDimension[] = [
+  { id: 'people', label: 'People & identity', score: 86, level: 'green', openItems: 3 },
+  { id: 'cloud', label: 'Cloud & infrastructure', score: 72, level: 'amber', openItems: 5 },
+  { id: 'apps', label: 'Applications & APIs', score: 68, level: 'amber', openItems: 4 },
+  { id: 'data', label: 'Data & privacy', score: 81, level: 'green', openItems: 2 },
+  { id: 'vendors', label: 'Vendor & third-party', score: 58, level: 'red', openItems: 7 },
+  { id: 'compliance', label: 'Compliance & audit', score: 78, level: 'amber', openItems: 6 },
+  { id: 'detection', label: 'Detection & response', score: 74, level: 'amber', openItems: 4 },
+  { id: 'governance', label: 'Governance & policies', score: 88, level: 'green', openItems: 2 },
 ];
 
-const afterMetrics = [
-  { label: 'Open Risks', value: '8' },
-  { label: 'Vendors not Assessed', value: '2' },
-  { label: 'Employees at Risk', value: '18' },
-  { label: 'Audits in Progress', value: '1' },
-  { label: 'Pending Approvals', value: '5' },
-  { label: 'Framework Readiness', value: '78%' },
-];
+const SUMMARY = {
+  overallScore: 76,
+  openRisks: 8,
+  highCritical: 3,
+  frameworksActive: 4,
+  vendorGaps: 2,
+};
+
+const levelColor: Record<RagLevel, string> = {
+  green: 'bg-emerald-400',
+  amber: 'bg-amber-400',
+  red: 'bg-red-400',
+};
+
+const levelText: Record<RagLevel, string> = {
+  green: 'text-emerald-400',
+  amber: 'text-amber-400',
+  red: 'text-red-400',
+};
 
 export function HeroDashboardPreview() {
-  const [mode, setMode] = useState<ViewMode>('after');
-  const metrics = mode === 'before' ? beforeMetrics : afterMetrics;
-
   return (
-    <div className="relative mx-auto max-w-4xl">
-      <div className="mb-5 flex justify-center gap-2">
-        <ToggleButton active={mode === 'before'} onClick={() => setMode('before')}>
-          Before
-        </ToggleButton>
-        <ToggleButton active={mode === 'after'} onClick={() => setMode('after')}>
-          After {PRODUCT_NAME}
-        </ToggleButton>
-      </div>
-
+    <div className="relative mx-auto max-w-5xl">
       <div className="overflow-hidden rounded-2xl border border-white/10 bg-scrut-navy-light/90 shadow-2xl shadow-black/50">
-        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 sm:px-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-5">
           <div className="flex items-center gap-2">
             <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
             <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />
             <div className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-            <span className="ml-2 text-xs text-white/50">
-              {mode === 'before' ? 'Spreadsheets & shared drives' : PRODUCT_NAME}
+            <span className="ml-2 text-xs font-medium text-white/60">
+              Organization security & risk profile
             </span>
           </div>
-          {mode === 'after' && (
-            <span className="rounded-full bg-scrut-gradient px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-scrut-navy">
-              Live
-            </span>
-          )}
+          <Link
+            href="/platform"
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11px] font-semibold text-zinc-300 transition-colors hover:border-scrut-teal/40 hover:text-white"
+          >
+            Powered by <ComplAIStyled className="text-[11px] font-semibold" />
+          </Link>
         </div>
 
         <div className="p-4 sm:p-6">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {metrics.map((m) => (
-              <div
-                key={m.label}
-                className={cn(
-                  'rounded-xl border p-3 sm:p-4',
-                  mode === 'before'
-                    ? 'border-white/5 bg-white/5'
-                    : 'border-white/10 bg-white/[0.07]'
-                )}
-              >
-                <p className="text-[11px] font-medium uppercase tracking-wide text-white/45">
-                  {m.label}
-                </p>
-                <p
-                  className={cn(
-                    'mt-1.5 text-2xl font-bold tabular-nums',
-                    mode === 'after' ? 'text-white' : 'text-white/60'
-                  )}
-                >
-                  {m.value}
-                </p>
+          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/10 pb-5">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/45">
+                Overall posture
+              </p>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-4xl font-bold tabular-nums text-white sm:text-5xl">
+                  {SUMMARY.overallScore}%
+                </span>
+                <span className="text-sm font-medium text-amber-400">Needs attention</span>
               </div>
+              <p className="mt-1 text-xs text-white/50">
+                Aggregated across all security dimensions for your organization
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+              <SummaryPill label="Open risks" value={String(SUMMARY.openRisks)} />
+              <SummaryPill label="High / critical" value={String(SUMMARY.highCritical)} highlight />
+              <SummaryPill label="Frameworks" value={String(SUMMARY.frameworksActive)} />
+              <SummaryPill label="Vendor gaps" value={String(SUMMARY.vendorGaps)} />
+            </div>
+          </div>
+
+          <p className="mt-5 text-xs font-semibold uppercase tracking-[0.15em] text-white/45">
+            Risk profile by dimension
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {RISK_DIMENSIONS.map((dim) => (
+              <DimensionRow key={dim.id} dimension={dim} />
             ))}
           </div>
 
-          {mode === 'after' && (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-white/10 bg-white/[0.05] p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-white/45">
-                  RAG by domain
-                </p>
-                <div className="mt-3 space-y-2">
-                  <BarRow label="Access & identity" pct={92} color="bg-emerald-400" />
-                  <BarRow label="Vendor risk" pct={68} color="bg-amber-400" />
-                  <BarRow label="Detection & response" pct={45} color="bg-red-400" />
-                </div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/[0.05] p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-white/45">
-                  Active frameworks
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {['SOC 2', 'ISO 27001', 'GDPR', 'SEBI CSCRF'].map((fw) => (
-                    <span
-                      key={fw}
-                      className="rounded-md bg-scrut-gradient/20 px-2 py-1 text-xs font-medium text-scrut-teal"
-                    >
-                      {fw}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {mode === 'before' && (
-            <div className="mt-4 rounded-xl border border-dashed border-white/15 bg-white/[0.03] p-4 text-center text-sm text-white/45">
-              Policies in Word · Controls in spreadsheets · Evidence in email threads
-            </div>
-          )}
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+            <p className="text-sm text-zinc-400">
+              See every dimension in one view with{' '}
+              <ComplAIBrandLink inheritWeight className="text-sm" /> — leadership dashboards, risk
+              register, and live control status.
+            </p>
+            <Link
+              href="/platform"
+              className="shrink-0 text-sm font-semibold text-scrut-teal hover:underline"
+            >
+              Open platform →
+            </Link>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function ToggleButton({
-  active,
-  onClick,
-  children,
+function SummaryPill({
+  label,
+  value,
+  highlight = false,
 }: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
+  label: string;
+  value: string;
+  highlight?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <div
       className={cn(
-        'rounded-full px-5 py-2 text-xs font-semibold transition-all',
-        active
-          ? 'bg-scrut-gradient text-scrut-navy shadow-md'
-          : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
+        'rounded-lg border px-3 py-2 text-center',
+        highlight ? 'border-red-400/30 bg-red-400/10' : 'border-white/10 bg-white/[0.05]'
       )}
     >
-      {children}
-    </button>
+      <p className="text-lg font-bold tabular-nums text-white">{value}</p>
+      <p className="text-[10px] font-medium uppercase tracking-wide text-white/45">{label}</p>
+    </div>
   );
 }
 
-function BarRow({ label, pct, color }: { label: string; pct: number; color: string }) {
+function DimensionRow({ dimension }: { dimension: RiskDimension }) {
   return (
-    <div>
-      <div className="flex justify-between text-xs">
-        <span className="text-white/70">{label}</span>
-        <span className="font-medium text-white">{pct}%</span>
+    <div className="rounded-xl border border-white/10 bg-white/[0.05] p-3 sm:p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium text-white/90">{dimension.label}</p>
+          <p className="mt-0.5 text-[11px] text-white/45">
+            {dimension.openItems} open item{dimension.openItems === 1 ? '' : 's'}
+          </p>
+        </div>
+        <span className={cn('text-sm font-bold tabular-nums', levelText[dimension.level])}>
+          {dimension.score}%
+        </span>
       </div>
-      <div className="mt-1 h-1.5 rounded-full bg-white/10">
-        <div className={cn('h-1.5 rounded-full', color)} style={{ width: `${pct}%` }} />
+      <div className="mt-2.5 h-1.5 rounded-full bg-white/10">
+        <div
+          className={cn('h-1.5 rounded-full transition-all', levelColor[dimension.level])}
+          style={{ width: `${dimension.score}%` }}
+        />
       </div>
     </div>
   );

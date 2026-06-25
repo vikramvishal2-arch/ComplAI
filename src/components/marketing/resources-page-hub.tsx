@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { BookOpen, HelpCircle } from 'lucide-react';
+import { ComplAIStyled, ComplAIText } from '@/components/marketing/complai-brand-link';
 import { FRAMEWORK_GUIDES } from '@/lib/data/marketing-resources';
 
 export function ResourcesPageHub() {
   return (
-    <section className="border-b border-white/10 bg-scrut-navy">
+    <section className="border-b border-white/10 bg-marketing-surface-alt">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,220px)_1fr_minmax(0,200px)] lg:gap-10">
           <Link
@@ -18,7 +19,9 @@ export function ResourcesPageHub() {
               FAQs
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-white/60">
-              Common questions about GRC, frameworks, and ComplAI.
+              <ComplAIText linked={false}>
+                Common questions about GRC, frameworks, and ComplAI.
+              </ComplAIText>
             </p>
           </Link>
 
@@ -64,7 +67,7 @@ export function ResourcesPageHub() {
               href="/why-complai"
               className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3.5 text-sm font-semibold text-white transition-colors hover:border-scrut-teal/30 hover:bg-white/[0.07]"
             >
-              Why ComplAI
+              Why <ComplAIStyled className="font-semibold" />
             </Link>
             <Link
               href="/company?contact=1"
