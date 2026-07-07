@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { ChronicleIntelligenceReport } from '@/lib/integrations/chronicle/types';
 import { Loader2, Radar, Shield, ExternalLink } from 'lucide-react';
+import { ControlReference } from '@/components/controls/control-reference';
 import { cn } from '@/lib/utils';
 
 export function ChronicleIntelligencePanel() {
@@ -121,12 +122,13 @@ export function ChronicleIntelligencePanel() {
           <ul className="divide-y divide-slate-100">
             {priorityItems.map((item) => (
               <li key={item.controlId} className="p-4">
-                <Link
-                  href={`/controls/${item.controlId}`}
-                  className="font-medium text-brand-600 hover:underline"
-                >
-                  {item.reference} — {item.title}
-                </Link>
+                <ControlReference
+                  controlId={item.controlId}
+                  reference={item.reference}
+                  title={item.title}
+                  showTitle
+                  className="font-medium text-sm font-sans"
+                />
                 <p className="mt-1 text-sm text-slate-600">{item.message}</p>
               </li>
             ))}

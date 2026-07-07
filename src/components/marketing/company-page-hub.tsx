@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Building2, Mail, Sparkles, LayoutGrid } from 'lucide-react';
+import { Building2, LayoutGrid, Mail, Sparkles } from 'lucide-react';
 import { ComplAIStyled } from '@/components/marketing/complai-brand-link';
 
 type CompanyPageHubProps = {
@@ -44,7 +44,7 @@ export function CompanyPageHub({ onAbout, onContact }: CompanyPageHubProps) {
                   <p className="text-sm font-semibold text-white group-hover:text-scrut-teal">
                     Contact us
                   </p>
-                  <p className="text-xs text-white/50">Open the enquiry form</p>
+                  <p className="text-xs text-white/50">Happy to help</p>
                 </div>
               </button>
 

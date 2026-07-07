@@ -57,7 +57,7 @@ export function IntelligenceHighlightSection() {
               ))}
             </ul>
             <Link
-              href="/solutions#intelligence"
+              href="/solutions/intelligence"
               className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-zinc-100 hover:text-scrut-blue"
             >
               Explore <ComplAIStyled className="font-semibold" /> Intelligence

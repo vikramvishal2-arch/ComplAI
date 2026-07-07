@@ -2,8 +2,7 @@
 # Usage:
 #   1. Copy .env.production.example to .env.production and fill values
 #   2. docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
-#   3. docker compose -f docker-compose.prod.yml exec app npx prisma db push
-#   4. docker compose -f docker-compose.prod.yml exec app npx tsx prisma/seed.ts
+#   3. docker compose -f docker-compose.prod.yml --profile tools run --rm tools npx tsx prisma/demo-seed.ts
 
 services:
   postgres:
@@ -22,7 +21,9 @@ services:
       retries: 5
 
   app:
-    build: .
+    build:
+      context: .
+      target: runner
     restart: unless-stopped
     depends_on:
       postgres:
@@ -31,12 +32,48 @@ services:
       - '127.0.0.1:3000:3000'
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-grc}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-grc_platform}?schema=public
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-${APP_URL:-http://localhost:3000}}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-}
       NEXT_PUBLIC_INTEGRATION_HELP_BASE_URL: ${NEXT_PUBLIC_INTEGRATION_HELP_BASE_URL:-https://propelreadysolutions.in/help/integrations}
       AI_ENABLED: ${AI_ENABLED:-false}
       AI_PROVIDER: ${AI_PROVIDER:-openai}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
+      DEMO_ACCESS_PASSWORD: ${DEMO_ACCESS_PASSWORD:-}
+      NEXT_PUBLIC_DEMO_MODE: ${NEXT_PUBLIC_DEMO_MODE:-false}
+      CONTACT_INQUIRY_TO: ${CONTACT_INQUIRY_TO:-}
+      CONTACT_INQUIRY_FROM: ${CONTACT_INQUIRY_FROM:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      CHRONICLE_ENABLED: ${CHRONICLE_ENABLED:-false}
+      AWS_MONITOR_ENABLED: ${AWS_MONITOR_ENABLED:-false}
+      AZURE_MONITOR_ENABLED: ${AZURE_MONITOR_ENABLED:-false}
+    volumes:
+      - grc_uploads:/app/uploads
+    healthcheck:
+      test: ['CMD', 'curl', '-sf', 'http://127.0.0.1:3000/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  tools:
+    profiles: [tools]
+    build:
+      context: .
+      target: tools
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-grc}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-grc_platform}?schema=public
+    entrypoint: ['npx', 'tsx']
 
 volumes:
   grc_postgres_prod:
+  grc_uploads:

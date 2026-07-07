@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/app-shell';
 import { PolicyApprovalMatrixPanel } from '@/components/policies/approval-matrix-panel';
 import { PolicyContentPreview } from '@/components/policies/policy-content-preview';
+import { PolicyStandardsReviewPanel } from '@/components/policies/policy-standards-review-panel';
+import type { PolicyStandardsReview } from '@/lib/policies/policy-review-types';
 import { ArrowLeft, Download, Edit3, Eye, Loader2, RefreshCw, Save, Upload } from 'lucide-react';
 import { getDefaultApprovalMatrix, type PolicyApprovalStep } from '@/lib/policies/approval-matrix';
 import { cn } from '@/lib/utils';
+import { ControlReference } from '@/components/controls/control-reference';
 
 interface ApprovalMember {
   id: string;
@@ -35,6 +38,7 @@ interface Policy {
   reviewDate: string | null;
   approvedAt: string | null;
   approvalMatrix?: PolicyApprovalStep[];
+  standardsReview?: PolicyStandardsReview | null;
 }
 
 interface ControlRoadmapItem {
@@ -59,9 +63,12 @@ const STATUSES = ['draft', 'review', 'approved', 'archived'];
 
 export default function PolicyDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params.id as string;
+  const showReview = searchParams.get('review') === '1';
 
   const [policy, setPolicy] = useState<Policy | null>(null);
+  const [standardsReview, setStandardsReview] = useState<PolicyStandardsReview | null>(null);
   const [roadmap, setRoadmap] = useState<ControlRoadmapItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -88,6 +95,7 @@ export default function PolicyDetailPage() {
       }),
     ]).then(([policyData, memberData]) => {
       setPolicy(policyData.policy);
+      setStandardsReview(policyData.policy.standardsReview ?? null);
       setRoadmap(policyData.roadmap ?? []);
       setMembers(memberData.members ?? []);
       setForm({
@@ -183,6 +191,10 @@ export default function PolicyDetailPage() {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error ?? 'Upload failed');
       setPolicy(d.policy);
+      if (d.review) setStandardsReview(d.review);
+      if (d.policy?.content) {
+        setForm((prev) => ({ ...prev, content: d.policy.content }));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed');
     } finally {
@@ -351,7 +363,12 @@ export default function PolicyDetailPage() {
                         title={item.ragStatus}
                       />
                       <span className="min-w-0">
-                        <span className="block text-xs font-medium text-brand-600">{item.reference}</span>
+                        <ControlReference
+                          controlId={item.controlId}
+                          reference={item.reference}
+                          title={item.title}
+                          className="text-xs"
+                        />
                         <span className="block truncate text-sm text-slate-800">{item.title}</span>
                         <span className="block text-xs capitalize text-slate-500">
                           {item.complianceStatus.replace(/_/g, ' ')}
@@ -369,6 +386,16 @@ export default function PolicyDetailPage() {
         </div>
 
         <div className="space-y-6 lg:col-span-2">
+          <PolicyStandardsReviewPanel
+            policyId={id}
+            initialReview={standardsReview}
+            defaultExpanded={showReview || (standardsReview?.recommendations.some((r) => r.status === 'open') ?? false)}
+            onContentApplied={(content) => {
+              setForm((prev) => ({ ...prev, content }));
+              setPolicy((prev) => (prev ? { ...prev, content } : prev));
+            }}
+          />
+
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
               <div className="flex items-center gap-3">

@@ -33,7 +33,7 @@ export function ScrutPrimaryButton({
     );
   }
   return (
-    <Link href={href} className={cls}>
+    <Link href={href} prefetch={false} className={cls}>
       {children}
     </Link>
   );
@@ -57,7 +57,7 @@ export function ScrutSecondaryButton({
     );
   }
   return (
-    <Link href={href} className={cls}>
+    <Link href={href} prefetch={false} className={cls}>
       {children}
     </Link>
   );
@@ -81,7 +81,7 @@ export function ScrutOutlineButton({
     );
   }
   return (
-    <Link href={href} className={cls}>
+    <Link href={href} prefetch={false} className={cls}>
       {children}
     </Link>
   );

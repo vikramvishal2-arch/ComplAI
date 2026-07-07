@@ -23,6 +23,7 @@ export {
   getControlEvidence,
   getControlEvidenceById,
   hasControlEvidenceForContext,
+  getControlIdsWithEvidenceForContext,
   createControlEvidence,
   deleteControlEvidence,
   getRisks,

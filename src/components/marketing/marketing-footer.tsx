@@ -1,21 +1,18 @@
 import Link from 'next/link';
-import {
-  COMPLAI_ICON,
-  INTEGRATION_HELP_BASE_URL,
-  ORGANIZATION_NAME,
-} from '@/lib/brand';
+import { COMPLAI_ICON, ORGANIZATION_NAME } from '@/lib/brand';
 import { ComplAIBrandLink, ComplAIStyled } from '@/components/marketing/complai-brand-link';
-import { FRAMEWORK_GUIDES, MARKETING_SOLUTIONS } from '@/lib/data/marketing-resources';
+import { FRAMEWORK_GUIDES } from '@/lib/data/marketing-resources';
+import { MARKETING_SOLUTIONS, solutionPageHref } from '@/lib/data/marketing-solutions';
 import { PLATFORM_CAPABILITIES } from '@/lib/data/marketing-platform';
 
 const platformLinks = PLATFORM_CAPABILITIES.map((cap) => ({
   label: cap.title,
-  href: `/platform#${cap.id}`,
+  href: cap.id === 'integrations' ? '/help' : `/platform#${cap.id}`,
 }));
 
 const solutionLinks = MARKETING_SOLUTIONS.slice(0, 5).map((s) => ({
   label: s.title,
-  href: `/solutions#${s.id}`,
+  href: solutionPageHref(s.id),
 }));
 
 export function MarketingFooter() {
@@ -24,7 +21,7 @@ export function MarketingFooter() {
       <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
-            <Link href="/platform" className="flex items-center gap-2.5">
+            <Link href="/platform" prefetch={false} className="flex items-center gap-2.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={COMPLAI_ICON} alt="" aria-hidden className="h-9 w-9 shrink-0" />
               <div>
@@ -39,19 +36,19 @@ export function MarketingFooter() {
             <h3 className="text-sm font-semibold text-white">Platform</h3>
             <ul className="mt-4 space-y-2 text-sm">
               <li>
-                <Link href="/platform" className="hover:text-scrut-teal">
+                <Link href="/platform" prefetch={false} className="hover:text-scrut-teal">
                   Platform overview
                 </Link>
               </li>
               {platformLinks.slice(0, 6).map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="hover:text-scrut-teal">
+                  <Link href={link.href} prefetch={false} className="hover:text-scrut-teal">
                     {link.label}
                   </Link>
                 </li>
               ))}
               <li>
-                <Link href="/platform#capabilities" className="font-medium text-scrut-teal hover:underline">
+                <Link href="/platform#capabilities" prefetch={false} className="font-medium text-scrut-teal hover:underline">
                   All capabilities
                 </Link>
               </li>
@@ -63,13 +60,13 @@ export function MarketingFooter() {
             <ul className="mt-4 space-y-2 text-sm">
               {solutionLinks.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="hover:text-scrut-teal">
+                  <Link href={link.href} prefetch={false} className="hover:text-scrut-teal">
                     {link.label}
                   </Link>
                 </li>
               ))}
               <li>
-                <Link href="/solutions" className="font-medium text-scrut-teal hover:underline">
+                <Link href="/solutions" prefetch={false} className="font-medium text-scrut-teal hover:underline">
                   All solutions
                 </Link>
               </li>
@@ -80,19 +77,19 @@ export function MarketingFooter() {
             <h3 className="text-sm font-semibold text-white">Resources</h3>
             <ul className="mt-4 space-y-2 text-sm">
               <li>
-                <Link href="/resources#faqs" className="hover:text-scrut-teal">
+                <Link href="/resources#faqs" prefetch={false} className="hover:text-scrut-teal">
                   FAQs
                 </Link>
               </li>
               {FRAMEWORK_GUIDES.slice(0, 5).map((guide) => (
                 <li key={guide.slug}>
-                  <Link href={`/resources/${guide.slug}`} className="hover:text-scrut-teal">
+                  <Link href={`/resources/${guide.slug}`} prefetch={false} className="hover:text-scrut-teal">
                     {guide.shortName} guide
                   </Link>
                 </li>
               ))}
               <li>
-                <Link href="/resources#frameworks" className="font-medium text-scrut-teal hover:underline">
+                <Link href="/resources#frameworks" prefetch={false} className="font-medium text-scrut-teal hover:underline">
                   All guides
                 </Link>
               </li>
@@ -103,17 +100,17 @@ export function MarketingFooter() {
             <h3 className="text-sm font-semibold text-white">Company</h3>
             <ul className="mt-4 space-y-2 text-sm">
               <li>
-                <Link href="/why-complai" className="hover:text-scrut-teal">
+                <Link href="/why-complai" prefetch={false} className="hover:text-scrut-teal">
                   Why <ComplAIStyled className="font-medium" />
                 </Link>
               </li>
               <li>
-                <Link href="/company" className="hover:text-scrut-teal">
+                <Link href="/company" prefetch={false} className="hover:text-scrut-teal">
                   About & mission
                 </Link>
               </li>
               <li>
-                <Link href="/company?contact=1" className="hover:text-scrut-teal">
+                <Link href="/company?contact=1" prefetch={false} className="hover:text-scrut-teal">
                   Contact us
                 </Link>
               </li>
@@ -128,14 +125,9 @@ export function MarketingFooter() {
                 </a>
               </li>
               <li>
-                <a
-                  href={INTEGRATION_HELP_BASE_URL}
-                  className="hover:text-scrut-teal"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  Integration help centre
-                </a>
+                <Link href="/help" prefetch={false} className="hover:text-scrut-teal">
+                  Help Center
+                </Link>
               </li>
             </ul>
           </div>

@@ -226,7 +226,7 @@ npm run db:up
 
 
 
-1. **Framework Library** → Browse 24 frameworks → Activate the ones you need (SOC 2, ISO 27001, Chronicle, SEBI CSCRF, ME Privacy, HIPAA, …)
+1. **Framework Library** → Browse 26 frameworks → Activate the ones you need (SOC 2, ISO 27001, ISO 22301, ISO 31000, Chronicle, SEBI CSCRF, ME Privacy, HIPAA, …)
 
 2. **Controls** → Filter by framework/status → Open any control
 
@@ -378,6 +378,51 @@ AZURE_CLIENT_SECRET=...
 After schema changes, run `npm run db:push` before starting the dev server.
 
 
+
+## Customer demo (live walkthroughs)
+
+Use this flow when sharing ComplAI with prospects — either on a call or via a password-protected link.
+
+### 1. Prepare demo data
+
+```bash
+npm run db:setup    # first time only
+npm run demo:seed   # rich sample org: Acme Industries (Demo)
+```
+
+Reset between customer sessions:
+
+```bash
+npm run demo:reset
+```
+
+### 2. Password-protect the app (recommended for hosted demos)
+
+In `.env` or `.env.production`:
+
+```bash
+DEMO_ACCESS_PASSWORD=your-shared-demo-password
+NEXT_PUBLIC_DEMO_MODE=true   # shows demo banner; rebuild after changing
+```
+
+Marketing pages stay public. App routes (`/dashboard`, `/controls`, `/audits`, etc.) require the password via `/demo/access`.
+
+### 3. Suggested 15-minute walkthrough
+
+1. **Leadership** (`/dashboard`) — readiness RAG and attention items  
+2. **Controls** (`/controls`) — open CC6.1, show compliance + remediation + evidence  
+3. **Policies** (`/policies`) — ISMS policy and approval workflow  
+4. **Audits** → Risk assessment — click a row for gap detail  
+5. **Vendors** — third-party register and AI assessment scores  
+6. **Intelligence** — gap analysis (if AI enabled)
+
+Share the demo entry link: `/demo/access` (or **Try live demo** on the marketing site).
+
+### 4. Docker demo host
+
+See comments in `docker-compose.prod.yml`. After `up --build`, run `db push` and `demo:seed`. Set `DEMO_ACCESS_PASSWORD` and rebuild with `NEXT_PUBLIC_DEMO_MODE=true`.
+
+---
 
 ## Project structure
 

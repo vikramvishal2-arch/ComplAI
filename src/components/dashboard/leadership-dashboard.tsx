@@ -7,36 +7,79 @@ import {
   ExecutiveRagCharts,
   filterDomainsByRag,
 } from '@/components/dashboard/executive-rag-charts';
-import type { ExecutiveDashboard, ExecutiveDomainSummary, RagStatus } from '@/lib/types';
+import type { ExecutiveDashboard, ExecutiveDomainSummary, LeadershipProgramSummaries, RagStatus } from '@/lib/types';
 import { parseRiskScoreLabel } from '@/lib/risk/scoring';
 import {
   AlertTriangle,
   Briefcase,
+  CalendarClock,
   CheckCircle2,
+  ChevronDown,
+  ClipboardCheck,
   Crown,
+  FileText,
+  Shield,
   ShieldAlert,
   Target,
-  TrendingUp,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AnnualCyclesPanel } from '@/components/cycles/annual-cycles-panel';
+import { GapAnalysisPanel } from '@/components/ai/gap-analysis-panel';
+import { KibanaEmbed } from '@/components/dashboard/kibana-embed';
+import type { CycleWithReminders, ProgramType } from '@/lib/types';
 
 type RagFilter = RagStatus | 'all';
 
 export function LeadershipDashboard() {
   const [data, setData] = useState<ExecutiveDashboard | null>(null);
+  const [programs, setPrograms] = useState<LeadershipProgramSummaries | null>(null);
+  const [programsLoading, setProgramsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedRag, setSelectedRag] = useState<RagFilter>('all');
   const [selectedFrameworkId, setSelectedFrameworkId] = useState<string | 'all'>('all');
+  const [cycles, setCycles] = useState<CycleWithReminders[]>([]);
+  const [cyclesLoaded, setCyclesLoaded] = useState(false);
 
   useEffect(() => {
-    fetch('/api/dashboard/executive')
+    const controller = new AbortController();
+    fetch('/api/dashboard/executive', { signal: controller.signal })
       .then(async (r) => {
         const d = await r.json();
         if (!r.ok) throw new Error(d.error ?? 'Failed to load leadership dashboard');
-        return d;
+        return d as ExecutiveDashboard;
       })
       .then(setData)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => {
+        if (err.name !== 'AbortError') setError(err.message);
+      });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/cycles')
+      .then(async (r) => {
+        const d = await r.json();
+        if (!r.ok) return;
+        setCycles(d.cycles as CycleWithReminders[]);
+      })
+      .catch(() => {})
+      .finally(() => setCyclesLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setProgramsLoading(true);
+    fetch('/api/dashboard/programs', { signal: controller.signal })
+      .then(async (r) => {
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error ?? 'Failed to load program summaries');
+        return d.programs as LeadershipProgramSummaries;
+      })
+      .then(setPrograms)
+      .catch(() => setPrograms(null))
+      .finally(() => setProgramsLoading(false));
+    return () => controller.abort();
   }, []);
 
   const visibleFrameworks = useMemo(() => {
@@ -66,36 +109,167 @@ export function LeadershipDashboard() {
 
   const riskSummary = data.riskSummary;
 
+  const overdueCycles = cycles.filter((c) => c.status === 'overdue');
+  const dueSoonCycles = cycles.filter(
+    (c) => c.status !== 'overdue' && c.status !== 'completed' && c.daysUntilDue <= 30
+  );
+  const grcHealth = Math.round(
+    (data.totals.readinessPercent * 0.5) +
+    (riskSummary.openRisks === 0 ? 50 : Math.max(0, 50 - riskSummary.presentHighOrCritical * 10))
+  );
+  const grcTone = grcHealth >= 75 ? 'emerald' : grcHealth >= 50 ? 'amber' : 'red';
+
   return (
-    <div className="space-y-8">
-      <section className="rounded-xl border border-brand-200 bg-gradient-to-br from-brand-50/80 to-white px-6 py-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-brand-100 p-2.5">
-              <Crown className="h-7 w-7 text-brand-600" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
-                Leadership view · {data.organizationName}
-              </p>
-              <p className="text-xl font-bold text-slate-900">
-                Compliance posture across activated frameworks
-              </p>
-              <p className="mt-1 text-sm text-slate-600">
-                {data.totals.total} controls · {data.frameworks.length} framework
-                {data.frameworks.length === 1 ? '' : 's'} · {data.totals.readinessPercent}% green
-              </p>
-            </div>
+    <div className="space-y-6">
+      {/* ── Hero: Organisation health at a glance ── */}
+      <section className="rounded-xl border border-brand-200 bg-gradient-to-br from-brand-50/80 via-white to-brand-50/30 px-6 py-5 shadow-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="rounded-lg bg-brand-100 p-2">
+            <Crown className="h-6 w-6 text-brand-600" />
           </div>
-          <div className="flex flex-wrap gap-3">
-            <MiniStat label="Green" value={data.totals.green} tone="green" />
-            <MiniStat label="Amber" value={data.totals.amber} tone="amber" />
-            <MiniStat label="Red" value={data.totals.red} tone="red" />
-            <MiniStat label="Open risks" value={riskSummary.openRisks} tone="amber" />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+              {data.organizationName}
+            </p>
+            <p className="text-lg font-bold text-slate-900">GRC Command Center</p>
           </div>
+        </div>
+
+        {/* KPI strip */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <KpiTile
+            label="GRC Health"
+            value={`${grcHealth}%`}
+            tone={grcTone}
+            href="/controls"
+          />
+          <KpiTile
+            label="Compliance"
+            value={`${data.totals.readinessPercent}%`}
+            sub={`${data.totals.green}G · ${data.totals.amber}A · ${data.totals.red}R`}
+            tone={data.totals.readinessPercent >= 70 ? 'emerald' : data.totals.readinessPercent >= 50 ? 'amber' : 'red'}
+            href="/controls"
+          />
+          <KpiTile
+            label="Open Risks"
+            value={riskSummary.openRisks}
+            sub={`${riskSummary.presentHighOrCritical} high/critical`}
+            tone={riskSummary.presentHighOrCritical > 0 ? 'red' : 'emerald'}
+            href="/risk-register"
+          />
+          <KpiTile
+            label="Vendors"
+            value={programs?.tprm.vendorCount ?? '—'}
+            sub={programs ? `${programs.tprm.averageRating950 ?? '—'}/950 avg` : undefined}
+            tone="slate"
+            href="/vendors"
+          />
+          <KpiTile
+            label="Audit Findings"
+            value={programs?.audits.openFindings ?? '—'}
+            sub={programs ? `${programs.audits.activeInternalPrograms} active` : undefined}
+            tone={programs && programs.audits.openFindings > 0 ? 'amber' : 'emerald'}
+            href="/audits"
+          />
+          <KpiTile
+            label="Policies"
+            value={programs?.policies.approved ?? '—'}
+            sub={programs ? `${programs.policies.inReview} in review` : undefined}
+            tone={programs && programs.policies.inReview > 0 ? 'amber' : 'emerald'}
+            href="/policies"
+          />
         </div>
       </section>
 
+      {/* ── Analytics + right sidebar ── */}
+      <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
+        <div className="lg:col-span-2 min-w-0 flex flex-col gap-6">
+          <KibanaEmbed />
+
+          <section className="space-y-4">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">Program health</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {programs && (
+                <>
+                  <CompactProgramCard
+                    title="Compliance (RAG)"
+                    icon={CheckCircle2}
+                    href="/controls"
+                    metric={`${data.totals.readinessPercent}%`}
+                    metricLabel="green"
+                    metricTone={data.totals.readinessPercent >= 70 ? 'emerald' : 'amber'}
+                    details={[
+                      `${data.totals.green} green · ${data.totals.amber} amber · ${data.totals.red} red`,
+                      `${data.totals.total} controls across ${data.frameworks.length} frameworks`,
+                    ]}
+                  />
+                  <CompactProgramCard
+                    title="Third-Party Risk"
+                    icon={Users}
+                    href="/vendors"
+                    metric={programs.tprm.averageRating950?.toString() ?? '—'}
+                    metricLabel="/950"
+                    metricTone={
+                      (programs.tprm.averageRating950 ?? 0) >= 701 ? 'emerald' :
+                      (programs.tprm.averageRating950 ?? 0) >= 501 ? 'amber' : 'red'
+                    }
+                    details={[
+                      `${programs.tprm.vendorCount} vendors · ${programs.tprm.monitoredCount} monitored`,
+                      programs.tprm.criticalFindings > 0
+                        ? `${programs.tprm.criticalFindings} critical findings`
+                        : `${programs.tprm.openRemediations} open remediations`,
+                    ]}
+                  />
+                  <CompactProgramCard
+                    title="Audits & Readiness"
+                    icon={ClipboardCheck}
+                    href="/audits"
+                    metric={programs.audits.openFindings.toString()}
+                    metricLabel="open findings"
+                    metricTone={programs.audits.openFindings > 0 ? 'red' : 'emerald'}
+                    details={[
+                      `${programs.audits.activeInternalPrograms} active programs`,
+                      `External ready: ${programs.audits.externalReadinessReady}/${programs.audits.externalReadinessTotal}`,
+                    ]}
+                  />
+                  <CompactProgramCard
+                    title="Policy Governance"
+                    icon={FileText}
+                    href="/policies"
+                    metric={programs.policies.approved.toString()}
+                    metricLabel="approved"
+                    metricTone="emerald"
+                    details={[
+                      `${programs.policies.inReview} in review · ${programs.policies.draft} draft`,
+                      `${programs.policies.total} total policies`,
+                    ]}
+                  />
+                </>
+              )}
+              {!programs && programsLoading && (
+                <>
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-28 animate-pulse rounded-xl bg-slate-100" />
+                  ))}
+                </>
+              )}
+            </div>
+          </section>
+
+          <AnnualCyclesPanel compact />
+        </div>
+        <aside className="flex flex-col gap-4 min-w-0 lg:sticky lg:top-4">
+          <UpcomingCyclesPanel
+            cycles={[...overdueCycles, ...dueSoonCycles]}
+            cyclesLoaded={cyclesLoaded}
+          />
+          <EscalationsPanel items={data.leadershipAttention} />
+          <GapAnalysisPanel variant="sidebar" />
+          <RiskRemediationPanel riskSummary={riskSummary} />
+        </aside>
+      </div>
+
+      {/* ── RAG charts ── */}
       <ExecutiveRagCharts
         data={data}
         selectedRag={selectedRag}
@@ -104,109 +278,322 @@ export function LeadershipDashboard() {
         onFrameworkChange={setSelectedFrameworkId}
       />
 
-      <div className="grid gap-6 xl:grid-cols-3">
-        <section className="rounded-xl border border-red-200 bg-white p-6 shadow-sm xl:col-span-1">
-          <div className="mb-4 flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
-            <h2 className="text-lg font-semibold text-slate-900">Leadership attention</h2>
-          </div>
-          {data.leadershipAttention.length === 0 ? (
-            <p className="text-sm text-slate-500">No critical escalations at this time.</p>
-          ) : (
-            <ul className="space-y-3 max-h-[360px] overflow-y-auto scrollbar-thin">
-              {data.leadershipAttention.map((item) => (
-                <li key={item.id}>
-                  <Link
-                    href={item.href}
-                    className="block rounded-lg border border-slate-100 p-3 transition hover:border-red-200 hover:bg-red-50/40"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <SeverityBadge severity={item.severity} />
-                      <span className="text-[10px] uppercase text-slate-400">{item.category}</span>
-                    </div>
-                    <p className="mt-2 text-sm font-medium text-slate-900">{item.title}</p>
-                    <p className="mt-1 text-xs text-slate-600 line-clamp-2">{item.description}</p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="rounded-xl border border-emerald-200 bg-white p-6 shadow-sm xl:col-span-1">
-          <div className="mb-4 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-emerald-600" />
-            <h2 className="text-lg font-semibold text-slate-900">Path to green</h2>
-          </div>
-          {data.priorityGoGreenActions.length === 0 ? (
-            <p className="text-sm text-slate-500">All controls are green or on track.</p>
-          ) : (
-            <ol className="list-decimal space-y-2 pl-4 text-sm text-slate-700">
-              {data.priorityGoGreenActions.map((action) => (
-                <li key={action}>{action}</li>
-              ))}
-            </ol>
-          )}
-        </section>
-
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm xl:col-span-1">
-          <div className="mb-4 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5 text-brand-500" />
-              <h2 className="text-lg font-semibold text-slate-900">Risk register</h2>
-            </div>
-            <Link href="/risk-register" className="text-xs font-medium text-brand-600 hover:underline">
-              Full register →
+      {/* ── Open audit findings ── */}
+      {programs && programs.audits.topFindings.length > 0 && (
+        <section className="rounded-xl border border-orange-200 bg-white p-5 shadow-sm">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h3 className="font-semibold text-slate-900">Open audit findings</h3>
+            <Link href="/audits/findings" className="text-xs font-medium text-brand-600 hover:underline">
+              All findings →
             </Link>
           </div>
-          <div className="mb-4 grid grid-cols-2 gap-2 text-center">
-            <div className="rounded-lg bg-slate-50 p-3">
-              <p className="text-lg font-bold text-slate-900">{riskSummary.openRisks}</p>
-              <p className="text-[10px] text-slate-500 uppercase">Open</p>
-            </div>
-            <div className="rounded-lg bg-red-50 p-3">
-              <p className="text-lg font-bold text-red-700">{riskSummary.presentHighOrCritical}</p>
-              <p className="text-[10px] text-red-600 uppercase">High / critical</p>
-            </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {programs.audits.topFindings.map((finding) => (
+              <Link
+                key={finding.id}
+                href="/audits/findings"
+                className="block rounded-lg border border-slate-100 p-3 hover:border-orange-200 hover:bg-orange-50/40"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-medium text-slate-900 line-clamp-1">{finding.title}</p>
+                  <SeverityBadge severity={finding.severity === 'critical' ? 'critical' : finding.severity === 'high' ? 'high' : 'medium'} />
+                </div>
+                <p className="mt-1 text-xs text-slate-500 capitalize">{finding.source} audit</p>
+              </Link>
+            ))}
           </div>
-          {riskSummary.items.length === 0 ? (
-            <p className="text-sm text-slate-500">No risks logged.</p>
-          ) : (
-            <ul className="space-y-2 max-h-[220px] overflow-y-auto scrollbar-thin">
-              {riskSummary.items.slice(0, 5).map((risk) => (
-                <li key={risk.id}>
-                  <Link
-                    href={`/risk-register/risks/${risk.id}`}
-                    className="block rounded-lg border border-slate-100 px-3 py-2 hover:bg-slate-50"
-                  >
-                    <p className="text-sm font-medium text-slate-900 truncate">{risk.title}</p>
-                    <p className="text-xs text-slate-500">
-                      Present:{' '}
-                      <span className={riskScoreTone(risk.presentRisk)}>{risk.presentRisk}</span>
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
         </section>
-      </div>
+      )}
 
-      <div className="space-y-6">
-        <h2 className="text-lg font-semibold text-slate-900">Framework & domain detail</h2>
-        {visibleFrameworks.length === 0 ? (
-          <p className="text-sm text-slate-500">No frameworks match the current chart filter.</p>
-        ) : (
-          visibleFrameworks.map((fw) => (
-            <FrameworkDomainPanel
-              key={fw.frameworkId}
-              framework={fw}
-              selectedRag={selectedRag}
-            />
-          ))
+      {/* ── Framework detail (collapsible) ── */}
+      <FrameworkDetailSection
+        frameworks={visibleFrameworks}
+        selectedRag={selectedRag}
+      />
+    </div>
+  );
+}
+
+function cycleProgramHref(type: ProgramType): string {
+  const map: Record<ProgramType, string> = {
+    internal_audit: '/audits/internal',
+    external_audit: '/audits/external-readiness',
+    risk_assessment: '/audits/risk-assessment',
+    vendor_assessment: '/vendors',
+    risk_register_update: '/risk-register',
+  };
+  return map[type] ?? '/cycles';
+}
+
+function UpcomingCyclesPanel({
+  cycles,
+  cyclesLoaded,
+}: {
+  cycles: CycleWithReminders[];
+  cyclesLoaded: boolean;
+}) {
+  const hasOverdue = cycles.some((c) => c.status === 'overdue');
+  return (
+    <section
+      className={cn(
+        'rounded-xl border p-4 shadow-sm',
+        !cyclesLoaded
+          ? 'border-slate-200 bg-white'
+          : hasOverdue
+            ? 'border-red-200 bg-red-50/40'
+            : cycles.length > 0
+              ? 'border-amber-200 bg-amber-50/30'
+              : 'border-slate-200 bg-white'
+      )}
+    >
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+          <CalendarClock className="h-4 w-4 text-brand-500" />
+          Upcoming cycles
+        </h3>
+        <Link href="/cycles" className="text-xs text-brand-600 hover:underline">View all →</Link>
+      </div>
+      {!cyclesLoaded ? (
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-10 animate-pulse rounded-lg bg-slate-100" />
+          ))}
+        </div>
+      ) : cycles.length === 0 ? (
+        <p className="text-sm text-emerald-700 flex items-center gap-1.5">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          No overdue or due-soon cycles.
+        </p>
+      ) : (
+        <div className="space-y-1.5">
+          {cycles.slice(0, 5).map((cycle) => {
+            const isOd = cycle.status === 'overdue';
+            return (
+              <Link
+                key={cycle.id}
+                href={cycleProgramHref(cycle.programType)}
+                className={cn(
+                  'flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm transition',
+                  isOd ? 'border-red-200 bg-white hover:bg-red-50' : 'border-amber-200 bg-white hover:bg-amber-50'
+                )}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={cn('h-2 w-2 rounded-full shrink-0', isOd ? 'bg-red-500' : 'bg-amber-400')} />
+                  <span className="font-medium text-slate-900 truncate">{cycle.title}</span>
+                </div>
+                <span className={cn('text-xs font-semibold whitespace-nowrap shrink-0', isOd ? 'text-red-700' : 'text-amber-700')}>
+                  {isOd ? `${Math.abs(cycle.daysUntilDue)}d overdue` : `${cycle.daysUntilDue}d left`}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function EscalationsPanel({
+  items,
+}: {
+  items: ExecutiveDashboard['leadershipAttention'];
+}) {
+  return (
+    <section className="rounded-xl border border-red-200 bg-white p-4 shadow-sm">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+          Escalations{items.length > 0 ? ` (${items.length})` : ''}
+        </h3>
+        {items.length > 0 && (
+          <Link href="/intelligence?tab=gaps" className="text-xs text-brand-600 hover:underline">Details →</Link>
         )}
       </div>
-    </div>
+      {items.length === 0 ? (
+        <p className="text-sm text-slate-500">No leadership escalations.</p>
+      ) : (
+        <div className="space-y-1.5 max-h-[220px] overflow-y-auto scrollbar-thin">
+          {items.slice(0, 5).map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 px-3 py-2 hover:bg-red-50/40"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-900 truncate">{item.title}</p>
+                <p className="text-xs text-slate-500 truncate">{item.description}</p>
+              </div>
+              <SeverityBadge severity={item.severity} />
+            </Link>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RiskRemediationPanel({
+  riskSummary,
+}: {
+  riskSummary: ExecutiveDashboard['riskSummary'];
+}) {
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+          <ShieldAlert className="h-4 w-4 text-brand-500" />
+          Risk & remediation
+        </h3>
+        <Link href="/risk-register" className="text-xs text-brand-600 hover:underline">Full register →</Link>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-center mb-3">
+        <div className="rounded-lg bg-slate-50 px-2 py-2">
+          <p className="text-xl font-bold text-slate-900">{riskSummary.openRisks}</p>
+          <p className="text-[10px] text-slate-500 uppercase">Open</p>
+        </div>
+        <div className="rounded-lg bg-red-50 px-2 py-2">
+          <p className="text-xl font-bold text-red-700">{riskSummary.presentHighOrCritical}</p>
+          <p className="text-[10px] text-red-600 uppercase">High / critical</p>
+        </div>
+      </div>
+      {riskSummary.items.length > 0 ? (
+        <ul className="space-y-1 max-h-[160px] overflow-y-auto scrollbar-thin">
+          {riskSummary.items.slice(0, 4).map((risk) => (
+            <li key={risk.id}>
+              <Link
+                href={`/risk-register/risks/${risk.id}`}
+                className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 px-3 py-1.5 hover:bg-slate-50"
+              >
+                <p className="text-sm text-slate-900 truncate">{risk.title}</p>
+                <span className={cn('text-xs font-medium whitespace-nowrap', riskScoreTone(risk.presentRisk))}>
+                  {risk.presentRisk}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-slate-500">No open risks in register.</p>
+      )}
+    </section>
+  );
+}
+
+function KpiTile({
+  label,
+  value,
+  sub,
+  tone,
+  href,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  tone: 'emerald' | 'amber' | 'red' | 'slate';
+  href: string;
+}) {
+  const border = {
+    emerald: 'border-emerald-200',
+    amber: 'border-amber-200',
+    red: 'border-red-200',
+    slate: 'border-slate-200',
+  };
+  const valueCn = {
+    emerald: 'text-emerald-700',
+    amber: 'text-amber-700',
+    red: 'text-red-700',
+    slate: 'text-slate-900',
+  };
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'group rounded-xl border bg-white px-3 py-3 text-center transition hover:shadow-md',
+        border[tone]
+      )}
+    >
+      <p className={cn('text-2xl font-bold tabular-nums', valueCn[tone])}>{value}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+      {sub && <p className="mt-0.5 text-[10px] text-slate-400">{sub}</p>}
+    </Link>
+  );
+}
+
+function CompactProgramCard({
+  title,
+  icon: Icon,
+  href,
+  metric,
+  metricLabel,
+  metricTone,
+  details,
+}: {
+  title: string;
+  icon: typeof Shield;
+  href: string;
+  metric: string;
+  metricLabel: string;
+  metricTone: 'emerald' | 'amber' | 'red';
+  details: string[];
+}) {
+  const metricColor = {
+    emerald: 'text-emerald-700',
+    amber: 'text-amber-700',
+    red: 'text-red-700',
+  };
+  return (
+    <Link
+      href={href}
+      className="group flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-300 hover:shadow-md"
+    >
+      <div className="rounded-lg bg-brand-50 p-2 shrink-0">
+        <Icon className="h-4 w-4 text-brand-600" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-slate-900 group-hover:text-brand-700">{title}</p>
+        <p className="mt-1">
+          <span className={cn('text-xl font-bold tabular-nums', metricColor[metricTone])}>{metric}</span>
+          <span className="ml-1 text-xs text-slate-400">{metricLabel}</span>
+        </p>
+        {details.map((d) => (
+          <p key={d} className="text-xs text-slate-500 leading-snug">{d}</p>
+        ))}
+      </div>
+    </Link>
+  );
+}
+
+function FrameworkDetailSection({
+  frameworks,
+  selectedRag,
+}: {
+  frameworks: ExecutiveDashboard['frameworks'];
+  selectedRag: RagFilter;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <section className="space-y-3">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-500 hover:text-slate-700"
+      >
+        <ChevronDown className={cn('h-4 w-4 transition-transform', expanded && 'rotate-180')} />
+        Framework & domain detail ({frameworks.length})
+      </button>
+      {expanded && (
+        <div className="space-y-6">
+          {frameworks.length === 0 ? (
+            <p className="text-sm text-slate-500">No frameworks match the current chart filter.</p>
+          ) : (
+            frameworks.map((fw) => (
+              <FrameworkDomainPanel key={fw.frameworkId} framework={fw} selectedRag={selectedRag} />
+            ))
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -219,27 +606,6 @@ function riskScoreTone(value: string | null): string {
   return 'text-emerald-700';
 }
 
-function MiniStat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone: 'green' | 'amber' | 'red';
-}) {
-  const styles = {
-    green: 'text-emerald-700 bg-emerald-50 border-emerald-200',
-    amber: 'text-amber-800 bg-amber-50 border-amber-200',
-    red: 'text-red-700 bg-red-50 border-red-200',
-  };
-  return (
-    <div className={cn('rounded-lg border px-4 py-2 min-w-[5rem] text-center', styles[tone])}>
-      <p className="text-xl font-bold">{value}</p>
-      <p className="text-[10px] uppercase opacity-80">{label}</p>
-    </div>
-  );
-}
 
 function FrameworkDomainPanel({
   framework,

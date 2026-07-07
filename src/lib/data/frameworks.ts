@@ -88,6 +88,30 @@ const FRAMEWORK_DEFINITIONS: Omit<Framework, 'controlCount'>[] = [
     tags: ['Risk', 'Identify', 'Protect', 'Detect'],
   },
   {
+    id: 'iso22301',
+    name: 'ISO 22301:2019',
+    shortName: 'ISO 22301',
+    description:
+      'International standard for business continuity management systems (BCMS) — resilience, BIA, recovery plans, and exercises.',
+    category: 'security',
+    region: 'Global',
+    version: '2019',
+    popular: true,
+    tags: ['BCMS', 'Business Continuity', 'Resilience', 'Certification'],
+  },
+  {
+    id: 'iso31000',
+    name: 'ISO 31000:2018',
+    shortName: 'ISO 31000',
+    description:
+      'International guidelines for risk management principles, framework, and process — integrate ERM across the organization.',
+    category: 'security',
+    region: 'Global',
+    version: '2018',
+    popular: true,
+    tags: ['Risk Management', 'ERM', 'Governance', 'Guidelines'],
+  },
+  {
     id: 'nist-800-53',
     name: 'NIST SP 800-53',
     shortName: 'NIST 800-53',

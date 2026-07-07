@@ -7,6 +7,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { ReadinessBar, StatusBadge, MethodBadge } from '@/components/ui/badges';
 import { DOMAIN_LABELS, type Control, type ControlCompliance } from '@/lib/types';
 import { ArrowLeft } from 'lucide-react';
+import { ControlReference } from '@/components/controls/control-reference';
 
 interface FrameworkDetailData {
   framework: { name: string; shortName: string; description: string };
@@ -113,7 +114,13 @@ export default function FrameworkDetailPage() {
                   {data.controls.map((control) => (
                     <tr key={control.id} className="hover:bg-slate-50">
                       <td className="px-6 py-4 font-mono text-xs text-brand-600">
-                        <Link href={`/controls/${control.id}`}>{control.reference}</Link>
+                        <ControlReference
+                          controlId={control.id}
+                          reference={control.reference}
+                          frameworkId={control.frameworkId}
+                          title={control.title}
+                          description={control.description}
+                        />
                       </td>
                       <td className="px-6 py-4">
                         <Link

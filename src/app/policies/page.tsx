@@ -229,7 +229,7 @@ export default function PoliciesPage() {
       setShowUpload(false);
       setUploadForm({ title: '', owner: '', templateId: '' });
       setUploadFile(null);
-      window.location.href = `/policies/${d.policy.id}`;
+      window.location.href = `/policies/${d.policy.id}?review=1`;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed');
     } finally {

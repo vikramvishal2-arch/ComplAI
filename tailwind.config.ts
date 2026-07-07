@@ -9,15 +9,17 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          500: '#0d4f8b',
-          600: '#0a3d6b',
-          700: '#082f52',
-          800: '#061f38',
-          900: '#041525',
-          950: '#020c16',
+          50: '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#10b981',
+          600: '#059669',
+          700: '#047857',
+          800: '#065f46',
+          900: '#064e3b',
+          950: '#022c22',
         },
         scrut: {
           /** Marketing dark base (fallback solid; use gradient utilities on sections) */

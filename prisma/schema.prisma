@@ -1,5 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  // Avoid Windows EPERM on query_engine-windows.dll.node (use standalone binary instead)
+  engineType = "binary"
 }
 
 datasource db {
@@ -24,8 +26,59 @@ model Organization {
   monitorCheckRuns     MonitorCheckRun[]
   policies             Policy[]
   members              OrganizationMember[]
+  programCycles            ProgramCycle[]
+  organizationIntegrations OrganizationIntegration[]
+  endpointAgents           EndpointAgent[]
 
   @@map("organizations")
+}
+
+model OrganizationIntegration {
+  id                String    @id @default(cuid())
+  organizationId    String    @map("organization_id")
+  toolId            String    @map("tool_id")
+  domain            String    @default("idam")
+  status            String    @default("not_connected")
+  accountIdentifier String    @default("") @map("account_identifier")
+  adminContact      String    @default("") @map("admin_contact")
+  connectionMode    String    @default("api") @map("connection_mode")
+  config            Json      @default("{}")
+  connectedAt       DateTime? @map("connected_at")
+  lastSyncAt        DateTime? @map("last_sync_at")
+  notes             String    @default("")
+  source            String    @default("manual")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, toolId])
+  @@index([organizationId, domain])
+  @@map("organization_integrations")
+}
+
+model EndpointAgent {
+  id                  String    @id @default(cuid())
+  organizationId      String    @map("organization_id")
+  bundleId            String    @map("bundle_id")
+  status              String    @default("pending")
+  enrollmentTokenHash String    @map("enrollment_token_hash")
+  agentSecretHash     String?   @map("agent_secret_hash")
+  hostname            String    @default("")
+  platform            String    @default("")
+  agentVersion        String    @default("0.1.0") @map("agent_version")
+  idamSnapshot        Json      @default("[]") @map("idam_snapshot")
+  enrolledAt          DateTime? @map("enrolled_at")
+  lastHeartbeatAt     DateTime? @map("last_heartbeat_at")
+  expiresAt           DateTime  @map("expires_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@index([enrollmentTokenHash])
+  @@map("endpoint_agents")
 }
 
 model FrameworkActivation {
@@ -148,21 +201,28 @@ model Risk {
 }
 
 model Vendor {
-  id               String    @id @default(cuid())
-  organizationId   String    @map("organization_id")
-  name             String
-  description      String    @default("")
-  tier             String    @default("medium")
-  dataAccess       String    @default("none") @map("data_access")
-  status           String    @default("active")
-  contactEmail     String    @default("") @map("contact_email")
-  website          String    @default("")
-  inherentRiskScore Int      @default(50) @map("inherent_risk_score")
-  aiRiskScore      Int?      @map("ai_risk_score")
-  aiRiskSummary    String    @default("") @map("ai_risk_summary")
-  lastAssessedAt   DateTime? @map("last_assessed_at")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
+  id                String    @id @default(cuid())
+  organizationId    String    @map("organization_id")
+  name              String
+  description       String    @default("")
+  tier              String    @default("medium")
+  dataAccess        String    @default("none") @map("data_access")
+  status            String    @default("active")
+  contactEmail      String    @default("") @map("contact_email")
+  website           String    @default("")
+  primaryDomain     String    @default("") @map("primary_domain")
+  industry          String    @default("")
+  inherentRiskScore Int       @default(50) @map("inherent_risk_score")
+  aiRiskScore       Int?      @map("ai_risk_score")
+  aiRiskSummary     String    @default("") @map("ai_risk_summary")
+  securityRating    Int?      @map("security_rating")
+  ratingGrade       String    @default("") @map("rating_grade")
+  domainScores      Json      @default("{}") @map("domain_scores")
+  labels            Json      @default("[]")
+  certifications Json      @default("[]")
+  lastAssessedAt    DateTime? @map("last_assessed_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   assessments  VendorAssessment[]
@@ -172,17 +232,25 @@ model Vendor {
 }
 
 model VendorAssessment {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  vendorId       String   @map("vendor_id")
-  status         String   @default("draft")
-  questions      Json     @default("[]")
-  responses      Json     @default("[]")
-  aiScore        Int?     @map("ai_score")
-  aiSummary      String   @default("") @map("ai_summary")
-  gaps           Json     @default("[]")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id                  String    @id @default(cuid())
+  organizationId      String    @map("organization_id")
+  vendorId            String    @map("vendor_id")
+  status              String    @default("draft")
+  templateId          String    @default("tprm-standard") @map("template_id")
+  templateName        String    @default("TPRM Standard") @map("template_name")
+  questionnaireStatus String    @default("internal") @map("questionnaire_status")
+  questions           Json      @default("[]")
+  responses           Json      @default("[]")
+  aiScore             Int?      @map("ai_score")
+  aiSummary           String    @default("") @map("ai_summary")
+  domainScores        Json      @default("{}") @map("domain_scores")
+  gaps                Json      @default("[]")
+  findings            Json      @default("[]")
+  remediationItems    Json      @default("[]") @map("remediation_items")
+  dueDate             DateTime? @map("due_date") @db.Date
+  completedAt         DateTime? @map("completed_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   vendor       Vendor       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
@@ -250,6 +318,7 @@ model Policy {
   approvalMatrix   Json      @default("[]") @map("approval_matrix")
   reviewDate       DateTime? @map("review_date") @db.Date
   approvedAt       DateTime? @map("approved_at")
+  standardsReview  Json?     @map("standards_review")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
 
@@ -288,4 +357,131 @@ model ContactInquiry {
 
   @@index([createdAt])
   @@map("contact_inquiries")
+}
+
+model ThreatIoc {
+  id          String    @id @default(cuid())
+  iocType     String    @map("ioc_type")
+  value       String
+  urlHash     String?   @map("url_hash")
+  category    String    @default("other")
+  confidence  Float     @default(0.9)
+  sourceFeed  String    @map("source_feed")
+  blacklisted Boolean   @default(true)
+  expiresAt   DateTime? @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([iocType, value])
+  @@index([iocType, value])
+  @@index([urlHash])
+  @@index([updatedAt])
+  @@map("threat_iocs")
+}
+
+model ThreatFeed {
+  id         String    @id @default(cuid())
+  name       String    @unique
+  feedType   String    @map("feed_type")
+  lastSyncAt DateTime? @map("last_sync_at")
+  status     String    @default("active")
+  config     Json      @default("{}")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@map("threat_feeds")
+}
+
+model ThreatGatewayAuditLog {
+  id         String   @id @default(cuid())
+  requestId  String   @map("request_id")
+  endpoint   String
+  clientId   String?  @map("client_id")
+  ip         String?
+  url        String?
+  statusCode Int      @map("status_code")
+  verdict    String?
+  latencyMs  Int?     @map("latency_ms")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("threat_gateway_audit_logs")
+}
+
+model ProgramCycle {
+  id               String    @id @default(cuid())
+  organizationId   String    @map("organization_id")
+  programType      String    @map("program_type")
+  title            String
+  description      String    @default("")
+  periodStart      DateTime  @map("period_start") @db.Date
+  periodEnd        DateTime  @map("period_end") @db.Date
+  dueDate          DateTime  @map("due_date") @db.Date
+  status           String    @default("upcoming")
+  owner            String    @default("")
+  lastCompletedAt  DateTime? @map("last_completed_at")
+  completedAt      DateTime? @map("completed_at")
+  reminderDays     Json      @default("[30, 14, 7]") @map("reminder_days")
+  notes            String    @default("")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  reminderLogs CycleReminderLog[]
+
+  @@index([organizationId, programType])
+  @@index([organizationId, status])
+  @@map("program_cycles")
+}
+
+model CycleReminderLog {
+  id            String   @id @default(cuid())
+  cycleId       String   @map("cycle_id")
+  channel       String   @default("in_app")
+  reminderType  String   @map("reminder_type")
+  recipientEmail String  @default("") @map("recipient_email")
+  sentAt        DateTime @default(now()) @map("sent_at")
+  acknowledged  Boolean  @default(false)
+  acknowledgedAt DateTime? @map("acknowledged_at")
+
+  cycle ProgramCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+
+  @@index([cycleId, reminderType])
+  @@map("cycle_reminder_logs")
+}
+
+model IllCircuit {
+  id            String   @id @default(cuid())
+  circuitId     String   @unique @map("circuit_id")
+  customerName  String   @map("customer_name")
+  nsp           String
+  pop           String
+  failMode      String   @default("fail_open") @map("fail_mode")
+  policyProfile String   @default("standard") @map("policy_profile")
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  decisions IllPolicyDecision[]
+
+  @@index([nsp, pop])
+  @@map("ill_circuits")
+}
+
+model IllPolicyDecision {
+  id        String   @id @default(cuid())
+  circuitId String   @map("circuit_id")
+  srcIp     String   @map("src_ip")
+  destIp    String?  @map("dest_ip")
+  url       String?
+  domain    String?
+  verdict   String
+  reason    String
+  cacheHit  Boolean  @default(false) @map("cache_hit")
+  checkedAt DateTime @default(now()) @map("checked_at")
+
+  circuit IllCircuit @relation(fields: [circuitId], references: [circuitId], onDelete: Cascade)
+
+  @@index([circuitId, checkedAt])
+  @@map("ill_policy_decisions")
 }

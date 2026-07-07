@@ -11,7 +11,7 @@ export function AnnouncementBar() {
           &amp; compliance
         </span>
         <Link
-          href="/solutions#intelligence"
+          href="/solutions/intelligence"
           className="inline-flex items-center gap-1 font-semibold text-scrut-teal hover:underline"
         >
           Learn more

@@ -1,0 +1,60 @@
+_format_version: "3.0"
+
+services:
+  - name: ill-threat-api
+    url: http://host.docker.internal:3000
+    routes:
+      - name: threat-check
+        paths:
+          - /v1/threat-check
+        methods:
+          - GET
+          - OPTIONS
+      - name: bulk-check
+        paths:
+          - /v1/bulk-check
+        methods:
+          - POST
+          - OPTIONS
+      - name: feeds-sync
+        paths:
+          - /v1/feeds/sync
+        methods:
+          - GET
+          - OPTIONS
+      - name: ill-inspect
+        paths:
+          - /v1/ill/inspect
+        methods:
+          - POST
+          - OPTIONS
+      - name: ill-pilot-status
+        paths:
+          - /v1/ill/pilot/status
+        methods:
+          - GET
+          - OPTIONS
+    plugins:
+      - name: key-auth
+        config:
+          key_names:
+            - x-api-key
+          hide_credentials: true
+      - name: rate-limiting
+        config:
+          minute: 1000
+          policy: local
+      - name: request-transformer
+        config:
+          add:
+            headers:
+              - "x-client-id:kong-nsp-dmz"
+      - name: file-log
+        config:
+          path: /var/log/kong/ill-gateway-access.log
+          reopen: true
+
+consumers:
+  - username: nsp-edge-pep
+    keyauth_credentials:
+      - key: ill-dev-gateway-key

@@ -7,3 +7,9 @@ out/
 .DS_Store
 .data/
 uploads/
+build-output.txt
+tsconfig.tsbuildinfo
+~$*.docx
+
+# Marketing site is its own separate repo
+marketing-site/

@@ -1,10 +1,8 @@
 import Link from 'next/link';
 import {
-  BookOpen,
   ClipboardList,
   Crown,
   FileText,
-  HelpCircle,
   Plug,
   Shield,
   ShieldAlert,
@@ -13,7 +11,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { ComplAIBrandLink } from '@/components/marketing/complai-brand-link';
-import { MARKETING_SOLUTIONS } from '@/lib/data/marketing-resources';
+import { MARKETING_SOLUTIONS, solutionPageHref } from '@/lib/data/marketing-solutions';
 
 const solutionIconById: Record<string, LucideIcon> = {
   compliance: Shield,
@@ -24,17 +22,6 @@ const solutionIconById: Record<string, LucideIcon> = {
   integrations: Plug,
   intelligence: Sparkles,
   dashboard: Crown,
-};
-
-const solutionTaglines: Record<string, string> = {
-  compliance: 'Get and stay compliant, effortlessly.',
-  audits: 'Share. Track. Close audits faster.',
-  policies: 'Templates, workflows, and Word export.',
-  risk: 'Build a live, collaborative risk program.',
-  vendors: 'Manage vendor risk with real insight.',
-  integrations: 'Connect the tools you already use.',
-  intelligence: 'AI guidance across audits and compliance.',
-  dashboard: 'Real-time visibility for leadership.',
 };
 
 export function SolutionsPageHub() {
@@ -65,7 +52,7 @@ export function SolutionsPageHub() {
               return (
                 <Link
                   key={solution.id}
-                  href={`#${solution.id}`}
+                  href={solutionPageHref(solution.id)}
                   className="group flex gap-3 rounded-xl px-3 py-3.5 transition-colors hover:bg-white/[0.06] sm:px-4"
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-white/80 group-hover:border-scrut-teal/30 group-hover:text-scrut-teal">
@@ -76,7 +63,7 @@ export function SolutionsPageHub() {
                       {solution.title}
                     </p>
                     <p className="mt-0.5 text-xs leading-relaxed text-white/50">
-                      {solutionTaglines[solution.id] ?? solution.description.slice(0, 60)}
+                      {solution.tagline}
                     </p>
                   </div>
                 </Link>

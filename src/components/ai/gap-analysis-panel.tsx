@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { GapAnalysisReport } from '@/lib/gap/types';
-import { AlertTriangle, FileWarning, Loader2 } from 'lucide-react';
+import { ControlReference } from '@/components/controls/control-reference';
+import { AlertTriangle, CheckCircle2, FileSearch, FileWarning, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const severityStyles = {
@@ -13,12 +14,24 @@ const severityStyles = {
   low: 'bg-slate-100 text-slate-700 border-slate-200',
 };
 
-export function GapAnalysisPanel({ compact = false }: { compact?: boolean }) {
+export function GapAnalysisPanel({
+  compact = false,
+  variant = 'default',
+}: {
+  compact?: boolean;
+  variant?: 'default' | 'sidebar';
+}) {
+  const isSidebar = variant === 'sidebar';
+  const autoLoad = !compact || isSidebar;
   const [report, setReport] = useState<GapAnalysisReport | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [requested, setRequested] = useState(autoLoad);
 
-  useEffect(() => {
+  const loadReport = useCallback(() => {
+    setRequested(true);
+    setLoading(true);
+    setError(null);
     fetch('/api/ai/gap-analysis')
       .then(async (r) => {
         const d = await r.json();
@@ -30,7 +43,33 @@ export function GapAnalysisPanel({ compact = false }: { compact?: boolean }) {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (autoLoad) {
+      loadReport();
+      return;
+    }
+    const idle = window.requestIdleCallback?.(() => loadReport(), { timeout: 3000 });
+    const timer = idle == null ? window.setTimeout(loadReport, 2000) : undefined;
+    return () => {
+      if (idle != null) window.cancelIdleCallback(idle);
+      if (timer != null) window.clearTimeout(timer);
+    };
+  }, [autoLoad, loadReport]);
+
+  if (!autoLoad && !requested) {
+    return null;
+  }
+
   if (loading) {
+    if (isSidebar) {
+      return (
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Loader2 className="h-4 w-4 animate-spin" /> Running gap analysis…
+          </div>
+        </section>
+      );
+    }
     return (
       <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-8 text-sm text-slate-500">
         <Loader2 className="h-4 w-4 animate-spin" /> Running gap analysis…
@@ -39,14 +78,91 @@ export function GapAnalysisPanel({ compact = false }: { compact?: boolean }) {
   }
 
   if (error || !report) {
+    if (isSidebar) {
+      return (
+        <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+          <p className="text-sm text-amber-900">{error ?? 'Gap analysis unavailable'}</p>
+          <button
+            type="button"
+            onClick={loadReport}
+            className="mt-2 text-xs font-medium text-brand-600 hover:underline"
+          >
+            Retry
+          </button>
+        </section>
+      );
+    }
     return (
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
-        {error ?? 'Gap analysis unavailable'}
+        <p>{error ?? 'Gap analysis unavailable'}</p>
+        <button
+          type="button"
+          onClick={loadReport}
+          className="mt-3 inline-flex items-center gap-2 rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-200"
+        >
+          <FileSearch className="h-3.5 w-3.5" />
+          Retry analysis
+        </button>
       </div>
     );
   }
 
-  const gaps = compact ? report.priorityGaps.slice(0, 5) : report.priorityGaps;
+  const gaps = isSidebar
+    ? report.priorityGaps.slice(0, 4)
+    : compact
+      ? report.priorityGaps.slice(0, 5)
+      : report.priorityGaps;
+
+  if (isSidebar) {
+    return (
+      <section className="rounded-xl border border-orange-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+            <FileSearch className="h-4 w-4 text-orange-600" />
+            Compliance gaps
+            {report.summary.gapsFound > 0 ? ` (${report.summary.gapsFound})` : ''}
+          </h3>
+          <Link href="/intelligence?tab=gaps" className="text-xs text-brand-600 hover:underline">
+            All gaps →
+          </Link>
+        </div>
+        <div className="mb-3 grid grid-cols-2 gap-2">
+          <SidebarStat label="Gaps" value={report.summary.gapsFound} />
+          <SidebarStat label="Critical" value={report.summary.critical} tone="red" />
+        </div>
+        {gaps.length === 0 ? (
+          <p className="text-sm text-emerald-700 flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            No priority gaps detected.
+          </p>
+        ) : (
+          <ul className="space-y-1.5 max-h-[200px] overflow-y-auto scrollbar-thin">
+            {gaps.map((gap) => (
+              <li key={`${gap.controlId}-${gap.category}`}>
+                <Link
+                  href={`/controls/${gap.controlId}`}
+                  className="block rounded-lg border border-slate-100 px-3 py-2 hover:bg-orange-50/50"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-medium text-slate-900 truncate">{gap.controlTitle}</p>
+                    <span
+                      className={cn(
+                        'shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-medium capitalize',
+                        severityStyles[gap.severity]
+                      )}
+                    >
+                      {gap.severity}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-slate-500 line-clamp-2">{gap.message}</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -74,12 +190,14 @@ export function GapAnalysisPanel({ compact = false }: { compact?: boolean }) {
               <li key={`${gap.controlId}-${gap.category}`} className="p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <Link
-                      href={`/controls/${gap.controlId}`}
-                      className="font-medium text-brand-600 hover:underline"
-                    >
-                      {gap.controlReference} — {gap.controlTitle}
-                    </Link>
+                    <ControlReference
+                      controlId={gap.controlId}
+                      reference={gap.controlReference}
+                      frameworkId={gap.frameworkId}
+                      title={gap.controlTitle}
+                      showTitle
+                      className="font-medium text-sm font-sans"
+                    />
                     <p className="mt-1 text-sm text-slate-600">{gap.message}</p>
                     <p className="mt-1 text-xs text-slate-400">
                       {gap.frameworkName} · {gap.category.replace(/_/g, ' ')}
@@ -126,6 +244,25 @@ export function GapAnalysisPanel({ compact = false }: { compact?: boolean }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function SidebarStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone?: 'red';
+}) {
+  return (
+    <div className="rounded-lg bg-slate-50 px-2 py-2 text-center">
+      <p className={cn('text-lg font-bold tabular-nums', tone === 'red' ? 'text-red-700' : 'text-slate-900')}>
+        {value}
+      </p>
+      <p className="text-[10px] uppercase text-slate-500">{label}</p>
     </div>
   );
 }

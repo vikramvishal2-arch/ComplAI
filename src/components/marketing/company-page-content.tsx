@@ -1,12 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Mail, MapPin, Target } from 'lucide-react';
+import { Mail, MapPin, Phone, Target } from 'lucide-react';
 import { CompanyPageHub } from '@/components/marketing/company-page-hub';
-import { ORGANIZATION_NAME, PRODUCT_TAGLINE } from '@/lib/brand';
+import {
+  CONTACT_EMAIL,
+  CONTACT_PHONE_DISPLAY,
+  CONTACT_PHONE_TEL,
+  ORGANIZATION_NAME,
+  PRODUCT_TAGLINE,
+} from '@/lib/brand';
 import { ComplAIBrandLink, ComplAIText } from '@/components/marketing/complai-brand-link';
-import { ContactFormDialog } from '@/components/marketing/contact-form-dialog';
+import { ContactForm } from '@/components/marketing/contact-form';
 
 const HEADER_OFFSET = 120;
 
@@ -44,11 +50,9 @@ type CompanyPageContentProps = {
 
 export function CompanyPageContent({ openContactOnMount = false }: CompanyPageContentProps) {
   const searchParams = useSearchParams();
-  const [contactOpen, setContactOpen] = useState(openContactOnMount);
 
-  const openContact = useCallback(() => {
-    setContactOpen(true);
-    window.setTimeout(() => scrollToSection('contact'), 50);
+  const goToContact = useCallback(() => {
+    scrollToSection('contact');
   }, []);
 
   const goToAbout = useCallback(() => {
@@ -58,15 +62,15 @@ export function CompanyPageContent({ openContactOnMount = false }: CompanyPageCo
   useEffect(() => {
     const contact = searchParams.get('contact');
     if (contact === '1' || contact === 'true') {
-      openContact();
+      goToContact();
     }
-  }, [searchParams, openContact]);
+  }, [searchParams, goToContact]);
 
   useEffect(() => {
     if (openContactOnMount) {
-      openContact();
+      goToContact();
     }
-  }, [openContactOnMount, openContact]);
+  }, [openContactOnMount, goToContact]);
 
   useEffect(() => {
     const syncFromHash = () => {
@@ -76,7 +80,6 @@ export function CompanyPageContent({ openContactOnMount = false }: CompanyPageCo
       const id = hash.slice(1);
       window.setTimeout(() => {
         scrollToSection(id);
-        if (id === 'contact') setContactOpen(true);
       }, 100);
     };
 
@@ -98,7 +101,7 @@ export function CompanyPageContent({ openContactOnMount = false }: CompanyPageCo
         </div>
       </section>
 
-      <CompanyPageHub onAbout={goToAbout} onContact={openContact} />
+      <CompanyPageHub onAbout={goToAbout} onContact={goToContact} />
 
       <section id="about" className="scroll-mt-32 py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -121,38 +124,81 @@ export function CompanyPageContent({ openContactOnMount = false }: CompanyPageCo
         </div>
       </section>
 
-      <section id="contact" className="scroll-mt-32 border-t border-white/10 bg-marketing-surface-alt py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4 text-center sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold tracking-tight text-zinc-100 sm:text-4xl">
-            Get in touch
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-zinc-400">
-            Interested in <ComplAIBrandLink inheritWeight />, a demo, or GRC advisory from{' '}
-            {ORGANIZATION_NAME}? Share your details and we&apos;ll respond promptly.
-          </p>
-          <div className="mt-8">
-            <button
-              type="button"
-              onClick={openContact}
-              className="inline-flex items-center justify-center rounded-full bg-scrut-gradient px-8 py-3.5 text-sm font-semibold text-black shadow-sm transition-opacity hover:opacity-90"
-            >
-              Open contact form
-            </button>
+      <section
+        id="contact"
+        className="scroll-mt-32 border-t border-white/10 bg-marketing-surface-alt py-16 sm:py-20"
+      >
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-12">
+            <div className="text-left">
+              <h2 className="text-3xl font-bold tracking-tight text-zinc-100 sm:text-4xl">
+                Get in touch
+              </h2>
+              <p className="mt-4 max-w-xl text-zinc-400">
+                Interested in <ComplAIBrandLink inheritWeight />, a demo, or GRC advisory from{' '}
+                {ORGANIZATION_NAME}? Reach us directly or share your details using the form.
+              </p>
+
+              <div className="mt-8 space-y-3">
+                <a
+                  href={`mailto:${CONTACT_EMAIL}`}
+                  className="flex items-start gap-4 rounded-2xl border border-white/10 bg-scrut-navy-light/70 p-4 transition-colors hover:border-scrut-teal/30 hover:bg-scrut-navy-light"
+                >
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-scrut-teal/15 text-scrut-teal">
+                    <Mail className="h-5 w-5" strokeWidth={1.75} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-white/45">
+                      Email
+                    </p>
+                    <p className="mt-1 break-all text-base font-semibold text-zinc-100 hover:text-scrut-teal">
+                      {CONTACT_EMAIL}
+                    </p>
+                  </div>
+                </a>
+
+                <a
+                  href={`tel:${CONTACT_PHONE_TEL}`}
+                  className="flex items-start gap-4 rounded-2xl border border-white/10 bg-scrut-navy-light/70 p-4 transition-colors hover:border-scrut-teal/30 hover:bg-scrut-navy-light"
+                >
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-scrut-teal/15 text-scrut-teal">
+                    <Phone className="h-5 w-5" strokeWidth={1.75} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-white/45">
+                      Handheld
+                    </p>
+                    <p className="mt-1 text-base font-semibold text-zinc-100 hover:text-scrut-teal">
+                      {CONTACT_PHONE_DISPLAY}
+                    </p>
+                  </div>
+                </a>
+              </div>
+
+              <p className="mt-6 text-sm text-zinc-500">
+                <a
+                  href="https://propelreadysolutions.in"
+                  className="font-medium text-zinc-300 hover:text-scrut-teal hover:underline"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  propelreadysolutions.in
+                </a>
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white p-6 shadow-sm sm:p-8">
+              <h3 className="text-lg font-semibold text-black">Send us a message</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Fill in the form and our team will respond promptly.
+              </p>
+              <div className="mt-6">
+                <ContactForm idPrefix="contact-page" />
+              </div>
+            </div>
           </div>
-          <p className="mt-6 text-sm text-zinc-500">
-            <a
-              href="https://propelreadysolutions.in"
-              className="font-medium text-zinc-100 hover:underline"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              propelreadysolutions.in
-            </a>
-          </p>
         </div>
       </section>
-
-      <ContactFormDialog open={contactOpen} onOpenChange={setContactOpen} />
     </>
   );
 }

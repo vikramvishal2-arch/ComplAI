@@ -19,7 +19,7 @@ const stages = [
     title: 'Need to scale your security program?',
     body: 'Manage risks and compliance across multiple subsidiaries, products and regions effortlessly.',
     cta: 'Power your enterprise-grade GRC',
-    href: '/solutions#dashboard',
+    href: '/solutions/dashboard',
   },
 ];
 

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { MarketingClientExtras } from '@/components/marketing/marketing-client-extras';
 import {
   ORGANIZATION_NAME,
   PRODUCT_DESCRIPTION,
@@ -19,5 +20,10 @@ export const metadata: Metadata = {
 };
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen scroll-pt-28 bg-marketing-surface">{children}</div>;
+  return (
+    <div className="min-h-screen scroll-pt-28 bg-marketing-surface">
+      {children}
+      <MarketingClientExtras />
+    </div>
+  );
 }

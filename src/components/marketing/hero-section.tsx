@@ -1,6 +1,7 @@
 import { HeroDashboardPreview } from '@/components/marketing/hero-dashboard-preview';
 import { ComplAIStyled } from '@/components/marketing/complai-brand-link';
 import { ScrutPrimaryButton, ScrutOutlineButton } from '@/components/marketing/marketing-ui';
+import { DEMO_ENTRY_PATH } from '@/lib/demo-access';
 
 export function HeroSection() {
   return (
@@ -24,6 +25,7 @@ export function HeroSection() {
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <ScrutPrimaryButton href="/company?contact=1">Book a demo</ScrutPrimaryButton>
+            <ScrutOutlineButton href={DEMO_ENTRY_PATH}>Try live demo</ScrutOutlineButton>
             <ScrutOutlineButton href="#complai">
               Meet <ComplAIStyled className="font-semibold" />
             </ScrutOutlineButton>

@@ -20,8 +20,10 @@ import {
   type ControlIssueSeverity,
 } from '@/lib/types';
 import { calculateRiskScore, riskScoreLabel, isHighOrCriticalScore, parseRiskScoreLabel, resolvePresentRiskDisplay, isHighOrCriticalDisplay } from '@/lib/risk/scoring';
-import { AlertTriangle, Download, Plus, ShieldAlert, X } from 'lucide-react';
+import { AlertTriangle, Download, Plus, ShieldAlert, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { RiskRegisterImportDialog } from '@/components/risk-register/risk-register-import-dialog';
+import { ControlReference } from '@/components/controls/control-reference';
 
 interface LinkableControl {
   id: string;
@@ -58,6 +60,7 @@ export default function RiskRegisterPage() {
   const [submitting, setSubmitting] = useState(false);
   const [typeFilter, setTypeFilter] = useState<'all' | 'risk' | 'issue'>('all');
   const [frameworkFilter, setFrameworkFilter] = useState('');
+  const [showImport, setShowImport] = useState(false);
 
   const [form, setForm] = useState({
     controlId: '',
@@ -252,6 +255,14 @@ export default function RiskRegisterPage() {
           <span>{controls.length} linkable controls</span>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowImport(true)}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            <Upload className="h-4 w-4" />
+            Upload register
+          </button>
           <a
             href={exportHref}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
@@ -781,13 +792,13 @@ export default function RiskRegisterPage() {
                       </td>
                       <td className="px-6 py-4 text-slate-600">{entry.frameworkShortName}</td>
                       <td className="px-6 py-4">
-                        <Link
-                          href={`/controls/${entry.controlId}`}
-                          className="font-mono text-xs text-brand-600 hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {entry.controlReference}
-                        </Link>
+                        <ControlReference
+                          controlId={entry.controlId}
+                          reference={entry.controlReference}
+                          frameworkId={entry.frameworkId}
+                          title={entry.controlTitle}
+                          stopPropagation
+                        />
                         <p className="text-xs text-slate-500 truncate max-w-[200px]">
                           {entry.controlTitle}
                         </p>
@@ -818,6 +829,11 @@ export default function RiskRegisterPage() {
           </div>
         </div>
       )}
+      <RiskRegisterImportDialog
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        onImported={load}
+      />
     </AppShell>
   );
 }

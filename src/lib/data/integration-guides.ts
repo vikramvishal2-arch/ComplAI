@@ -1,4 +1,5 @@
-import type { IntegrationDomain, IntegrationTool } from './integration-catalog';
+import type { IntegrationDomain, IntegrationDeployment, IntegrationTool } from './integration-catalog';
+import { INTEGRATION_DOMAINS } from './integration-catalog';
 import { ORGANIZATION_NAME, PRODUCT_NAME } from '../brand';
 
 export interface IntegrationGuideStep {
@@ -13,6 +14,16 @@ export interface IntegrationGuide {
   primaryDomain: IntegrationDomain;
   domains: IntegrationDomain[];
   overview: string;
+  productDescription: string;
+  deployment: IntegrationDeployment;
+  deploymentLabel: string;
+  deploymentSummary: string;
+  domainLabels: string[];
+  capabilities: string[];
+  typicalUseCases: string[];
+  integrationMethods: string[];
+  grcDataPoints: string[];
+  documentationTopics: string[];
   prerequisites: string[];
   steps: IntegrationGuideStep[];
   grcBenefits: string[];
@@ -21,6 +32,69 @@ export interface IntegrationGuide {
   troubleshooting: { issue: string; resolution: string }[];
   lastUpdated: string;
 }
+
+const DEPLOYMENT_LABEL: Record<IntegrationDeployment, string> = {
+  saas: 'SaaS (cloud)',
+  'on-prem': 'On-premises',
+  hybrid: 'Hybrid',
+  'open-source': 'Open source',
+};
+
+const DEPLOYMENT_SUMMARY: Record<IntegrationDeployment, string> = {
+  saas: 'Fully managed cloud service — no infrastructure to host. Typically connected via REST APIs, OAuth, or webhooks over HTTPS.',
+  'on-prem': 'Installed in your data centre or private cloud. May require an on-network connector, agent, or VPN for ComplAI to reach APIs.',
+  hybrid: 'Available as cloud and/or self-hosted components. Confirm which deployment model your organization uses before planning credentials and network paths.',
+  'open-source': 'Community or self-supported software. Define internal ownership for patching, upgrades, and security monitoring.',
+};
+
+const DOMAIN_USE_CASES: Record<IntegrationDomain, string[]> = {
+  hrms: [
+    'Authoritative employee records for joiner, mover, and leaver (JML) workflows',
+    'Org hierarchy and manager relationships for access approvals',
+    'Termination and contractor end dates driving account deprovisioning',
+    'Workforce compliance reporting for HR and security audits',
+  ],
+  idam: [
+    'Central directory for users, groups, roles, and entitlements',
+    'MFA enforcement and authentication policy evidence',
+    'Privileged access management and session audit trails',
+    'Access review and certification campaign data',
+  ],
+  siem: [
+    'Centralized log ingestion and retention for security monitoring',
+    'Detection rules, alerts, and SOC case management metrics',
+    'Incident triage, escalation, and response timelines',
+    'Compliance reporting on monitoring coverage and MTTR',
+  ],
+  vapt: [
+    'Vulnerability scanning across infrastructure and applications',
+    'Penetration test findings and remediation tracking',
+    'Exposure prioritization and risk-based remediation SLAs',
+    'Audit evidence for vulnerability management programs',
+  ],
+  sso: [
+    'Federated single sign-on for SaaS and internal applications',
+    'Application access inventory for periodic access reviews',
+    'MFA and session policies enforced at the identity provider',
+    'SAML/OIDC federation metadata and attribute mapping',
+  ],
+};
+
+const DOMAIN_INTEGRATION_METHODS: Record<IntegrationDomain, string[]> = {
+  hrms: ['REST API with OAuth or API keys', 'SCIM outbound provisioning', 'Scheduled CSV/SFTP exports', 'Webhook event notifications'],
+  idam: ['REST or Graph API (read-only scopes)', 'SCIM provisioning logs', 'Syslog or SIEM export of auth events', 'CSV entitlement reports'],
+  siem: ['REST API for searches and dashboards', 'Webhook or email alert forwarding', 'Scheduled report exports', 'SOAR playbook status APIs'],
+  vapt: ['Scanner or platform REST API', 'Scheduled scan result exports', 'Ticketing system webhooks', 'PDF/CSV assessment report upload'],
+  sso: ['SAML/OIDC metadata exchange', 'IdP admin API for app assignments', 'SCIM app provisioning logs', 'Access report exports'],
+};
+
+const DOMAIN_GRC_DATA: Record<IntegrationDomain, string[]> = {
+  hrms: ['Employee status and termination dates', 'Department and role changes', 'Manager approval chains', 'Integration sync audit logs'],
+  idam: ['User and group inventory', 'MFA enrollment status', 'Sign-in and privileged access logs', 'Access review completion rates'],
+  siem: ['Log source health and ingestion volume', 'Detection rule coverage', 'Open and closed incident counts', 'Mean time to detect/respond'],
+  vapt: ['Open findings by severity', 'Scan coverage and frequency', 'Remediation SLA compliance', 'Penetration test summaries'],
+  sso: ['Federated application catalog', 'User-to-app assignments', 'MFA policy compliance', 'Failed authentication trends'],
+};
 
 const DOMAIN_GRC_BENEFITS: Record<IntegrationDomain, string[]> = {
   hrms: [
@@ -211,17 +285,44 @@ const COMMON_PREREQUISITES = [
 export function buildIntegrationGuide(tool: IntegrationTool): IntegrationGuide {
   const primaryDomain = tool.domains[0];
   const domainSteps = DOMAIN_STEPS[primaryDomain] ?? DOMAIN_STEPS.idam;
+  const domainLabels = tool.domains.map(
+    (id) => INTEGRATION_DOMAINS.find((d) => d.id === id)?.label ?? id.toUpperCase()
+  );
+
+  const documentationTopics = [
+    'Admin console setup and service account creation',
+    'API authentication, scopes, and rate limits',
+    ...(tool.docsUrl ? ['Product API reference and integration guides'] : []),
+    'Audit log export and retention settings',
+    'Security hardening and least-privilege configuration',
+  ];
 
   return {
     toolId: tool.id,
     toolName: tool.name,
     primaryDomain,
     domains: tool.domains,
-    overview: `${tool.name} integrates with ${PRODUCT_NAME} to support ${ORGANIZATION_NAME}'s GRC program. ${tool.description} This guide describes the recommended connection process, prerequisites, and verification steps for audit-ready evidence collection.`,
+    productDescription: tool.description,
+    deployment: tool.deployment,
+    deploymentLabel: DEPLOYMENT_LABEL[tool.deployment],
+    deploymentSummary: DEPLOYMENT_SUMMARY[tool.deployment],
+    domainLabels,
+    capabilities: tool.capabilities,
+    typicalUseCases: [
+      ...DOMAIN_USE_CASES[primaryDomain].slice(0, 2),
+      ...tool.domains.slice(1).flatMap((d) => DOMAIN_USE_CASES[d].slice(0, 1)),
+    ],
+    integrationMethods: DOMAIN_INTEGRATION_METHODS[primaryDomain],
+    grcDataPoints: [
+      ...DOMAIN_GRC_DATA[primaryDomain],
+      ...tool.capabilities.slice(0, 2).map((cap) => `${cap} metrics and configuration evidence`),
+    ],
+    documentationTopics,
+    overview: `${tool.name} integrates with ${PRODUCT_NAME} to support ${ORGANIZATION_NAME}'s GRC program. ${tool.description} This guide covers product context, the recommended connection process, prerequisites, and verification steps for audit-ready evidence collection.`,
     prerequisites: [
       ...COMMON_PREREQUISITES,
       `Admin or integration-builder role in ${tool.name}`,
-      `Vendor documentation reviewed (${tool.websiteUrl})`,
+      `${tool.name} product documentation reviewed (see Documentation topics below)`,
       ...(tool.deployment === 'on-prem'
         ? ['On-premises connector or agent deployed in approved network zone']
         : []),

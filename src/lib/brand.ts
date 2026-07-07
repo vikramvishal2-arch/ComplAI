@@ -2,6 +2,10 @@ export const PRODUCT_NAME = 'ComplAI';
 export const PRODUCT_TAGLINE = 'GRC Compliance Platform';
 export const ORGANIZATION_NAME = 'Propel Ready Solutions';
 
+export const CONTACT_EMAIL = 'tech@propelreadysolutions.in';
+export const CONTACT_PHONE_DISPLAY = '+91-8796941115';
+export const CONTACT_PHONE_TEL = '+918796941115';
+
 /** Product logo assets (ComplAI mark — shield + compliance check + AI accent). */
 export const COMPLAI_ICON = '/complai-icon.svg';
 export const COMPLAI_LOGO = '/complai-logo.svg';

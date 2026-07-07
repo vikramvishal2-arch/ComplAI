@@ -1,0 +1,188 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model PcOrganization {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  frameworkActivations PcFrameworkActivation[]
+  controlCompliances   PcControlCompliance[]
+  controlRemediations  PcControlRemediation[]
+  controlIssues        PcControlIssue[]
+  controlEvidence      PcControlEvidence[]
+  privacyRisks         PcPrivacyRisk[]
+  dpiaRecords          PcDpiaRecord[]
+
+  @@map("pc_organizations")
+}
+
+model PcFrameworkActivation {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  frameworkId    String   @map("framework_id")
+  activatedAt    DateTime @default(now()) @map("activated_at")
+
+  organization PcOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, frameworkId])
+  @@map("pc_framework_activations")
+}
+
+model PcControlCompliance {
+  id                     String    @id @default(cuid())
+  organizationId         String    @map("organization_id")
+  controlId              String    @map("control_id")
+  status                 String    @default("not_started")
+  complianceMethod       String?   @map("compliance_method")
+  implementationApproach String    @default("") @map("implementation_approach")
+  owner                  String    @default("")
+  targetDate             DateTime? @map("target_date") @db.Date
+  evidenceNotes          String    @default("") @map("evidence_notes")
+  naJustification        String    @default("") @map("na_justification")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  organization PcOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, controlId])
+  @@index([organizationId])
+  @@map("pc_control_compliance")
+}
+
+model PcControlRemediation {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  controlId      String   @map("control_id")
+  actions        Json     @default("[]")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization PcOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, controlId])
+  @@index([organizationId])
+  @@map("pc_control_remediations")
+}
+
+model PcControlIssue {
+  id              String    @id @default(cuid())
+  organizationId  String    @map("organization_id")
+  controlId       String    @map("control_id")
+  title           String
+  description     String    @default("")
+  severity        String    @default("medium")
+  status          String    @default("open")
+  raisedBy        String    @default("") @map("raised_by")
+  assignee        String    @default("")
+  dueDate         DateTime? @map("due_date") @db.Date
+  resolutionNotes String    @default("") @map("resolution_notes")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  organization PcOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, controlId])
+  @@map("pc_control_issues")
+}
+
+model PcControlEvidence {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  controlId      String   @map("control_id")
+  context        String
+  issueId        String?  @map("issue_id")
+  fileName       String   @map("file_name")
+  originalName   String   @map("original_name")
+  mimeType       String   @map("mime_type")
+  sizeBytes      Int      @map("size_bytes")
+  description    String   @default("")
+  storagePath    String   @map("storage_path")
+  uploadedAt     DateTime @default(now()) @map("uploaded_at")
+
+  organization PcOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, controlId])
+  @@map("pc_control_evidence")
+}
+
+model PcPrivacyRisk {
+  id                        String    @id @default(cuid())
+  organizationId            String    @map("organization_id")
+  riskReference             String    @map("risk_reference")
+  source                    String    @default("other")
+  affectedIndividualsAssets String    @default("") @map("affected_individuals_assets")
+  description               String    @default("")
+  dataLifecyclePhase        String    @default("processing") @map("data_lifecycle_phase")
+  inherentLikelihood        String    @default("possible") @map("inherent_likelihood")
+  inherentImpact            String    @default("moderate") @map("inherent_impact")
+  inherentRiskRating        String    @default("") @map("inherent_risk_rating")
+  existingControls          String    @default("") @map("existing_controls")
+  treatmentPlan             String    @default("") @map("treatment_plan")
+  treatmentStrategy         String    @default("mitigate") @map("treatment_strategy")
+  owner                     String    @default("")
+  targetDueDate             DateTime? @map("target_due_date") @db.Date
+  residualLikelihood        String?   @map("residual_likelihood")
+  residualImpact            String?   @map("residual_impact")
+  residualRiskRating        String    @default("") @map("residual_risk_rating")
+  status                    String    @default("open")
+  lastReviewDate            DateTime? @map("last_review_date") @db.Date
+  nextReviewDate            DateTime? @map("next_review_date") @db.Date
+  linkedRopaRefs            String    @default("") @map("linked_ropa_refs")
+  linkedDpiaRefs            String    @default("") @map("linked_dpia_refs")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  updatedAt                 DateTime  @updatedAt @map("updated_at")
+
+  organization PcOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, riskReference])
+  @@index([organizationId])
+  @@map("pc_privacy_risks")
+}
+
+model PcDpiaRecord {
+  id                       String    @id @default(cuid())
+  organizationId           String    @map("organization_id")
+  dpiaReference            String    @map("dpia_reference")
+  processingActivityName   String    @map("processing_activity_name")
+  description              String    @default("")
+  triggerReason            String    @default("") @map("trigger_reason")
+  necessityProportionality String    @default("") @map("necessity_proportionality")
+  dataCategories           String    @default("") @map("data_categories")
+  affectedIndividuals      String    @default("") @map("affected_individuals")
+  riskDescription          String    @default("") @map("risk_description")
+  dataLifecyclePhase       String    @default("processing") @map("data_lifecycle_phase")
+  inherentLikelihood       String    @default("possible") @map("inherent_likelihood")
+  inherentImpact           String    @default("moderate") @map("inherent_impact")
+  inherentRiskRating       String    @default("") @map("inherent_risk_rating")
+  measuresToMitigate       String    @default("") @map("measures_to_mitigate")
+  dpoConsultation          String    @default("") @map("dpo_consultation")
+  residualLikelihood       String?   @map("residual_likelihood")
+  residualImpact           String?   @map("residual_impact")
+  residualRiskRating       String    @default("") @map("residual_risk_rating")
+  status                   String    @default("draft")
+  owner                    String    @default("")
+  initiatedDate            DateTime? @map("initiated_date") @db.Date
+  targetCompletionDate     DateTime? @map("target_completion_date") @db.Date
+  completedDate            DateTime? @map("completed_date") @db.Date
+  lastReviewDate           DateTime? @map("last_review_date") @db.Date
+  nextReviewDate           DateTime? @map("next_review_date") @db.Date
+  linkedRopaRefs           String    @default("") @map("linked_ropa_refs")
+  linkedRiskRefs           String    @default("") @map("linked_risk_refs")
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  organization PcOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, dpiaReference])
+  @@index([organizationId])
+  @@map("pc_dpia_records")
+}

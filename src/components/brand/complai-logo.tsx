@@ -9,6 +9,8 @@ interface ComplAILogoProps {
   href?: string;
   variant?: ComplAILogoVariant;
   showTagline?: boolean;
+  /** Light text for dark backgrounds (app sidebar, marketing). */
+  onDark?: boolean;
 }
 
 export function ComplAILogo({
@@ -16,6 +18,7 @@ export function ComplAILogo({
   href = '/dashboard',
   variant = 'stacked',
   showTagline = true,
+  onDark = false,
 }: ComplAILogoProps) {
   const content =
     variant === 'icon' ? (
@@ -47,17 +50,21 @@ export function ComplAILogo({
             className="h-9 w-9 shrink-0"
           />
           <div className="min-w-0 leading-tight">
-            <p className="truncate text-base font-bold tracking-tight text-slate-900">
-              <span className="text-emerald-600">Compl</span>
-              <span className="text-emerald-500">AI</span>
+            <p className={cn('truncate text-base font-bold tracking-tight', onDark ? 'text-zinc-50' : 'text-slate-900')}>
+              <span className="inline-flex items-baseline gap-[0.06em]">
+                <span className="text-brand-400">Compl</span>
+                <span className={onDark ? 'text-zinc-50' : 'text-slate-900'}>AI</span>
+              </span>
             </p>
             {showTagline && (
-              <p className="truncate text-[11px] text-slate-500">GRC Compliance Platform</p>
+              <p className={cn('truncate text-[11px]', onDark ? 'text-zinc-500' : 'text-slate-500')}>
+                GRC Compliance Platform
+              </p>
             )}
           </div>
         </div>
         {showTagline && (
-          <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+          <p className={cn('text-[10px] font-medium uppercase tracking-wide', onDark ? 'text-zinc-600' : 'text-slate-400')}>
             {ORGANIZATION_NAME}
           </p>
         )}
@@ -72,7 +79,8 @@ export function ComplAILogo({
     <Link
       href={href}
       className={cn(
-        'block min-w-0 transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 rounded-lg',
+        'block min-w-0 transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 rounded-lg',
+        onDark && 'focus-visible:ring-offset-scrut-navy',
         className
       )}
       aria-label={`${PRODUCT_NAME} — go to leadership dashboard`}

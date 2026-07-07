@@ -1,34 +1,57 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #f4f4f5;
+  --foreground: #18181b;
   --card: #ffffff;
-  --primary: #0d4f8b;
+  --primary: #10b981;
   --primary-foreground: #ffffff;
-  --muted: #64748b;
-  --border: #e2e8f0;
+  --muted: #71717a;
+  --border: #e4e4e7;
   --success: #059669;
   --warning: #d97706;
   --danger: #dc2626;
+  --app-sidebar: #12141c;
+  --app-sidebar-border: rgba(255, 255, 255, 0.08);
 }
 
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 7.5rem;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  min-height: 100dvh;
 }
 
 @layer components {
+  .app-sidebar {
+    @apply bg-scrut-navy text-zinc-300;
+  }
+
+  .app-sidebar-nav-active {
+    @apply bg-brand-500/15 text-brand-400;
+  }
+
+  .app-sidebar-nav-idle {
+    @apply text-zinc-400 hover:bg-white/5 hover:text-zinc-100;
+  }
+
+  .app-primary-btn {
+    @apply bg-brand-500 text-white hover:bg-brand-600;
+  }
+
+  .grc-card {
+    @apply rounded-xl border border-zinc-200 bg-white p-5 shadow-sm;
+  }
+
   /* ComplAI marketing — grey → black gradient surfaces */
   .marketing-body {
     @apply bg-marketing-surface text-zinc-100;
@@ -78,6 +101,63 @@ body {
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
+  }
+
+  .touch-scroll-x {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .marketing-tab-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: x proximity;
+  }
+
+  .marketing-tab-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .marketing-tab-scroll button,
+  .marketing-tab-scroll a {
+    scroll-snap-align: start;
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  @media (max-width: 1023px) {
+    .marketing-desktop-nav {
+      display: none !important;
+    }
+
+    .marketing-mobile-menu-button {
+      display: inline-flex !important;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .marketing-mobile-menu-button {
+      display: none !important;
+    }
+
+    .marketing-desktop-nav {
+      display: flex !important;
+    }
+
+    .marketing-mobile-drawer,
+    .marketing-mobile-overlay {
+      display: none !important;
+    }
+  }
+
+  .marketing-mobile-nav-scroll {
+    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -170,3 +250,974 @@ body {
   text-align: right;
   color: #666;
 }
+
+/* Security learning — animated infographics */
+@keyframes training-pulse-ring {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(96, 165, 250, 0);
+  }
+}
+
+@keyframes training-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes training-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes training-complete-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.training-anim-active .training-pulse-ring {
+  animation: training-pulse-ring 2s ease-in-out infinite;
+}
+
+.training-anim-active .training-float {
+  animation: training-float 3s ease-in-out infinite;
+}
+
+.training-anim-active .training-shake {
+  animation: training-shake 0.4s ease-in-out infinite;
+}
+
+.training-anim-paused .training-pulse-ring,
+.training-anim-paused .training-float,
+.training-anim-paused .training-shake {
+  animation-play-state: paused;
+}
+
+.training-complete-badge {
+  animation: training-complete-pop 0.5s ease-out forwards;
+}
+
+.training-funnel-bar {
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Scenario-based character animations */
+@keyframes scenario-idle-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes scenario-look-screen {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  40% {
+    transform: translateY(-2px) rotate(-3deg);
+  }
+  70% {
+    transform: translateY(-2px) rotate(2deg);
+  }
+}
+
+@keyframes scenario-on-phone {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(-5deg);
+  }
+}
+
+@keyframes scenario-arm-sway {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+
+@keyframes scenario-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes scenario-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px) rotate(-5deg);
+  }
+  75% {
+    transform: translateX(4px) rotate(5deg);
+  }
+}
+
+@keyframes scenario-phone-ring {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  10%,
+  30% {
+    transform: rotate(-12deg);
+  }
+  20%,
+  40% {
+    transform: rotate(12deg);
+  }
+}
+
+@keyframes scenario-dialogue-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes scenario-talk-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes scenario-mouth-talk {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.35);
+  }
+}
+
+@keyframes scenario-body-idle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes scenario-body-talk {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes scenario-body-listen {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(0.8deg);
+  }
+}
+
+@keyframes scenario-body-phone {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(-3deg);
+  }
+}
+
+@keyframes scenario-head-talk {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(2deg);
+  }
+  70% {
+    transform: rotate(-1deg);
+  }
+}
+
+@keyframes scenario-head-listen {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes scenario-arm-gesture {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(-18deg) translateY(-4px);
+  }
+  45% {
+    transform: rotate(-42deg) translateY(-10px);
+  }
+  70% {
+    transform: rotate(-24deg) translateY(-6px);
+  }
+}
+
+@keyframes scenario-arm-point {
+  0%,
+  100% {
+    transform: rotate(8deg) translateX(4px);
+  }
+  50% {
+    transform: rotate(-12deg) translateX(12px) translateY(-6px);
+  }
+}
+
+@keyframes scenario-arm-phone {
+  0%,
+  100% {
+    transform: rotate(-55deg) translateY(-18px);
+  }
+  50% {
+    transform: rotate(-62deg) translateY(-22px);
+  }
+}
+
+@keyframes scenario-arm-listen {
+  0%,
+  100% {
+    transform: rotate(4deg);
+  }
+  50% {
+    transform: rotate(8deg) translateY(-2px);
+  }
+}
+
+@keyframes scenario-arm-listen-subtle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes scenario-arm-idle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-4deg) translateY(-1px);
+  }
+}
+
+@keyframes scenario-arm-idle-subtle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+.scenario-idle-bob {
+  animation: scenario-idle-bob 2.8s ease-in-out infinite;
+}
+
+.scenario-look-screen {
+  animation: scenario-look-screen 3s ease-in-out infinite;
+}
+
+.scenario-on-phone {
+  animation: scenario-on-phone 2.5s ease-in-out infinite;
+}
+
+.scenario-arm-left {
+  transform-origin: 28px 100px;
+  animation: scenario-arm-sway 2s ease-in-out infinite;
+}
+
+.scenario-pop-in {
+  animation: scenario-pop-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.scenario-shake {
+  animation: scenario-shake 0.5s ease-in-out infinite;
+}
+
+.scenario-phone-ring {
+  animation: scenario-phone-ring 0.8s ease-in-out infinite;
+}
+
+.scenario-dialogue {
+  animation: scenario-dialogue-in 0.45s ease-out forwards;
+}
+
+.scenario-talk-bob {
+  animation: scenario-talk-bob 0.35s ease-in-out infinite;
+}
+
+.scenario-mouth-talk {
+  transform-origin: 80px 102px;
+  transform-box: fill-box;
+  animation: scenario-mouth-talk 0.28s ease-in-out infinite;
+}
+
+.scenario-body-idle {
+  animation: scenario-body-idle 3s ease-in-out infinite;
+}
+
+.scenario-body-talk {
+  animation: scenario-body-talk 0.45s ease-in-out infinite;
+}
+
+.scenario-body-listen {
+  animation: scenario-body-listen 2.5s ease-in-out infinite;
+}
+
+.scenario-body-phone {
+  animation: scenario-body-phone 2s ease-in-out infinite;
+}
+
+.scenario-head-talk {
+  transform-origin: 80px 100px;
+  transform-box: fill-box;
+  animation: scenario-head-talk 0.5s ease-in-out infinite;
+}
+
+.scenario-head-listen {
+  transform-origin: 80px 100px;
+  transform-box: fill-box;
+  animation: scenario-head-listen 2s ease-in-out infinite;
+}
+
+.scenario-arm-near {
+  transform-origin: 52px 128px;
+  transform-box: fill-box;
+}
+
+.scenario-arm-far {
+  transform-origin: 108px 128px;
+  transform-box: fill-box;
+}
+
+.scenario-arm-gesture {
+  animation: scenario-arm-gesture 0.55s ease-in-out infinite;
+}
+
+.scenario-arm-point {
+  animation: scenario-arm-point 1.2s ease-in-out infinite;
+}
+
+.scenario-arm-phone {
+  animation: scenario-arm-phone 2s ease-in-out infinite;
+}
+
+.scenario-arm-listen {
+  animation: scenario-arm-listen 2.2s ease-in-out infinite;
+}
+
+.scenario-arm-listen-subtle {
+  animation: scenario-arm-listen-subtle 2.8s ease-in-out infinite;
+}
+
+.scenario-arm-idle {
+  animation: scenario-arm-idle 2.6s ease-in-out infinite;
+}
+
+.scenario-arm-idle-subtle {
+  animation: scenario-arm-idle-subtle 3s ease-in-out infinite;
+}
+
+.scenario-film-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.training-anim-paused .scenario-idle-bob,
+.training-anim-paused .scenario-look-screen,
+.training-anim-paused .scenario-on-phone,
+.training-anim-paused .scenario-shake,
+.training-anim-paused .scenario-phone-ring,
+.training-anim-paused .training-char-talk,
+.training-anim-paused .training-char-listen,
+.training-anim-paused .training-char-idle,
+.training-anim-paused .training-char-phone,
+.training-anim-paused .training-char-point,
+.training-anim-paused .training-arm-front-talk,
+.training-anim-paused .training-arm-back-talk,
+.training-anim-paused .training-mouth-talk,
+.training-anim-paused .training-eyes-blink,
+.training-anim-paused .scenario-screen-flicker,
+.training-anim-paused .scenario-badge-blink {
+  animation-play-state: paused;
+}
+
+/* ── Training scene v2 animations ── */
+
+@keyframes training-scene-enter {
+  from {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.training-scene-enter {
+  animation: training-scene-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes training-char-idle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes training-char-talk {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes training-char-listen {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(1deg);
+  }
+}
+
+@keyframes training-char-phone {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(-2deg);
+  }
+}
+
+@keyframes training-char-point {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px) translateX(2px);
+  }
+}
+
+.training-char-idle {
+  animation: training-char-idle 3.2s ease-in-out infinite;
+}
+
+.training-char-talk {
+  animation: training-char-talk 0.5s ease-in-out infinite;
+}
+
+.training-char-listen {
+  animation: training-char-listen 2.8s ease-in-out infinite;
+}
+
+.training-char-phone {
+  animation: training-char-phone 2.2s ease-in-out infinite;
+}
+
+.training-char-point {
+  animation: training-char-point 1.4s ease-in-out infinite;
+}
+
+@keyframes training-arm-front-talk {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-28deg) translateY(-8px);
+  }
+  55% {
+    transform: rotate(-48deg) translateY(-14px);
+  }
+  80% {
+    transform: rotate(-32deg) translateY(-10px);
+  }
+}
+
+@keyframes training-arm-front-phone {
+  0%,
+  100% {
+    transform: rotate(-58deg) translateY(-20px);
+  }
+  50% {
+    transform: rotate(-64deg) translateY(-24px);
+  }
+}
+
+@keyframes training-arm-front-point {
+  0%,
+  100% {
+    transform: rotate(12deg) translateX(6px);
+  }
+  50% {
+    transform: rotate(-8deg) translateX(18px) translateY(-8px);
+  }
+}
+
+@keyframes training-arm-front-listen {
+  0%,
+  100% {
+    transform: rotate(6deg);
+  }
+  50% {
+    transform: rotate(10deg) translateY(-2px);
+  }
+}
+
+@keyframes training-arm-back-talk {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
+.training-arm-front {
+  transform-origin: 70px 175px;
+  transform-box: fill-box;
+}
+
+.training-arm-back {
+  transform-origin: 130px 175px;
+  transform-box: fill-box;
+}
+
+.training-head {
+  transform-origin: 100px 120px;
+  transform-box: fill-box;
+}
+
+.training-arm-front-talk {
+  animation: training-arm-front-talk 0.55s ease-in-out infinite;
+}
+
+.training-arm-front-phone {
+  animation: training-arm-front-phone 2s ease-in-out infinite;
+}
+
+.training-arm-front-point {
+  animation: training-arm-front-point 1.1s ease-in-out infinite;
+}
+
+.training-arm-front-listen {
+  animation: training-arm-front-listen 2.5s ease-in-out infinite;
+}
+
+@keyframes training-arm-back-talk {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(28deg) translateY(-8px);
+  }
+  55% {
+    transform: rotate(48deg) translateY(-14px);
+  }
+  80% {
+    transform: rotate(32deg) translateY(-10px);
+  }
+}
+
+@keyframes training-arm-back-phone {
+  0%,
+  100% {
+    transform: rotate(58deg) translateY(-20px);
+  }
+  50% {
+    transform: rotate(64deg) translateY(-24px);
+  }
+}
+
+@keyframes training-arm-back-point {
+  0%,
+  100% {
+    transform: rotate(-12deg) translateX(-6px);
+  }
+  50% {
+    transform: rotate(8deg) translateX(-18px) translateY(-8px);
+  }
+}
+
+@keyframes training-arm-back-listen {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(-10deg) translateY(-2px);
+  }
+}
+
+@keyframes training-arm-front-idle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-3deg);
+  }
+}
+
+@keyframes training-arm-back-idle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+.training-arm-back-talk {
+  animation: training-arm-back-talk 0.55s ease-in-out infinite;
+}
+
+.training-arm-back-phone {
+  animation: training-arm-back-phone 2s ease-in-out infinite;
+}
+
+.training-arm-back-point {
+  animation: training-arm-back-point 1.1s ease-in-out infinite;
+}
+
+.training-arm-back-listen {
+  animation: training-arm-back-listen 2.5s ease-in-out infinite;
+}
+
+.training-arm-front-idle {
+  animation: training-arm-front-idle 2.8s ease-in-out infinite;
+}
+
+.training-arm-back-idle {
+  animation: training-arm-back-idle 2.8s ease-in-out infinite;
+}
+
+@keyframes training-head-talk {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(2deg);
+  }
+  70% {
+    transform: rotate(-1deg);
+  }
+}
+
+@keyframes training-head-listen {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+.training-head-talk {
+  animation: training-head-talk 0.55s ease-in-out infinite;
+}
+
+.training-head-listen {
+  animation: training-head-listen 2.2s ease-in-out infinite;
+}
+
+@keyframes training-mouth-talk {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.4);
+  }
+}
+
+.training-mouth-talk {
+  transform-origin: 100px 128px;
+  transform-box: fill-box;
+  animation: training-mouth-talk 0.22s ease-in-out infinite;
+}
+
+@keyframes training-eyes-blink {
+  0%,
+  42%,
+  44%,
+  100% {
+    transform: scaleY(1);
+  }
+  43% {
+    transform: scaleY(0.1);
+  }
+}
+
+.training-eyes-blink {
+  transform-origin: 100px 102px;
+  transform-box: fill-box;
+  animation: training-eyes-blink 4s ease-in-out infinite;
+}
+
+@keyframes scenario-screen-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.scenario-screen-flicker {
+  animation: scenario-screen-flicker 3s ease-in-out infinite;
+}
+
+@keyframes scenario-badge-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.scenario-badge-blink {
+  animation: scenario-badge-blink 1.5s ease-in-out infinite;
+}
+
+/* Explainer video (KnowledgeCatch-style) */
+@keyframes training-bg-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(12px, -8px) scale(1.05);
+  }
+}
+
+@keyframes training-voice-bar {
+  0%,
+  100% {
+    transform: scaleY(0.45);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes training-chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes training-icon-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+  }
+}
+
+.training-bg-orb {
+  animation: training-bg-drift 8s ease-in-out infinite;
+}
+
+.training-bg-orb-delay {
+  animation: training-bg-drift 10s ease-in-out infinite reverse;
+}
+
+.training-bg-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.training-voice-bar {
+  transform-origin: bottom center;
+  animation: training-voice-bar 0.55s ease-in-out infinite;
+}
+
+.training-chip-in {
+  animation: training-chip-in 0.45s ease-out forwards;
+}
+
+.training-icon-pulse {
+  animation: training-icon-pulse 1.5s ease-in-out infinite;
+}
+
+.training-anim-paused .training-bg-orb,
+.training-anim-paused .training-bg-orb-delay,
+.training-anim-paused .training-voice-bar,
+.training-anim-paused .training-icon-pulse,
+.training-anim-paused .training-kinetic-in,
+.training-anim-paused .training-scale-in,
+.training-anim-paused .training-slide-up,
+.training-anim-paused .training-orbit-icon,
+.training-anim-paused .training-glow-pulse {
+  animation-play-state: paused;
+}
+
+@keyframes training-kinetic-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes training-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes training-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes training-orbit-icon {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes training-glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(96, 165, 250, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 32px rgba(96, 165, 250, 0.45);
+  }
+}
+
+.training-kinetic-in {
+  animation: training-kinetic-in 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.training-scale-in {
+  animation: training-scale-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.training-slide-up {
+  animation: training-slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.training-orbit-icon {
+  animation: training-orbit-icon 3s ease-in-out infinite;
+}
+
+.training-glow-pulse {
+  animation: training-glow-pulse 2s ease-in-out infinite;
+}
+

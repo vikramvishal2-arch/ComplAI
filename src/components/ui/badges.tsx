@@ -7,13 +7,33 @@ import {
 
 const statusStyles: Record<ComplianceStatus, string> = {
   not_started: 'bg-slate-100 text-slate-700 border-slate-200',
-  planning: 'bg-blue-50 text-blue-700 border-blue-200',
+  planning: 'bg-brand-50 text-brand-700 border-brand-200',
   implementing: 'bg-amber-50 text-amber-800 border-amber-200',
   implemented: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   needs_review: 'bg-orange-50 text-orange-800 border-orange-200',
   audit_ready: 'bg-green-100 text-green-800 border-green-300',
   not_applicable: 'bg-gray-100 text-gray-500 border-gray-200',
 };
+
+export function StatCard({
+  label,
+  value,
+  sub,
+  className,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  className?: string;
+}) {
+  return (
+    <div className={cn('grc-card', className)}>
+      <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</p>
+      <p className="mt-1 text-3xl font-bold text-zinc-900">{value}</p>
+      {sub && <p className="mt-1 text-sm text-zinc-500">{sub}</p>}
+    </div>
+  );
+}
 
 export function StatusBadge({
   status,

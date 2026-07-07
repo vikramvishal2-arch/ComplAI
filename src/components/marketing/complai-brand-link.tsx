@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 /** Brand-colored ComplAI wordmark (no link). */
 export function ComplAIStyled({ className }: { className?: string }) {
   return (
-    <span className={cn('font-bold', className)}>
+    <span className={cn('inline-flex items-baseline gap-[0.06em] font-bold', className)}>
       <span className="text-emerald-400">Compl</span>
       <span className="text-white">AI</span>
     </span>

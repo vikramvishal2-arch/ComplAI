@@ -5,6 +5,8 @@ import { INDIA_DPDP_CONTROLS } from './india-dpdp-controls';
 import { SEBI_CSCRF_CONTROLS } from './sebi-cscrf-controls';
 import { MIDDLE_EAST_PRIVACY_CONTROLS } from './middle-east-privacy-controls';
 import { GOOGLE_CHRONICLE_CONTROLS } from './google-chronicle-controls';
+import { ISO22301_CONTROLS } from './iso22301-controls';
+import { ISO31000_CONTROLS } from './iso31000-controls';
 
 function c(
   id: string,
@@ -26,6 +28,8 @@ export const CONTROLS: Control[] = [
   ...SEBI_CSCRF_CONTROLS,
   ...MIDDLE_EAST_PRIVACY_CONTROLS,
   ...GOOGLE_CHRONICLE_CONTROLS,
+  ...ISO22301_CONTROLS,
+  ...ISO31000_CONTROLS,
 
   // ISO 27701 (subset)
 
@@ -470,6 +474,30 @@ export function getControlsByFramework(frameworkId: string): Control[] {
 
 export function getControlById(id: string): Control | undefined {
   return CONTROLS.find((c) => c.id === id);
+}
+
+export function getControlByReference(reference: string, frameworkId?: string): Control | undefined {
+  const normalized = reference.trim().toLowerCase();
+  const matches = CONTROLS.filter((c) => c.reference.toLowerCase() === normalized);
+  if (frameworkId) {
+    return matches.find((c) => c.frameworkId === frameworkId) ?? matches[0];
+  }
+  return matches[0];
+}
+
+export function resolveControlLookup(input: {
+  controlId?: string;
+  reference?: string;
+  frameworkId?: string;
+}): Control | undefined {
+  if (input.controlId) {
+    const byId = getControlById(input.controlId);
+    if (byId) return byId;
+  }
+  if (input.reference?.trim()) {
+    return getControlByReference(input.reference, input.frameworkId);
+  }
+  return undefined;
 }
 
 export function getAllControlsForActivatedFrameworks(frameworkIds: string[]): Control[] {

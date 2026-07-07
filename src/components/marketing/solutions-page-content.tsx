@@ -1,8 +1,8 @@
-import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { SolutionsPageHub } from '@/components/marketing/solutions-page-hub';
+import { MarketingPageLink } from '@/components/marketing/marketing-page-link';
 import { ScrutPrimaryButton } from '@/components/marketing/marketing-ui';
-import { MARKETING_SOLUTIONS } from '@/lib/data/marketing-resources';
+import { MARKETING_SOLUTIONS, solutionPageHref } from '@/lib/data/marketing-solutions';
 import { ComplAIBrandLink } from '@/components/marketing/complai-brand-link';
 
 export function SolutionsPageContent() {
@@ -28,23 +28,23 @@ export function SolutionsPageContent() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-6 sm:grid-cols-2">
             {MARKETING_SOLUTIONS.map((solution) => (
-              <Link
+              <article
                 key={solution.id}
                 id={solution.id}
-                href={`#${solution.id}`}
-                className="group flex flex-col scroll-mt-24 rounded-2xl border border-white/10 bg-scrut-navy-light/70 p-6 shadow-sm transition-all hover:border-scrut-teal/30 hover:shadow-md sm:p-8"
+                className="group flex scroll-mt-24 flex-col rounded-2xl border border-white/10 bg-scrut-navy-light/70 p-6 shadow-sm transition-all hover:border-scrut-teal/30 hover:shadow-md sm:p-8"
               >
-                <h2 className="text-xl font-bold text-zinc-100 group-hover:text-scrut-blue">
-                  {solution.title}
-                </h2>
+                <h2 className="text-xl font-bold text-zinc-100">{solution.title}</h2>
                 <p className="mt-3 flex-1 text-sm leading-relaxed text-zinc-400">
                   {solution.description}
                 </p>
-                <span className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-zinc-100">
+                <MarketingPageLink
+                  href={solutionPageHref(solution.id)}
+                  className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-scrut-teal transition-colors hover:text-scrut-blue"
+                >
                   Learn more
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </Link>
+                </MarketingPageLink>
+              </article>
             ))}
           </div>
 

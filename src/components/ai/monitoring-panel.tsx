@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Loader2, Play, Cloud, CheckCircle2, XCircle, AlertTriangle, MinusCircle } from 'lucide-react';
+import { ControlReference } from '@/components/controls/control-reference';
 import { cn } from '@/lib/utils';
 
 interface MonitorConfig {
@@ -198,12 +199,9 @@ function ProviderCard({
                     <p className="font-medium text-slate-900">{r.checkName}</p>
                     <p className="mt-0.5 text-slate-600">{r.message}</p>
                     {r.controlId && (
-                      <Link
-                        href={`/controls/${r.controlId}`}
-                        className="mt-1 inline-block text-xs text-brand-600 hover:underline"
-                      >
-                        Control: {r.controlId}
-                      </Link>
+                      <div className="mt-1">
+                        <ControlReference controlId={r.controlId} className="text-xs" />
+                      </div>
                     )}
                     {r.status === 'fail' && r.remediation && (
                       <p className="mt-1 text-xs text-slate-500">Fix: {r.remediation}</p>

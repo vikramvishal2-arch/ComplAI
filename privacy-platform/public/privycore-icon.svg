@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="PrivyCore">
+  <defs>
+    <linearGradient id="pc-grad" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#a78bfa"/>
+      <stop offset="0.55" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#5b21b6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#pc-grad)"/>
+  <path d="M32 14c-7.2 0-13 5.8-13 13v4h4v-4c0-5 4-9 9-9s9 4 9 9v2c-5.5 1.2-9.5 6-9.5 11.5V44h4v-2.5c0-3.6 2.8-6.6 6.4-7.1.4 1 .6 2 .6 3.1V44h4v-4.5c0-5.5-4-10.3-9.5-11.5v-2c0-7.2-5.8-13-13-13z" fill="white" opacity="0.95"/>
+  <circle cx="32" cy="48" r="3" fill="white"/>
+</svg>

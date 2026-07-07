@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { INTEGRATION_HELP_BASE_URL } from '@/lib/brand';
 import { ComplAIBrandLink } from '@/components/marketing/complai-brand-link';
 import {
   INTEGRATION_DOMAINS,
@@ -40,24 +39,24 @@ export function IntegrationsPreviewSection() {
           </p>
         </div>
 
-        <div className="mt-10 flex flex-wrap justify-center gap-2">
-          {INTEGRATION_DOMAINS.map((domain) => (
-            <span
-              key={domain.id}
-              className="rounded-full bg-scrut-navy-light px-4 py-1.5 text-sm font-medium text-zinc-100 ring-1 ring-white/10"
-            >
-              {domain.label}
-            </span>
-          ))}
+        <div className="marketing-tab-scroll -mx-4 mt-10 touch-scroll-x overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+          <div className="flex w-max min-w-full gap-2 lg:w-auto lg:flex-wrap lg:justify-center">
+            {INTEGRATION_DOMAINS.map((domain) => (
+              <span
+                key={domain.id}
+                className="shrink-0 rounded-full bg-scrut-navy-light px-4 py-2 text-sm font-medium text-zinc-100 ring-1 ring-white/10 min-h-[44px] inline-flex items-center"
+              >
+                {domain.label}
+              </span>
+            ))}
+          </div>
         </div>
 
         <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {featuredTools.map((tool) => (
             <Link
               key={tool.id}
-              href={tool.helpGuideUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={tool.helpGuidePath}
               className="flex items-center justify-center rounded-xl border border-white/10 bg-scrut-navy-light/80 px-3 py-4 text-center text-xs font-semibold text-zinc-100 transition-all hover:border-scrut-teal/40 hover:shadow-sm sm:text-sm"
             >
               {tool.name}
@@ -70,11 +69,11 @@ export function IntegrationsPreviewSection() {
         </p>
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <ScrutPrimaryButton href={INTEGRATION_HELP_BASE_URL}>
+          <ScrutPrimaryButton href="/help">
             Explore all integrations
             <ArrowRight className="h-4 w-4" />
           </ScrutPrimaryButton>
-          <ScrutOutlineButton href={INTEGRATION_HELP_BASE_URL}>Setup guides</ScrutOutlineButton>
+          <ScrutOutlineButton href="/help">Setup guides</ScrutOutlineButton>
         </div>
       </div>
     </section>

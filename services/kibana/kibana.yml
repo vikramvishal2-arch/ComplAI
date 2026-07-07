@@ -1,0 +1,10 @@
+server.host: "0.0.0.0"
+server.name: grc-kibana
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+
+xpack.encryptedSavedObjects.encryptionKey: "grc-platform-local-kibana-encryption-key-32"
+
+# Avoid redirect loops when embedding from the Next.js app
+csp.strict: false
+csp.warnLegacyBrowsers: false
+csp.frameAncestors: ["'self'", "http://localhost:3000", "http://127.0.0.1:3000"]

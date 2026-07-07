@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f8f7fc;
+  --foreground: #1a1730;
+  --card: #ffffff;
+  --primary: #7c3aed;
+  --primary-foreground: #ffffff;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --app-sidebar: #0f0d1a;
+  --app-sidebar-border: rgba(255, 255, 255, 0.08);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  min-height: 100dvh;
+}
+
+@layer components {
+  .app-sidebar {
+    @apply bg-surface-navy text-zinc-300;
+  }
+
+  .app-sidebar-nav-active {
+    @apply bg-brand-500/20 text-brand-300;
+  }
+
+  .app-sidebar-nav-idle {
+    @apply text-zinc-400 hover:bg-white/5 hover:text-zinc-100;
+  }
+
+  .app-primary-btn {
+    @apply bg-brand-600 text-white hover:bg-brand-700;
+  }
+
+  .privacy-card {
+    @apply rounded-xl border border-zinc-200 bg-white p-5 shadow-sm;
+  }
+}

@@ -13,6 +13,7 @@ import {
   type ComplianceStatus,
 } from '@/lib/types';
 import { Download, Search } from 'lucide-react';
+import { ControlReference } from '@/components/controls/control-reference';
 
 interface ControlRow extends Control {
   compliance: ControlCompliance;
@@ -207,13 +208,14 @@ export default function ControlsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 font-mono text-xs">
-                      <Link
-                        href={`/controls/${control.id}`}
-                        className="text-brand-600 hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {control.reference}
-                      </Link>
+                      <ControlReference
+                        controlId={control.id}
+                        reference={control.reference}
+                        frameworkId={control.frameworkId}
+                        title={control.title}
+                        description={control.description}
+                        stopPropagation
+                      />
                     </td>
                     <td className="px-6 py-4 font-medium text-slate-900 max-w-xs truncate">
                       <Link

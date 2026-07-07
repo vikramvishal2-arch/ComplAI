@@ -1,17 +1,25 @@
 import 'server-only';
 import { completeChat } from '../ai/client';
 import { getAiConfig } from '../ai/config';
+import { getPredefinedVendorAssessmentQuestions } from '../data/vendor-assessment-controls';
 
 export interface VendorQuestion {
   id: string;
   category: string;
+  checklistLabel?: string;
   question: string;
   weight: number;
+  controlIds?: string[];
+  controlRefs?: string[];
+  evidenceGuidance?: string;
 }
+
+export type ChecklistResponseStatus = 'yes' | 'partial' | 'no' | 'na';
 
 export interface VendorResponse {
   questionId: string;
   answer: string;
+  status?: ChecklistResponseStatus;
 }
 
 export interface VendorAssessmentResult {
@@ -92,7 +100,17 @@ export async function generateVendorQuestions(vendor: {
   description: string;
   tier: string;
   dataAccess: string;
+  templateId?: string;
 }): Promise<VendorQuestion[]> {
+  const predefined = getPredefinedVendorAssessmentQuestions({
+    tier: vendor.tier,
+    dataAccess: vendor.dataAccess,
+    templateId: vendor.templateId,
+  });
+  if (predefined.length > 0) {
+    return predefined;
+  }
+
   const ai = getAiConfig();
   if (!ai.configured) {
     return FALLBACK_QUESTIONS;
@@ -132,23 +150,66 @@ export async function scoreVendorAssessment(input: {
 }): Promise<VendorAssessmentResult> {
   const ai = getAiConfig();
 
-  const responseMap = Object.fromEntries(input.responses.map((r) => [r.questionId, r.answer]));
+  const responseById = Object.fromEntries(input.responses.map((r) => [r.questionId, r]));
   const qaBlock = input.questions
-    .map((q) => `Q (${q.category}, weight ${q.weight}): ${q.question}\nA: ${responseMap[q.id] || '(no answer)'}`)
+    .map((q) => {
+      const r = responseById[q.id];
+      const status = r?.status ?? 'pending';
+      const notes = r?.answer?.trim() || '(no notes)';
+      return `Q (${q.category}, weight ${q.weight}): ${q.question}\nStatus: ${status}\nNotes: ${notes}`;
+    })
     .join('\n\n');
 
   if (!ai.configured) {
-    const answered = input.responses.filter((r) => r.answer.trim().length > 10).length;
-    const ratio = answered / Math.max(input.questions.length, 1);
+    const gaps: VendorAssessmentResult['gaps'] = [];
+    let weightedScore = 0;
+    let totalWeight = 0;
+
+    for (const q of input.questions) {
+      const r = responseById[q.id];
+      const status = r?.status;
+      const weight = q.weight;
+
+      if (status === 'na') continue;
+
+      totalWeight += weight;
+      if (status === 'yes') {
+        weightedScore += weight;
+      } else if (status === 'partial') {
+        weightedScore += weight * 0.5;
+      }
+
+      if (!status || status === 'no' || status === 'partial') {
+        const controlLabel = q.controlRefs?.length ? q.controlRefs.join(', ') : q.category;
+        const label = q.checklistLabel ?? q.question;
+        gaps.push({
+          area: `${label} (${controlLabel})`,
+          severity:
+            status === 'no' || !status
+              ? q.weight >= 9
+                ? 'high'
+                : q.weight >= 7
+                  ? 'medium'
+                  : 'low'
+              : 'medium',
+          recommendation:
+            status === 'partial'
+              ? `Remediate partial compliance: ${q.evidenceGuidance ?? q.question}`
+              : `Address gap — ${q.evidenceGuidance ?? q.question}`,
+        });
+      }
+    }
+
+    const ratio = totalWeight > 0 ? weightedScore / totalWeight : 0;
     const base = Math.round(100 - input.vendor.inherentRiskScore * 0.3);
     const score = Math.max(0, Math.min(100, Math.round(base * ratio)));
+    const answered = input.responses.filter((r) => r.status && r.status !== 'na').length;
+    const applicable = input.questions.filter((q) => responseById[q.id]?.status !== 'na').length;
+
     return {
       score,
-      summary: `Rule-based score (${answered}/${input.questions.length} substantive answers). Enable AI for deeper analysis.`,
-      gaps:
-        ratio < 0.7
-          ? [{ area: 'Completeness', severity: 'medium', recommendation: 'Complete all questionnaire responses.' }]
-          : [],
+      summary: `TPRM checklist score (${answered}/${applicable} controls rated). Mapped to ISO 27001 A.5.19–A.5.23 and SOC 2 CC9.x.`,
+      gaps,
     };
   }
 

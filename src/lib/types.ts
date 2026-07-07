@@ -315,7 +315,139 @@ export interface ExecutiveDashboard {
   leadershipAttention: LeadershipAttentionItem[];
   priorityGoGreenActions: string[];
   riskSummary: DashboardRiskSummary;
+  programs?: LeadershipProgramSummaries;
 }
+
+export interface LeadershipGapItem {
+  controlId: string;
+  controlReference: string;
+  title: string;
+  severity: string;
+  message: string;
+}
+
+export interface LeadershipAuditFindingItem {
+  id: string;
+  title: string;
+  severity: string;
+  source: string;
+}
+
+export interface LeadershipProgramSummaries {
+  compliance: {
+    auditReady: number;
+    implementing: number;
+    notStarted: number;
+    overallReadiness: number;
+    totalControls: number;
+  };
+  tprm: {
+    vendorCount: number;
+    monitoredCount: number;
+    averageRating950: number | null;
+    criticalFindings: number;
+    pendingQuestionnaires: number;
+    openRemediations: number;
+  };
+  gaps: {
+    gapsFound: number;
+    critical: number;
+    policyGaps: number;
+    evidenceGaps: number;
+    topGaps: LeadershipGapItem[];
+  };
+  audits: {
+    activeInternalPrograms: number;
+    riskAreasAssessed: number;
+    openFindings: number;
+    externalReadinessReady: number;
+    externalReadinessTotal: number;
+    topFindings: LeadershipAuditFindingItem[];
+  };
+  policies: {
+    total: number;
+    draft: number;
+    inReview: number;
+    approved: number;
+    archived: number;
+  };
+  monitoring: {
+    awsConfigured: boolean;
+    azureConfigured: boolean;
+    awsPassed: number | null;
+    awsFailed: number | null;
+    azurePassed: number | null;
+    azureFailed: number | null;
+  };
+}
+
+export type ProgramType =
+  | 'internal_audit'
+  | 'external_audit'
+  | 'risk_assessment'
+  | 'vendor_assessment'
+  | 'risk_register_update';
+
+export type CycleStatus = 'upcoming' | 'in_progress' | 'completed' | 'overdue';
+
+export interface ProgramCycle {
+  id: string;
+  programType: ProgramType;
+  title: string;
+  description: string;
+  periodStart: string;
+  periodEnd: string;
+  dueDate: string;
+  status: CycleStatus;
+  owner: string;
+  lastCompletedAt: string | null;
+  completedAt: string | null;
+  reminderDays: number[];
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CycleReminder {
+  id: string;
+  cycleId: string;
+  channel: 'in_app' | 'email';
+  reminderType: string;
+  recipientEmail: string;
+  sentAt: string;
+  acknowledged: boolean;
+  acknowledgedAt: string | null;
+}
+
+export interface CycleWithReminders extends ProgramCycle {
+  reminders: CycleReminder[];
+  daysUntilDue: number;
+  isOverdue: boolean;
+  activeReminderCount: number;
+}
+
+export const PROGRAM_TYPE_LABELS: Record<ProgramType, string> = {
+  internal_audit: 'Annual Internal Audit',
+  external_audit: 'External Audit',
+  risk_assessment: 'Risk Assessment',
+  vendor_assessment: 'Vendor Annual Assessment',
+  risk_register_update: 'Risk Register Update',
+};
+
+export const PROGRAM_TYPE_ICONS: Record<ProgramType, string> = {
+  internal_audit: 'ClipboardCheck',
+  external_audit: 'ShieldCheck',
+  risk_assessment: 'Target',
+  vendor_assessment: 'Building2',
+  risk_register_update: 'ShieldAlert',
+};
+
+export const CYCLE_STATUS_LABELS: Record<CycleStatus, string> = {
+  upcoming: 'Upcoming',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+  overdue: 'Overdue',
+};
 
 export const COMPLIANCE_STATUS_LABELS: Record<ComplianceStatus, string> = {
   not_started: 'Not Started',
@@ -354,7 +486,7 @@ export const DOMAIN_LABELS: Record<ControlDomain, string> = {
   network_security: 'Network Security',
   physical_security: 'Physical Security',
   risk_management: 'Risk Management',
-  vendor_management: 'Vendor Management',
+  vendor_management: 'TPRM',
   vulnerability_management: 'Vulnerability Management',
   other: 'Other',
 };

@@ -1,0 +1,225 @@
+{
+  "generatedAt": "2026-07-07T08:47:36.544Z",
+  "scenes": [
+    {
+      "moduleId": "sl-sample-cyber-basics",
+      "sceneId": "intro",
+      "narration": "Hey, thanks for taking a few minutes for this. I'm not here to drown you in tech jargon. Honestly, four everyday habits stop most attacks cold. We'll walk through them together — quick and practical."
+    },
+    {
+      "moduleId": "sl-sample-cyber-basics",
+      "sceneId": "phishing",
+      "narration": "First up — phishing. You know that message that makes your stomach drop? 'Urgent, verify your account now.' That's the one. Pause. Don't tap the link. Report it to security, then delete it. That single pause protects your whole team."
+    },
+    {
+      "moduleId": "sl-sample-cyber-basics",
+      "sceneId": "passwords-mfa",
+      "narration": "Passwords next. Use long, unique ones — think sixteen characters or more — and let your company password manager remember them for you. Then turn on multi-factor auth wherever you can. Even if someone steals a password, MFA still stops them at the door."
+    },
+    {
+      "moduleId": "sl-sample-cyber-basics",
+      "sceneId": "updates",
+      "narration": "Last one — updates. I know, they're annoying. But those patches close holes attackers actually use. Turn on automatic updates when you can. Small habit, big payoff. Thanks for listening — stay safe out there."
+    },
+    {
+      "moduleId": "sl-phishing-basics",
+      "sceneId": "intro",
+      "narration": "So, phishing. Still the number one way bad actors get in — and it's not because people are careless. These emails look real. Your bank, your boss, IT support. You've got seconds to decide. Let's make sure you trust your gut."
+    },
+    {
+      "moduleId": "sl-phishing-basics",
+      "sceneId": "red-flags",
+      "narration": "What do I look for? Urgency — 'act now or lose access.' Senders that are almost right but not quite. Links that look fine until you hover. Attachments you weren't expecting. If it feels weird, it probably is. Trust that."
+    },
+    {
+      "moduleId": "sl-phishing-basics",
+      "sceneId": "verify",
+      "narration": "Someone wants a wire transfer, a password reset, a data export — in email or chat? Don't confirm in the same thread. Call a number you already trust. Your company directory, not the number in the message."
+    },
+    {
+      "moduleId": "sl-phishing-basics",
+      "sceneId": "report",
+      "narration": "When you catch one, hit Report Phishing — or forward to your security alias. That teaches the filters. Your coworkers might never even see the same attack. Report it, delete it, carry on. You just helped everyone."
+    },
+    {
+      "moduleId": "sl-mfa-passwords",
+      "sceneId": "intro",
+      "narration": "Think of your work password like your house key. Reuse it everywhere, or pick something easy — and one leak from some random shopping site can unlock your work email too. It happens every day."
+    },
+    {
+      "moduleId": "sl-mfa-passwords",
+      "sceneId": "manager",
+      "narration": "Use the password manager your company gave you. Let it generate long, random passwords — you don't have to memorize them. And please don't stash production passwords in your personal browser on a home laptop."
+    },
+    {
+      "moduleId": "sl-mfa-passwords",
+      "sceneId": "mfa",
+      "narration": "Turn on MFA — that extra prompt on your phone. Only approve when you just tried to log in. Got a push out of nowhere? Deny it and tell security. That's someone testing your account."
+    },
+    {
+      "moduleId": "sl-mfa-passwords",
+      "sceneId": "close",
+      "narration": "Little things matter. Lock your screen when you grab coffee. Don't paste passwords in chat. If security asks you to reset, do it — they're not trying to annoy you, they're closing a risk."
+    },
+    {
+      "moduleId": "sl-data-handling",
+      "sceneId": "classify",
+      "narration": "Before you hit send on a file, ask yourself — is this public, internal, confidential, or restricted? Not sure? Treat it as confidential until someone who owns the data tells you otherwise."
+    },
+    {
+      "moduleId": "sl-data-handling",
+      "sceneId": "pii",
+      "narration": "Customer names, employee records, payment info — that's regulated stuff. GDPR, DPDP, contracts — pick up only what you need, keep it only as long as policy says, then get rid of it properly."
+    },
+    {
+      "moduleId": "sl-data-handling",
+      "sceneId": "tools",
+      "narration": "Share sensitive files through company drives and approved transfer tools. Personal Gmail, random WhatsApp groups — that's how data walks out the door by accident. When DLP warns you, take it seriously."
+    },
+    {
+      "moduleId": "sl-data-handling",
+      "sceneId": "incident",
+      "narration": "Email the wrong person? Laptop left in a cab? Don't panic-hide it. Tell security within the hour. Early heads-up means we can contain it before it becomes a headline."
+    },
+    {
+      "moduleId": "sl-remote-work",
+      "sceneId": "intro",
+      "narration": "Working from home means your living room is part of the company network now. Shared Wi‑Fi, family tablets, a webcam pointed at your kitchen — attackers know that, and they'll use it."
+    },
+    {
+      "moduleId": "sl-remote-work",
+      "sceneId": "vpn",
+      "narration": "VPN on before you touch internal apps. Use the laptop IT enrolled — encrypted disk, patches managed. Your personal PC might be fine for Netflix, but not for production data."
+    },
+    {
+      "moduleId": "sl-remote-work",
+      "sceneId": "calls",
+      "narration": "On video calls, blur the background if you can. Mute when you're not talking. And before you share your screen — glance at what's open. Dashboards and tickets shouldn't flash in front of guests."
+    },
+    {
+      "moduleId": "sl-remote-work",
+      "sceneId": "close",
+      "narration": "Coffee shop Wi‑Fi? Use your phone hotspot or VPN. Shoulder surfers are real. Traveling — laptop in the hotel safe beats leaving it on the desk."
+    },
+    {
+      "moduleId": "sl-social-engineering",
+      "sceneId": "intro",
+      "narration": "Social engineering isn't fancy hacking — it's someone playing on trust. Fake IT, fake exec, fake auditor. They rush you so you skip the checks. Slow down. That's your superpower."
+    },
+    {
+      "moduleId": "sl-social-engineering",
+      "sceneId": "channels",
+      "narration": "It shows up everywhere. A caller asking for your MFA code. A text with a login link. Someone tailgating through the door with a smile and a fake badge. Same playbook — pressure and pretend trust."
+    },
+    {
+      "moduleId": "sl-social-engineering",
+      "sceneId": "verify",
+      "narration": "Wire transfer, gift cards, 'reset my password real quick' — never use the contact details in the request. Call back on a number you look up yourself, or walk over and confirm face to face."
+    },
+    {
+      "moduleId": "sl-social-engineering",
+      "sceneId": "close",
+      "narration": "You're never in trouble for double-checking. Security would rather get ten false alarms than miss one real scam. Report weird interactions — you're protecting everyone, including yourself."
+    },
+    {
+      "moduleId": "sl-incident-reporting",
+      "sceneId": "what",
+      "narration": "An incident is anything that puts data or systems at risk — malware, a lost phone, someone in an account they shouldn't be, a weird email you already clicked. If you're wondering 'is this bad?' — treat it as yes."
+    },
+    {
+      "moduleId": "sl-incident-reporting",
+      "sceneId": "when",
+      "narration": "Active attack happening now? Report immediately. Think data might have leaked? Within the hour. Still unsure? Report anyway. We'd rather help early than clean up a mess later."
+    },
+    {
+      "moduleId": "sl-incident-reporting",
+      "sceneId": "how",
+      "narration": "Use the security hotline, the Slack channel, or the incident form in ComplAI. What happened, when, what systems, what you've already done — that's enough to get the right people moving."
+    },
+    {
+      "moduleId": "sl-incident-reporting",
+      "sceneId": "dont",
+      "narration": "Don't power off machines unless they tell you to. Don't delete emails to 'clean up.' And please don't post about it in a public chat. Let the incident team lead — they're trained for this."
+    },
+    {
+      "moduleId": "sl-clean-desk",
+      "sceneId": "intro",
+      "narration": "We talk a lot about firewalls, but a printed customer list on a desk or an unlocked screen in the break room — that's a breach too. Physical security still shows up on audits for a reason."
+    },
+    {
+      "moduleId": "sl-clean-desk",
+      "sceneId": "desk",
+      "narration": "Lock confidential papers away. Shred what you're done with — cross-cut, not the little strip shredder. Whiteboard full of customer names? Wipe it before you leave the room."
+    },
+    {
+      "moduleId": "sl-clean-desk",
+      "sceneId": "access",
+      "narration": "Wear your badge where people can see it. Walk visitors in — don't let strangers wander. Someone behind you without a badge? A polite 'can I help you find someone?' is exactly what we want."
+    },
+    {
+      "moduleId": "sl-clean-desk",
+      "sceneId": "close",
+      "narration": "Leaving your desk — Win+L to lock, dock the laptop, badge in your bag not dangling on your lanyard. Takes ten seconds, saves a world of hurt."
+    },
+    {
+      "moduleId": "sl-mobile-security",
+      "sceneId": "intro",
+      "narration": "Your phone has your email, your MFA app, Slack with sensitive threads. Lose the phone or install the wrong app, and it's often game over for your accounts."
+    },
+    {
+      "moduleId": "sl-mobile-security",
+      "sceneId": "mdm",
+      "narration": "Enroll any device that touches company data in MDM — that's mobile device management. It keeps encryption on, patches current, and lets us wipe remotely if the phone goes missing."
+    },
+    {
+      "moduleId": "sl-mobile-security",
+      "sceneId": "apps",
+      "narration": "Work apps from the company catalog or official stores only. Sideloaded APKs, jailbroken phones — that's a hard no for company email. Check permissions when an app asks for more than it needs."
+    },
+    {
+      "moduleId": "sl-mobile-security",
+      "sceneId": "lost",
+      "narration": "Phone gone? Tell security right away — even if you think it's powered off. We'll wipe it and rotate sessions so your accounts stay yours. Waiting until tomorrow is the expensive option."
+    },
+    {
+      "moduleId": "sl-secure-coding",
+      "sceneId": "intro",
+      "narration": "As engineers, you're on the front line. Most production incidents I've seen trace back to missing validation, a secret in git, or a dependency nobody updated. Security isn't someone else's ticket."
+    },
+    {
+      "moduleId": "sl-secure-coding",
+      "sceneId": "secrets",
+      "narration": "API keys in code — we've all seen it, don't be that commit. Vault and environment injection exist for a reason. Someone leaves, a repo goes public — rotate everything that could've leaked."
+    },
+    {
+      "moduleId": "sl-secure-coding",
+      "sceneId": "scan",
+      "narration": "Let the pipeline run SAST, dependency scans, image checks. Critical finding on your merge request? Fix it before merge. Waivers need security sign-off — not a silent ignore."
+    },
+    {
+      "moduleId": "sl-secure-coding",
+      "sceneId": "deploy",
+      "narration": "Feature flags, canary deploys, immutable infra — use them. And check authorization on every API endpoint, not just the login page. Attackers script the rest."
+    },
+    {
+      "moduleId": "sl-leadership-governance",
+      "sceneId": "intro",
+      "narration": "Auditors aren't just looking at firewalls — they want to see leadership set expectations, fund controls, and hold people accountable. Your visible support matters more than another policy PDF."
+    },
+    {
+      "moduleId": "sl-leadership-governance",
+      "sceneId": "metrics",
+      "narration": "Quarterly, look at readiness scores, open critical findings, training completion, vendor risk. When you decide to accept a risk, document it in ComplAI — owner, date, rationale. Future you will thank present you."
+    },
+    {
+      "moduleId": "sl-leadership-governance",
+      "sceneId": "incidents",
+      "narration": "Have comms templates and regulatory paths agreed before the bad day. On a severity-one, executives join the bridge and sign off on external statements. Practice beats improvisation."
+    },
+    {
+      "moduleId": "sl-leadership-governance",
+      "sceneId": "close",
+      "narration": "Complete your own training on time. Attest to policies. When a team reports phishing instead of clicking — say thank you publicly. Culture is what leaders reward."
+    }
+  ]
+}

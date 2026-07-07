@@ -1,6 +1,14 @@
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { MarketingSectionSkeleton } from '@/components/marketing/marketing-section-skeleton';
 
-import { OrganizationRiskProfile } from '@/components/marketing/organization-risk-profile';
+const OrganizationRiskProfile = dynamic(
+  () =>
+    import('@/components/marketing/organization-risk-profile').then(
+      (m) => m.OrganizationRiskProfile
+    ),
+  { loading: () => <MarketingSectionSkeleton minHeight={420} className="mx-auto max-w-5xl" /> }
+);
 
 
 

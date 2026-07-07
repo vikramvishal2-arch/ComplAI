@@ -235,6 +235,60 @@ export const FRAMEWORK_GUIDES: FrameworkGuide[] = [
       'Unified control mapping to reduce duplicate evidence',
     ],
   },
+  {
+    slug: 'iso-22301',
+    frameworkId: 'iso22301',
+    title: 'ISO 22301 Business Continuity Hub',
+    shortName: 'ISO 22301',
+    tagline: 'Build a certifiable business continuity management system',
+    overview:
+      'ISO 22301:2019 is the international standard for Business Continuity Management Systems (BCMS). It specifies requirements to plan, establish, implement, operate, monitor, review, maintain, and continually improve resilience — so organizations can respond to and recover from disruptive incidents.',
+    whoNeedsIt:
+      'Organizations that need formal BCMS certification, must demonstrate operational resilience to customers and regulators, or operate in sectors where downtime has material business impact (financial services, healthcare, critical infrastructure, SaaS).',
+    keyTopics: [
+      'Business continuity policy and governance (Clause 5)',
+      'Business impact analysis (BIA) and risk assessment',
+      'Business continuity strategies and solutions',
+      'BC plans, incident response, and recovery procedures',
+      'Exercises, testing, and continual improvement',
+      'Certification audit (Stage 1 and Stage 2)',
+    ],
+    auditTimeline:
+      'Most organizations require 4–9 months to implement a BCMS and pass certification, depending on scope complexity, existing DR/BCP maturity, and exercise cadence.',
+    howComplAIHelps: [
+      'ISO 22301-mapped BCMS controls with implementation guidance',
+      'Link BC plans and exercises to control evidence',
+      'Risk register integration for continuity-related risks',
+      'Executive dashboards for BCMS readiness and open gaps',
+    ],
+  },
+  {
+    slug: 'iso-31000',
+    frameworkId: 'iso31000',
+    title: 'ISO 31000 Risk Management Hub',
+    shortName: 'ISO 31000',
+    tagline: 'Enterprise risk management principles and process',
+    overview:
+      'ISO 31000:2018 provides guidelines for establishing a risk management framework and process. Unlike certifiable management system standards, it defines principles and a structured approach organizations can adopt to integrate risk-informed decision-making across governance, strategy, operations, and compliance.',
+    whoNeedsIt:
+      'Risk officers, CISOs, and leadership teams building or maturing enterprise risk management (ERM) — especially when aligning operational, cyber, vendor, and strategic risks under one framework alongside ISO 27001 or SOC 2 programs.',
+    keyTopics: [
+      'Risk management principles (integrated, structured, customized)',
+      'Framework design: mandate, governance, and accountability',
+      'Risk assessment: identification, analysis, and evaluation',
+      'Risk treatment, monitoring, review, and communication',
+      'Recording and reporting risk information',
+      'Continual improvement of the risk management process',
+    ],
+    auditTimeline:
+      'ISO 31000 is a guideline standard — not certifiable. Organizations typically adopt it over 2–6 months as part of ERM program design, often in parallel with ISO 27001 risk assessment (Clause 6.1) or board-level risk reporting.',
+    howComplAIHelps: [
+      'ISO 31000-mapped risk management controls and policy templates',
+      'Risk register with treatment plans linked to mitigating controls',
+      'Gap analysis against risk framework requirements',
+      'Leadership dashboards combining risk posture and control readiness',
+    ],
+  },
 ];
 
 export function getFrameworkGuide(slug: string): FrameworkGuide | undefined {
@@ -245,61 +299,10 @@ export function getAllFrameworkGuideSlugs(): string[] {
   return FRAMEWORK_GUIDES.map((g) => g.slug);
 }
 
-export const MARKETING_SOLUTIONS = [
-  {
-    id: 'compliance',
-    title: 'Simplify compliance',
-    description:
-      'Get and stay compliant across SOC 2, ISO 27001, GDPR, HIPAA, PCI DSS, and regional frameworks — with pre-mapped controls and clear implementation guidance.',
-    href: '/solutions#compliance',
-  },
-  {
-    id: 'audits',
-    title: 'Streamline audits',
-    description:
-      'Track evidence, policy approvals, and control status in one place. Export auditor-ready Word documents and breeze through internal and external reviews.',
-    href: '/solutions#audits',
-  },
-  {
-    id: 'policies',
-    title: 'Policy & ISMS management',
-    description:
-      '100+ ISO 27001 Annex A templates, multi-stage approval workflows, My Approvals inbox, and in-app editing with Word export.',
-    href: '/solutions#policies',
-  },
-  {
-    id: 'risk',
-    title: 'Monitor cyber risk',
-    description:
-      'Maintain a living risk register with scoring and treatment status, linked to controls and surfaced on the leadership dashboard.',
-    href: '/solutions#risk',
-  },
-  {
-    id: 'vendors',
-    title: 'Assess third-party risk',
-    description:
-      'Track vendor assessments, due diligence status, and compliance posture alongside your internal control program.',
-    href: '/solutions#vendors',
-  },
-  {
-    id: 'integrations',
-    title: 'Integrate your tech stack',
-    description:
-      'Connect HRMS, IAM, SIEM, VAPT, and SSO tools with setup guides for automated evidence and continuous monitoring.',
-    href: '/platform#integrations',
-  },
-  {
-    id: 'intelligence',
-    title: 'AI-powered GRC',
-    description:
-      'Gap analysis, security questionnaires, remediation guidance, and SecOps intelligence — embedded in the platform.',
-    href: '/solutions#intelligence',
-  },
-  {
-    id: 'dashboard',
-    title: 'Leadership visibility',
-    description:
-      'CISO and CIO dashboard with RAG status by domain, framework readiness, risk summary, and prioritized actions.',
-    href: '/solutions#dashboard',
-  },
-];
+export {
+  MARKETING_SOLUTIONS,
+  getAllSolutionSlugs,
+  getSolutionGuide,
+  solutionPageHref,
+} from '@/lib/data/marketing-solutions';
+export type { SolutionGuide } from '@/lib/data/marketing-solutions';

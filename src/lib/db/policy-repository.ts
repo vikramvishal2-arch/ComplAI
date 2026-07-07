@@ -31,9 +31,103 @@ import {
   updateMemberApprovalStep,
   type ApprovalInboxItem,
 } from '../policies/approval-inbox';
+import {
+  applyRecommendationToContent,
+  dismissRecommendation,
+} from '../policies/recommendation-apply';
+import {
+  extractPolicyTextFromBuffer,
+  extractPolicyTextFromFile,
+  extractPolicyTextFromUpload,
+} from '../policies/extract-policy-text';
+import { runPolicyStandardsReview } from '../policies/policy-standards-review';
+import {
+  parseStandardsReview,
+  type PolicyStandardsReview,
+} from '../policies/policy-review-types';
 
 function toJsonMatrix(matrix: PolicyApprovalStep[]): Prisma.InputJsonValue {
   return matrix as unknown as Prisma.InputJsonValue;
+}
+
+function toJsonReview(review: PolicyStandardsReview): Prisma.InputJsonValue {
+  return review as unknown as Prisma.InputJsonValue;
+}
+
+function isStandardsReviewClientError(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientValidationError &&
+    String(error.message).includes('standardsReview')
+  );
+}
+
+/** Persist review JSON — raw SQL fallback when Prisma client is stale (missing standardsReview field). */
+async function persistStandardsReview(id: string, review: PolicyStandardsReview): Promise<void> {
+  try {
+    await prisma.policy.update({
+      where: { id },
+      data: { standardsReview: toJsonReview(review) },
+    });
+  } catch (error) {
+    if (!isStandardsReviewClientError(error)) throw error;
+    await prisma.$executeRaw`
+      UPDATE policies
+      SET standards_review = ${JSON.stringify(review)}::jsonb, updated_at = NOW()
+      WHERE id = ${id}
+    `;
+  }
+}
+
+async function fetchStandardsReview(id: string): Promise<PolicyStandardsReview | null> {
+  try {
+    const row = await prisma.policy.findFirst({
+      where: { id },
+      select: { standardsReview: true },
+    });
+    if (row) return parseStandardsReview(row.standardsReview);
+  } catch (error) {
+    if (!isStandardsReviewClientError(error)) throw error;
+  }
+
+  const rows = await prisma.$queryRaw<Array<{ standards_review: unknown }>>`
+    SELECT standards_review FROM policies WHERE id = ${id} LIMIT 1
+  `;
+  return parseStandardsReview(rows[0]?.standards_review);
+}
+
+async function attachStandardsReview<T extends { id: string; standardsReview?: unknown }>(
+  policy: T
+): Promise<T & { standardsReview: unknown }> {
+  if (policy.standardsReview != null) return policy as T & { standardsReview: unknown };
+  const review = await fetchStandardsReview(policy.id);
+  return { ...policy, standardsReview: review };
+}
+
+function parseLinkedControlIds(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map(String);
+}
+
+function policyToReviewInput(row: {
+  title: string;
+  content: string;
+  documentType: string;
+  templateId: string | null;
+  isoReference: string;
+  owner: string;
+  reviewDate: Date | null;
+  linkedControlIds: unknown;
+}): Parameters<typeof runPolicyStandardsReview>[0] {
+  return {
+    title: row.title,
+    content: row.content,
+    documentType: row.documentType,
+    templateId: row.templateId,
+    isoReference: row.isoReference,
+    owner: row.owner,
+    reviewDate: row.reviewDate,
+    linkedControlIds: parseLinkedControlIds(row.linkedControlIds),
+  };
 }
 
 function toPolicyDocumentContext(row: {
@@ -142,11 +236,14 @@ export async function getPolicyById(id: string) {
 export async function getPolicyWithControlRoadmap(id: string) {
   const policy = await getPolicyById(id);
   if (!policy) return null;
-  const matrix = parseApprovalMatrix(policy.approvalMatrix);
-  const doc = toPolicyDocumentContext(policy);
-  const roadmap = await getPolicyControlRoadmap(toSyncInput({ ...policy, approvalMatrix: policy.approvalMatrix }));
+  const withReview = await attachStandardsReview(policy);
+  const matrix = parseApprovalMatrix(withReview.approvalMatrix);
+  const doc = toPolicyDocumentContext(withReview);
+  const roadmap = await getPolicyControlRoadmap(
+    toSyncInput({ ...withReview, approvalMatrix: withReview.approvalMatrix })
+  );
   return {
-    policy: { ...policy, approvalMatrix: matrix },
+    policy: { ...withReview, approvalMatrix: matrix },
     roadmap,
     approvalProgress: approvalMatrixProgress(matrix, doc),
   };
@@ -456,6 +553,131 @@ export async function submitPolicyAuthorPrepare(
   }
 
   return updatePolicy(policyId, { approvalMatrix: nextMatrix });
+}
+
+export async function extractAndSavePolicyContent(
+  id: string,
+  source:
+    | { storagePath: string; originalFileName: string; mimeType?: string | null }
+    | { buffer: Buffer; originalFileName: string; mimeType?: string | null }
+    | File
+): Promise<string> {
+  const org = await getDefaultOrganization();
+  const existing = await prisma.policy.findFirst({
+    where: { id, organizationId: org.id },
+  });
+  if (!existing) throw new Error('Policy not found');
+
+  const text =
+    source instanceof File
+      ? await extractPolicyTextFromUpload(source)
+      : 'buffer' in source
+        ? await extractPolicyTextFromBuffer(
+            source.buffer,
+            source.originalFileName,
+            source.mimeType
+          )
+        : await extractPolicyTextFromFile(
+            source.storagePath,
+            source.originalFileName,
+            source.mimeType
+          );
+
+  if (text) {
+    let matrix = parseApprovalMatrix(existing.approvalMatrix);
+    matrix = syncAuthorStepFromDocument(matrix, {
+      content: text,
+      storagePath: existing.storagePath,
+      originalFileName: existing.originalFileName,
+    });
+    await prisma.policy.update({
+      where: { id },
+      data: {
+        content: text,
+        approvalMatrix: toJsonMatrix(matrix),
+      },
+    });
+  }
+
+  return text;
+}
+
+export async function runAndSavePolicyStandardsReview(id: string): Promise<PolicyStandardsReview | null> {
+  const policy = await getPolicyById(id);
+  if (!policy) return null;
+
+  const review = runPolicyStandardsReview(policyToReviewInput(policy));
+  await persistStandardsReview(id, review);
+  return review;
+}
+
+export async function getPolicyStandardsReview(id: string): Promise<PolicyStandardsReview | null> {
+  return fetchStandardsReview(id);
+}
+
+export class PolicyReviewActionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PolicyReviewActionError';
+  }
+}
+
+export async function applyPolicyRecommendation(
+  policyId: string,
+  recId: string
+): Promise<{ policy: Awaited<ReturnType<typeof getPolicyById>>; review: PolicyStandardsReview } | null> {
+  const policy = await getPolicyById(policyId);
+  if (!policy) return null;
+
+  const review = await fetchStandardsReview(policyId);
+  if (!review) throw new PolicyReviewActionError('No standards review found');
+
+  const recIndex = review.recommendations.findIndex((r) => r.id === recId);
+  if (recIndex === -1) throw new PolicyReviewActionError('Recommendation not found');
+
+  const rec = review.recommendations[recIndex];
+  const { content, recommendation } = applyRecommendationToContent(policy.content, rec);
+
+  const nextReview: PolicyStandardsReview = {
+    ...review,
+    recommendations: review.recommendations.map((r, i) => (i === recIndex ? recommendation : r)),
+  };
+
+  const updated = await prisma.policy.update({
+    where: { id: policyId },
+    data: { content },
+  });
+  await persistStandardsReview(policyId, nextReview);
+
+  await maybeSyncControls({ ...updated, approvalMatrix: updated.approvalMatrix });
+  const refreshedPolicy = await getPolicyById(policyId);
+  if (!refreshedPolicy) return null;
+  return { policy: refreshedPolicy, review: nextReview };
+}
+
+export async function dismissPolicyRecommendation(
+  policyId: string,
+  recId: string
+): Promise<{ review: PolicyStandardsReview } | null> {
+  const policy = await getPolicyById(policyId);
+  if (!policy) return null;
+
+  const review = await fetchStandardsReview(policyId);
+  if (!review) throw new PolicyReviewActionError('No standards review found');
+
+  const recIndex = review.recommendations.findIndex((r) => r.id === recId);
+  if (recIndex === -1) throw new PolicyReviewActionError('Recommendation not found');
+
+  const nextReview: PolicyStandardsReview = {
+    ...review,
+    recommendations: review.recommendations.map((r, i) =>
+      i === recIndex ? dismissRecommendation(r) : r
+    ),
+  };
+
+  await persistStandardsReview(policyId, nextReview);
+
+  return { review: nextReview };
 }
 
 export async function deletePolicy(id: string) {

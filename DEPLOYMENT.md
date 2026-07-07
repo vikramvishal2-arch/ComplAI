@@ -86,6 +86,8 @@ SSL is automatic on Vercel (usually live within minutes).
 
 Use this if you already have a Linux server (AWS EC2, DigitalOcean, Hostinger VPS, etc.).
 
+**EC2 quick start:** see [deploy/EC2.md](deploy/EC2.md) for step-by-step AWS instructions (`ec2-bootstrap.sh`, `ec2-deploy.sh`, `ec2-update.sh`).
+
 ### Requirements
 
 - Ubuntu 22.04+ (or similar)

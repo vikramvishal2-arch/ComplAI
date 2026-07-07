@@ -18,6 +18,7 @@ import {
   type Control,
 } from '@/lib/types';
 import { calculateRiskScore, riskScoreLabel, isHighOrCriticalScore } from '@/lib/risk/scoring';
+import { ControlReference } from '@/components/controls/control-reference';
 import { formatDateTime, cn } from '@/lib/utils';
 import { ArrowLeft, Save, Trash2, CheckCircle2, ExternalLink } from 'lucide-react';
 
@@ -551,9 +552,13 @@ export default function RiskDetailPage() {
             <h3 className="text-sm font-semibold text-slate-900">Linked control</h3>
             {data.control ? (
               <>
-                <p className="mt-2 font-mono text-sm text-brand-600">{data.control.reference}</p>
-                <p className="mt-1 text-sm font-medium text-slate-900">{data.control.title}</p>
-                <p className="mt-2 text-xs text-slate-500">{data.control.description}</p>
+                <ControlReference
+                  controlId={data.control.id}
+                  reference={data.control.reference}
+                  title={data.control.title}
+                  description={data.control.description}
+                  className="mt-2 text-sm"
+                />
                 <Link
                   href={`/controls/${data.control.id}`}
                   className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:underline"

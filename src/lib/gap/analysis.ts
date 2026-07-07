@@ -4,10 +4,10 @@ import { FRAMEWORKS } from '../data/frameworks';
 import {
   getActivatedFrameworkIds,
   getControlComplianceBatch,
+  getControlIdsWithEvidenceForContext,
   getOpenIssueCountByControlIds,
   getOpenRiskCountByControlIds,
   getOrganizationName,
-  hasControlEvidenceForContext,
 } from '../store';
 import { classifyControlRag, getGoGreenActions } from '../compliance/rag-status';
 import { createDefaultCompliance } from '../store';
@@ -43,10 +43,11 @@ export async function runGapAnalysis(): Promise<GapAnalysisReport> {
   const controls = getControlsForActivated(activatedIds);
   const controlIds = controls.map((c) => c.id);
 
-  const [complianceMap, issueCounts, riskCounts] = await Promise.all([
+  const [complianceMap, issueCounts, riskCounts, evidenceControlIds] = await Promise.all([
     getControlComplianceBatch(controlIds),
     getOpenIssueCountByControlIds(controlIds),
     getOpenRiskCountByControlIds(controlIds),
+    getControlIdsWithEvidenceForContext(controlIds, 'compliance'),
   ]);
 
   const allGaps: ComplianceGap[] = [];
@@ -108,7 +109,7 @@ export async function runGapAnalysis(): Promise<GapAnalysisReport> {
     }
 
     const hasEvidenceNotes = compliance.evidenceNotes.trim().length > 0;
-    const hasUploadedEvidence = await hasControlEvidenceForContext(control.id, 'compliance');
+    const hasUploadedEvidence = evidenceControlIds.has(control.id);
 
     if (
       compliance.status !== 'not_applicable' &&

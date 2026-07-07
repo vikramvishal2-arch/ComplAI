@@ -1,0 +1,143 @@
+import type { MappingProperty } from '@elastic/elasticsearch/lib/api/types';
+
+export const GRC_INDICES = {
+  controls: 'grc-controls',
+  risks: 'grc-risks',
+  vendors: 'grc-vendors',
+  audits: 'grc-audits',
+  cycles: 'grc-cycles',
+  policies: 'grc-policies',
+  assurance: 'grc-assurance',
+  assuranceJira: 'grc-assurance-jira',
+} as const;
+
+const keyword: MappingProperty = { type: 'keyword' };
+const text: MappingProperty = { type: 'text' };
+const integer: MappingProperty = { type: 'integer' };
+const float: MappingProperty = { type: 'float' };
+const date: MappingProperty = { type: 'date' };
+const bool: MappingProperty = { type: 'boolean' };
+
+export const INDEX_MAPPINGS: Record<string, Record<string, MappingProperty>> = {
+  [GRC_INDICES.controls]: {
+    controlId: keyword,
+    title: text,
+    domain: keyword,
+    domainLabel: keyword,
+    frameworkId: keyword,
+    frameworkName: keyword,
+    status: keyword,
+    ragStatus: keyword,
+    description: text,
+    updatedAt: date,
+  },
+
+  [GRC_INDICES.risks]: {
+    riskId: keyword,
+    title: text,
+    category: keyword,
+    owner: keyword,
+    inherentLikelihood: keyword,
+    inherentImpact: keyword,
+    inherentRisk: keyword,
+    presentLikelihood: keyword,
+    presentImpact: keyword,
+    presentRisk: keyword,
+    status: keyword,
+    treatmentPlan: keyword,
+    description: text,
+    updatedAt: date,
+  },
+
+  [GRC_INDICES.vendors]: {
+    vendorId: keyword,
+    name: keyword,
+    tier: keyword,
+    status: keyword,
+    securityRating: float,
+    ratingGrade: keyword,
+    industry: keyword,
+    dataAccess: keyword,
+    certifications: keyword,
+    domainSecurity: float,
+    domainPrivacy: float,
+    domainCompliance: float,
+    domainResilience: float,
+    domainOperations: float,
+    assessmentStatus: keyword,
+    openFindings: integer,
+    openRemediations: integer,
+    updatedAt: date,
+  },
+
+  [GRC_INDICES.audits]: {
+    findingId: keyword,
+    title: text,
+    severity: keyword,
+    status: keyword,
+    source: keyword,
+    category: keyword,
+    description: text,
+    dueDate: date,
+    createdAt: date,
+  },
+
+  [GRC_INDICES.cycles]: {
+    cycleId: keyword,
+    programType: keyword,
+    programLabel: keyword,
+    title: text,
+    status: keyword,
+    owner: keyword,
+    dueDate: date,
+    periodStart: date,
+    periodEnd: date,
+    daysUntilDue: integer,
+    isOverdue: bool,
+    completedAt: date,
+  },
+
+  [GRC_INDICES.policies]: {
+    policyId: keyword,
+    title: text,
+    status: keyword,
+    owner: keyword,
+    category: keyword,
+    documentType: keyword,
+    version: keyword,
+    isoReference: keyword,
+    createdAt: date,
+    updatedAt: date,
+  },
+
+  [GRC_INDICES.assurance]: {
+    findingId: keyword,
+    title: text,
+    severity: keyword,
+    status: keyword,
+    source: keyword,
+    scanner: keyword,
+    environment: keyword,
+    application: keyword,
+    cve: keyword,
+    cvss: float,
+    jiraTicketId: keyword,
+    hasJiraTicket: bool,
+    detectedAt: date,
+    updatedAt: date,
+  },
+
+  [GRC_INDICES.assuranceJira]: {
+    ticketId: keyword,
+    ticketKey: keyword,
+    summary: text,
+    priority: keyword,
+    status: keyword,
+    source: keyword,
+    assignee: keyword,
+    issueType: keyword,
+    slaDue: date,
+    createdAt: date,
+    updatedAt: date,
+  },
+};

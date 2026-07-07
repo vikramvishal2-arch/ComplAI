@@ -56,7 +56,7 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
     tabLabel: 'Frameworks',
     title: 'Framework compliance',
     description:
-      'SOC 2, ISO 27001, GDPR, HIPAA, PCI DSS, India DPDP, SEBI CSCRF, Middle East privacy, Google Chronicle SecOps, and more — with mapped controls and evidence.',
+      'SOC 2, ISO 27001, ISO 22301, ISO 31000, GDPR, HIPAA, PCI DSS, India DPDP, SEBI CSCRF, Middle East privacy, Google Chronicle SecOps, and more — with mapped controls and evidence.',
     bullets: [
       'Pre-mapped controls across major frameworks',
       'Reuse controls across multiple certifications',
@@ -221,7 +221,7 @@ export const PLATFORM_SIDEBAR_LINKS: PlatformSidebarLink[] = [
   {
     title: 'Integrate your tech stack',
     description: 'Connect ComplAI with the tools you already use.',
-    href: '#integrations',
+    href: '/help',
   },
 ];
 
@@ -315,18 +315,18 @@ export const WHY_COMPLAI_STAGES = [
     title: 'First audit readiness',
     description:
       'Get SOC 2, ISO 27001, or regional compliance off the ground with pre-built templates, mapped controls, and guided workflows — without hiring a full GRC team on day one.',
-    href: '/solutions#compliance',
+    href: '/solutions/compliance',
   },
   {
     title: 'Multi-framework scale',
     description:
       'Add frameworks as you grow. Reuse controls, consolidate evidence, and manage overlapping requirements from one program instead of restarting every audit cycle.',
-    href: '/solutions#compliance',
+    href: '/solutions/compliance',
   },
   {
     title: 'Enterprise GRC operations',
     description:
       'Executive dashboards, vendor risk, integration monitoring, and AI-assisted intelligence for teams managing complex, multi-region compliance programs.',
-    href: '/solutions#dashboard',
+    href: '/solutions/dashboard',
   },
 ];

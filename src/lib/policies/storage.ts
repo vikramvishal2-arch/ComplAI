@@ -24,6 +24,24 @@ export function validatePolicyFile(file: File): string | null {
   return null;
 }
 
+function validatePolicyUpload(
+  size: number,
+  fileName: string,
+  mimeType?: string | null
+): string | null {
+  if (size > MAX_EVIDENCE_FILE_BYTES) {
+    return `File exceeds ${MAX_EVIDENCE_FILE_BYTES / (1024 * 1024)} MB limit`;
+  }
+  const ext = path.extname(fileName).toLowerCase();
+  if (!ALLOWED_EVIDENCE_EXTENSIONS.has(ext)) {
+    return `File type ${ext || '(none)'} is not allowed`;
+  }
+  if (mimeType && !ALLOWED_EVIDENCE_MIME_TYPES.has(mimeType) && mimeType !== 'application/octet-stream') {
+    return `MIME type ${mimeType} is not allowed`;
+  }
+  return null;
+}
+
 export async function savePolicyFile(
   orgId: string,
   policyId: string,
@@ -31,15 +49,26 @@ export async function savePolicyFile(
 ): Promise<{ storagePath: string; fileName: string; relativePath: string }> {
   const validationError = validatePolicyFile(file);
   if (validationError) throw new Error(validationError);
+  const buffer = Buffer.from(await file.arrayBuffer());
+  return savePolicyFileBuffer(orgId, policyId, buffer, file.name);
+}
 
-  const ext = path.extname(file.name).toLowerCase();
+export async function savePolicyFileBuffer(
+  orgId: string,
+  policyId: string,
+  buffer: Buffer,
+  originalFileName: string
+): Promise<{ storagePath: string; fileName: string; relativePath: string }> {
+  const validationError = validatePolicyUpload(buffer.length, originalFileName);
+  if (validationError) throw new Error(validationError);
+
+  const ext = path.extname(originalFileName).toLowerCase();
   const fileName = `${randomUUID()}${ext}`;
   const dir = path.join(UPLOAD_ROOT, orgId, policyId);
   await mkdir(dir, { recursive: true });
 
   const relativePath = path.join(orgId, policyId, fileName);
   const storagePath = path.join(UPLOAD_ROOT, relativePath);
-  const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(storagePath, buffer);
 
   return { storagePath, fileName, relativePath: relativePath.replace(/\\/g, '/') };

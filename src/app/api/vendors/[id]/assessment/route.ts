@@ -4,6 +4,7 @@ import {
   getVendorById,
   createVendorAssessment,
   getVendorAssessment,
+  finalizeVendorAssessment,
   updateVendorAssessment,
 } from '@/lib/db/vendor-repository';
 import {
@@ -11,8 +12,14 @@ import {
   scoreVendorAssessment,
   parseVendorQuestions,
   parseVendorResponses,
-  type VendorResponse,
 } from '@/lib/vendor/assessment';
+import { getVendorAssessmentTemplate } from '@/lib/vendor/vendor-assessment-templates';
+import {
+  aggregateAssessmentScore,
+  computeDomainScores,
+  generateFindingsFromResponses,
+  generateRemediationItems,
+} from '@/lib/vendor/vendor-rating';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -26,7 +33,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     if (action === 'generate') {
-      const assessment = await createVendorAssessment(vendorId);
+      const templateId = (body.templateId as string) ?? 'tprm-standard';
+      const template = getVendorAssessmentTemplate(templateId);
+
+      const assessment = await createVendorAssessment(vendorId, template.id, template.name);
       if (!assessment) {
         return NextResponse.json({ error: 'Could not create assessment' }, { status: 500 });
       }
@@ -36,14 +46,109 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         description: vendor.description,
         tier: vendor.tier,
         dataAccess: vendor.dataAccess,
+        templateId: template.id,
       });
 
       const updated = await updateVendorAssessment(assessment.id, {
         status: 'in_progress',
         questions: questions as unknown as Prisma.InputJsonValue,
+        questionnaireStatus: 'in_progress',
       });
 
-      return NextResponse.json({ assessment: updated, questions });
+      return NextResponse.json({ assessment: updated, questions, template });
+    }
+
+    if (action === 'save') {
+      const assessmentId = body.assessmentId as string;
+      const responses = parseVendorResponses(body.responses);
+      const assessment = await getVendorAssessment(assessmentId);
+      if (!assessment || assessment.vendorId !== vendorId) {
+        return NextResponse.json({ error: 'Assessment not found' }, { status: 404 });
+      }
+      const updated = await updateVendorAssessment(assessmentId, {
+        responses: responses as unknown as Prisma.InputJsonValue,
+        status: 'in_progress',
+      });
+      return NextResponse.json({ assessment: updated });
+    }
+
+    if (action === 'import') {
+      const assessmentIdBody = body.assessmentId as string | undefined;
+      const templateId = (body.templateId as string) ?? 'tprm-standard';
+      const template = getVendorAssessmentTemplate(templateId);
+      const importedResponses = parseVendorResponses(body.responses);
+
+      if (importedResponses.length === 0) {
+        return NextResponse.json({ error: 'No responses to import' }, { status: 400 });
+      }
+
+      let assessment = assessmentIdBody ? await getVendorAssessment(assessmentIdBody) : null;
+      if (assessment && assessment.vendorId !== vendorId) {
+        return NextResponse.json({ error: 'Assessment not found' }, { status: 404 });
+      }
+
+      if (!assessment) {
+        const created = await createVendorAssessment(vendorId, template.id, template.name);
+        if (!created) {
+          return NextResponse.json({ error: 'Could not create assessment' }, { status: 500 });
+        }
+        const questions = await generateVendorQuestions({
+          name: vendor.name,
+          description: vendor.description,
+          tier: vendor.tier,
+          dataAccess: vendor.dataAccess,
+          templateId: template.id,
+        });
+        assessment = await updateVendorAssessment(created.id, {
+          status: 'in_progress',
+          questions: questions as unknown as Prisma.InputJsonValue,
+          questionnaireStatus: 'imported',
+        });
+        if (!assessment) {
+          return NextResponse.json({ error: 'Could not update assessment' }, { status: 500 });
+        }
+      }
+
+      if (!assessment) {
+        return NextResponse.json({ error: 'Assessment not found' }, { status: 404 });
+      }
+
+      const existingQuestions = parseVendorQuestions(assessment.questions);
+      if (existingQuestions.length === 0) {
+        const templateIdForQuestions = assessment.templateId || template.id;
+        const questions = await generateVendorQuestions({
+          name: vendor.name,
+          description: vendor.description,
+          tier: vendor.tier,
+          dataAccess: vendor.dataAccess,
+          templateId: templateIdForQuestions,
+        });
+        assessment = await updateVendorAssessment(assessment.id, {
+          questions: questions as unknown as Prisma.InputJsonValue,
+        });
+        if (!assessment) {
+          return NextResponse.json({ error: 'Could not update assessment' }, { status: 500 });
+        }
+      }
+
+      const existingResponses = parseVendorResponses(assessment.responses);
+      const mergedById = new Map(existingResponses.map((r) => [r.questionId, r]));
+      for (const response of importedResponses) {
+        mergedById.set(response.questionId, response);
+      }
+
+      const merged = [...mergedById.values()];
+      const updated = await updateVendorAssessment(assessment.id, {
+        responses: merged as unknown as Prisma.InputJsonValue,
+        status: 'in_progress',
+        questionnaireStatus: 'imported',
+      });
+
+      return NextResponse.json({
+        assessment: updated,
+        importedCount: importedResponses.length,
+        mergedCount: merged.length,
+      });
     }
 
     if (action === 'score') {
@@ -67,15 +172,31 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         responses,
       });
 
-      const updated = await updateVendorAssessment(assessmentId, {
-        status: 'completed',
-        responses: responses as unknown as Prisma.InputJsonValue,
-        aiScore: result.score,
+      const domainScores = computeDomainScores(questions, responses);
+      const aggregateScore = domainScores.length > 0 ? aggregateAssessmentScore(domainScores) : result.score;
+      const findings = generateFindingsFromResponses(questions, responses);
+      const remediationItems = generateRemediationItems(findings);
+
+      const updated = await finalizeVendorAssessment(assessmentId, {
+        responses,
+        aiScore: aggregateScore,
         aiSummary: result.summary,
-        gaps: result.gaps as unknown as Prisma.InputJsonValue,
+        gaps: result.gaps,
+        domainScores,
+        findings,
+        remediationItems,
       });
 
-      return NextResponse.json({ assessment: updated, result });
+      return NextResponse.json({
+        assessment: updated,
+        result: {
+          ...result,
+          score: aggregateScore,
+          domainScores,
+          findings,
+          remediationItems,
+        },
+      });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
