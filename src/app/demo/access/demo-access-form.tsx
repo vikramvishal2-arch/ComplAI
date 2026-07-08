@@ -9,6 +9,7 @@ import { LockKeyhole } from 'lucide-react';
 
 export function DemoAccessForm({ nextPath }: { nextPath: string }) {
   const router = useRouter();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -22,13 +23,13 @@ export function DemoAccessForm({ nextPath }: { nextPath: string }) {
       const response = await fetch('/api/demo/access', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setError(typeof data.error === 'string' ? data.error : 'Could not sign in to the demo');
+        setError(typeof data.error === 'string' ? data.error : 'Could not sign in to the demo portal');
         return;
       }
 
@@ -52,17 +53,33 @@ export function DemoAccessForm({ nextPath }: { nextPath: string }) {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-600">
             <LockKeyhole className="h-5 w-5" />
           </div>
-          <h1 className="text-xl font-bold text-slate-900">Enter demo access</h1>
+          <h1 className="text-xl font-bold text-slate-900">Sign in to ComplAI Lab</h1>
           <p className="mt-2 text-sm text-slate-500">
-            This {PRODUCT_NAME} environment is shared for customer walkthroughs. Use the password
-            provided by your Propel Ready contact.
+            Use the demo credentials provided by your Propel Ready contact to explore{' '}
+            {PRODUCT_NAME} modules. Dashboard and frameworks are view-only for customer demos.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <label htmlFor="demo-email" className="block text-sm font-medium text-slate-700">
+              Email
+            </label>
+            <input
+              id="demo-email"
+              type="email"
+              autoComplete="username"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              placeholder="you@company.com"
+            />
+          </div>
+
+          <div>
             <label htmlFor="demo-password" className="block text-sm font-medium text-slate-700">
-              Demo password
+              Password
             </label>
             <input
               id="demo-password"
@@ -87,7 +104,7 @@ export function DemoAccessForm({ nextPath }: { nextPath: string }) {
             disabled={loading}
             className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-60"
           >
-            {loading ? 'Opening demo…' : 'Open live demo'}
+            {loading ? 'Signing in…' : 'Sign in to demo portal'}
           </button>
         </form>
 

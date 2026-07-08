@@ -16,14 +16,18 @@ git pull --ff-only
 echo "==> Rebuilding app container..."
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --build app
 
-echo "==> Waiting for health..."
-for i in $(seq 1 24); do
-  if docker compose -f "$COMPOSE_FILE" exec -T app curl -sf http://127.0.0.1:3000/api/health >/dev/null 2>&1; then
+echo "==> Waiting for health (up to ~3 min after rebuild)..."
+for i in $(seq 1 36); do
+  if curl -sf http://127.0.0.1:3000/api/health >/dev/null 2>&1; then
     echo "Update complete — app is healthy."
+    curl -s http://127.0.0.1:3000/api/health
+    echo ""
     exit 0
   fi
   sleep 5
 done
 
-echo "WARN: Health check timed out. Run: docker compose -f $COMPOSE_FILE logs app --tail 100"
+echo "WARN: Health check timed out. The app may still be starting."
+echo "Check: curl -s http://127.0.0.1:3000/api/health"
+echo "Logs:  docker compose -f $COMPOSE_FILE --env-file $ENV_FILE logs app --tail 100"
 exit 1

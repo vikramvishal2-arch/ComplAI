@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { AppShell } from '@/components/layout/app-shell';
 import { ReadinessBar } from '@/components/ui/badges';
 import { CATEGORY_LABELS, type Framework } from '@/lib/types';
-import { Globe, Plus, Star } from 'lucide-react';
+import { Globe, Plus, Star, Eye } from 'lucide-react';
+import { useDemoSession } from '@/hooks/use-demo-session';
 
 interface FrameworkWithMeta extends Framework {
   activated: boolean;
@@ -14,6 +15,8 @@ interface FrameworkWithMeta extends Framework {
 }
 
 export default function FrameworksPage() {
+  const { isCustomer, isReadOnlyArea } = useDemoSession();
+  const readOnly = isCustomer || isReadOnlyArea('frameworks');
   const [frameworks, setFrameworks] = useState<FrameworkWithMeta[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [loading, setLoading] = useState<string | null>(null);
@@ -45,6 +48,7 @@ export default function FrameworksPage() {
   }, []);
 
   const toggleFramework = async (frameworkId: string, activated: boolean) => {
+    if (readOnly) return;
     setLoading(frameworkId);
     await fetch('/api/frameworks', {
       method: 'POST',
@@ -103,6 +107,12 @@ export default function FrameworksPage() {
 
       {!initialLoad && !fetchError && (
       <>
+      {readOnly && (
+        <div className="mb-6 flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+          <Eye className="h-4 w-4 shrink-0 text-sky-600" />
+          Framework library is view-only in the customer demo. Explore controls without changing activations.
+        </div>
+      )}
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <span className="text-sm text-slate-500">{activatedCount} activated</span>
         <div className="flex flex-wrap gap-2">
@@ -185,7 +195,7 @@ export default function FrameworksPage() {
                   >
                     View controls
                   </Link>
-                  {!fw.mvpRequired && (
+                  {!fw.mvpRequired && !readOnly && (
                     <button
                       onClick={() => toggleFramework(fw.id, true)}
                       disabled={loading === fw.id}
@@ -195,6 +205,10 @@ export default function FrameworksPage() {
                     </button>
                   )}
                 </>
+              ) : readOnly ? (
+                <span className="flex flex-1 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                  View only
+                </span>
               ) : (
                 <button
                   onClick={() => toggleFramework(fw.id, false)}

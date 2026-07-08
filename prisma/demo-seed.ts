@@ -8,6 +8,7 @@ import { getPolicyTemplate } from '../src/lib/data/policy-templates';
 import { getDefaultApprovalMatrix } from '../src/lib/policies/approval-matrix';
 import { seedOrganizationData } from '../src/lib/db/organization-seed';
 import { listPublicVendorProfiles, publicProfileToSeedData } from '../src/lib/vendor/public-vendor-profiles';
+import { upsertDemoPortalAccount } from '../src/lib/db/demo-portal-repository';
 
 const prisma = new PrismaClient();
 
@@ -367,10 +368,38 @@ export async function seedDemoEnvironment() {
   return org;
 }
 
+async function seedDemoPortalAccounts() {
+  const customerEmail = process.env.DEMO_CUSTOMER_EMAIL?.trim() || 'demo.customer@acme-demo.com';
+  const customerPassword = process.env.DEMO_CUSTOMER_PASSWORD?.trim() || 'ComplAI-Demo-2026!';
+  const adminEmail = process.env.DEMO_ADMIN_EMAIL?.trim() || 'admin@propelreadysolutions.in';
+  const adminPassword =
+    process.env.DEMO_ADMIN_PASSWORD?.trim() ||
+    process.env.DEMO_ACCESS_PASSWORD?.trim() ||
+    'ComplAI-Admin-2026!';
+
+  await upsertDemoPortalAccount({
+    email: customerEmail,
+    password: customerPassword,
+    displayName: 'Demo Customer',
+    role: 'customer',
+  });
+
+  await upsertDemoPortalAccount({
+    email: adminEmail,
+    password: adminPassword,
+    displayName: 'Propel Ready Admin',
+    role: 'admin',
+  });
+
+  console.log(`Demo portal customer: ${customerEmail}`);
+  console.log(`Demo portal admin: ${adminEmail}`);
+}
+
 async function main() {
   const org = await seedDemoEnvironment();
+  await seedDemoPortalAccounts();
   console.log(`Demo environment ready: ${org.name} (${org.id})`);
-  console.log('Suggested walkthrough: /dashboard → /controls → /policies → /audits → /vendors');
+  console.log('Sign in at /demo/access — customer explores modules; dashboard & frameworks are view-only');
 }
 
 main()

@@ -27,6 +27,7 @@
     "db:studio": "prisma studio",
     "db:setup": "prisma db push --skip-generate && tsx prisma/seed.ts",
     "demo:seed": "tsx prisma/demo-seed.ts",
+    "demo:create-user": "prisma generate && tsx prisma/create-demo-portal-user.ts",
     "demo:reset": "tsx prisma/demo-reset.ts",
     "ill:seed": "tsx prisma/ill-seed.ts",
     "ill:stack": "docker compose -f docker-compose.yml -f services/ill-threat-intel/docker-compose.ill.yml up -d",

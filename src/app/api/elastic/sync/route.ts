@@ -35,12 +35,17 @@ export async function GET() {
   const [esUp, kibanaUp] = await Promise.all([isElasticAvailable(), isKibanaAvailable()]);
   const dashboardReady = esUp && kibanaUp ? await isKibanaDashboardReady() : false;
 
+  const publicKibana =
+    process.env.KIBANA_PUBLIC_URL?.trim() || process.env.KIBANA_URL || 'http://localhost:5601';
+
   return NextResponse.json({
     elasticsearch: esUp ? 'connected' : 'unavailable',
     kibana: kibanaUp ? 'connected' : 'unavailable',
     dashboardReady,
-    kibanaUrl: process.env.KIBANA_URL || 'http://localhost:5601',
+    kibanaUrl: publicKibana,
     dashboardUrl: dashboardReady ? getKibanaDashboardEmbedUrl() : null,
-    dashboardDirectUrl: kibanaUp ? getKibanaDashboardDirectUrl() : null,
+    dashboardDirectUrl: kibanaUp
+      ? `${publicKibana.replace(/\/$/, '')}/app/dashboards#/view/grc-leadership-dashboard`
+      : null,
   });
 }

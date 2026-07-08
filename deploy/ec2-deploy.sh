@@ -39,17 +39,32 @@ if [ -d .git ]; then
   git pull --ff-only
 fi
 
-echo "==> Building and starting containers..."
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --build
+echo "==> Starting PostgreSQL..."
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d postgres
+
+echo "==> Waiting for PostgreSQL..."
+for i in $(seq 1 24); do
+  if docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T postgres pg_isready -U "${POSTGRES_USER:-grc}" >/dev/null 2>&1; then
+    echo "PostgreSQL is ready."
+    break
+  fi
+  sleep 5
+done
+
+echo "==> Applying database schema..."
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" --profile tools run --rm --entrypoint npx tools prisma db push --skip-generate
+
+echo "==> Building and starting app..."
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --build app
 
 echo "==> Waiting for app health..."
-for i in $(seq 1 30); do
-  if docker compose -f "$COMPOSE_FILE" exec -T app curl -sf http://127.0.0.1:3000/api/health >/dev/null 2>&1; then
+for i in $(seq 1 36); do
+  if curl -sf http://127.0.0.1:3000/api/health >/dev/null 2>&1; then
     echo "App is healthy."
     break
   fi
-  if [ "$i" -eq 30 ]; then
-    echo "WARN: Health check timed out. Check logs: docker compose -f $COMPOSE_FILE logs app"
+  if [ "$i" -eq 36 ]; then
+    echo "WARN: Health check timed out. Check logs: docker compose -f $COMPOSE_FILE --env-file $ENV_FILE logs app"
   fi
   sleep 5
 done

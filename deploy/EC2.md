@@ -43,7 +43,9 @@ nano .env.production
 | `APP_URL` | `https://propelreadysolutions.in` |
 | `NEXT_PUBLIC_APP_URL` | Same as `APP_URL` |
 | `NEXT_PUBLIC_SITE_URL` | Same as `APP_URL` |
-| `DEMO_ACCESS_PASSWORD` | Optional gate for app routes |
+| `DEMO_PORTAL_ENABLED` | `true` — require sign-in at `/demo/access` |
+| `DEMO_CUSTOMER_EMAIL` / `DEMO_CUSTOMER_PASSWORD` | Customer demo login (seeded by `demo:seed`) |
+| `DEMO_ADMIN_EMAIL` / `DEMO_ADMIN_PASSWORD` | Full admin demo login |
 
 ## Deploy
 
@@ -59,17 +61,46 @@ This will:
 3. Auto-apply schema on app startup (`prisma db push`)
 4. Seed demo data (disable with `SEED_ON_DEPLOY=false`)
 
-## Nginx + HTTPS
+## Nginx + HTTPS (ComplAI Lab at `/complAI/Lab`)
+
+Browsers mark plain **HTTP on port 80** as “Not secure”. Use **HTTPS on port 443** instead.
+
+You cannot get a trusted certificate for a bare IP (`13.233.254.149`). Use one of:
+
+| Option | Domain | Setup |
+|--------|--------|--------|
+| **Immediate** | `13-233-254-149.sslip.io` | Resolves to your EC2 IP — no DNS change |
+| **Recommended** | `lab.propelreadysolutions.in` | Add DNS **A record** → EC2 public IP |
+
+Open inbound ports **443** (HTTPS) and **80** (redirect + cert renewal) in the EC2 security group.
+
+After deploy, on EC2:
 
 ```bash
-sudo cp deploy/nginx-propelsite.conf /etc/nginx/sites-available/propelreadysolutions.in
-sudo ln -sf /etc/nginx/sites-available/propelreadysolutions.in /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d propelreadysolutions.in -d www.propelreadysolutions.in
+cd /opt/complai
+bash deploy/ec2-https-lab.sh 13-233-254-149.sslip.io
+# or: bash deploy/ec2-https-lab.sh lab.propelreadysolutions.in
 ```
 
-Point your domain **A record** to the EC2 public IP.
+Your lab URL becomes:
+
+```text
+https://13-233-254-149.sslip.io/complAI/Lab/
+```
+
+Manual Nginx install:
+
+```bash
+sudo cp deploy/nginx-complai-lab.conf /etc/nginx/sites-available/complai-lab
+sudo ln -sf /etc/nginx/sites-available/complai-lab /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d 13-233-254-149.sslip.io
+```
+
+## Nginx + HTTPS (main site at domain root)
+
+For production at `propelreadysolutions.in` without the `/complAI/Lab` path:
 
 ## Subsequent updates
 

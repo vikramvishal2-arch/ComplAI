@@ -42,6 +42,8 @@ services:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
       DEMO_ACCESS_PASSWORD: ${DEMO_ACCESS_PASSWORD:-}
+      DEMO_PORTAL_ENABLED: ${DEMO_PORTAL_ENABLED:-false}
+      DEMO_SESSION_SECRET: ${DEMO_SESSION_SECRET:-}
       NEXT_PUBLIC_DEMO_MODE: ${NEXT_PUBLIC_DEMO_MODE:-false}
       CONTACT_INQUIRY_TO: ${CONTACT_INQUIRY_TO:-}
       CONTACT_INQUIRY_FROM: ${CONTACT_INQUIRY_FROM:-}
@@ -53,6 +55,9 @@ services:
       CHRONICLE_ENABLED: ${CHRONICLE_ENABLED:-false}
       AWS_MONITOR_ENABLED: ${AWS_MONITOR_ENABLED:-false}
       AZURE_MONITOR_ENABLED: ${AZURE_MONITOR_ENABLED:-false}
+      ELASTICSEARCH_URL: ${ELASTICSEARCH_URL:-http://elasticsearch:9200}
+      KIBANA_URL: ${KIBANA_URL:-http://kibana:5601}
+      KIBANA_PUBLIC_URL: ${KIBANA_PUBLIC_URL:-}
     volumes:
       - grc_uploads:/app/uploads
     healthcheck:
@@ -74,6 +79,52 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-grc}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-grc_platform}?schema=public
     entrypoint: ['npx', 'tsx']
 
+  elasticsearch:
+    profiles: [analytics]
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    restart: unless-stopped
+    mem_limit: 1280m
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: 'false'
+      xpack.security.http.ssl.enabled: 'false'
+      bootstrap.memory_lock: 'false'
+      cluster.routing.allocation.disk.threshold_enabled: 'false'
+      ES_JAVA_OPTS: -Xms384m -Xmx384m
+    volumes:
+      - grc_es_prod:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -sf http://localhost:9200/_cluster/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 12
+      start_period: 120s
+
+  kibana:
+    profiles: [analytics]
+    image: docker.elastic.co/kibana/kibana:8.15.0
+    restart: unless-stopped
+    mem_limit: 1024m
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      XPACK_SECURITY_ENABLED: 'false'
+      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: grc-platform-kibana-encryption-key-32
+      CSP_STRICT: 'false'
+      CSP_FRAMES_ANCESTORS: '["''self''","http://localhost:3000","http://127.0.0.1:3000"]'
+      NODE_OPTIONS: --max-old-space-size=768
+    ports:
+      - '127.0.0.1:5601:5601'
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -sf http://localhost:5601/api/status || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 180s
+
 volumes:
   grc_postgres_prod:
   grc_uploads:
+  grc_es_prod:

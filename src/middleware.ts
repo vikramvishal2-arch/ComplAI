@@ -2,10 +2,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import {
   DEMO_SESSION_COOKIE,
-  createDemoSessionToken,
-  isDemoGateEnabled,
+  isAdminOnlyApiPath,
+  isAdminOnlyPagePath,
+  isCustomerReadOnlyApiWrite,
+  isDemoPortalEnabled,
+  isLegacyDemoSession,
   isProtectedAppPath,
-} from '@/lib/demo-access';
+  parseDemoSession,
+} from '@/lib/demo-portal-auth';
 
 function resolveNextPath(request: NextRequest): string {
   const next = request.nextUrl.searchParams.get('next') || '/dashboard';
@@ -19,27 +23,42 @@ function redirectToNext(request: NextRequest): NextResponse {
   return NextResponse.redirect(url);
 }
 
+async function resolveSession(request: NextRequest) {
+  const token = request.cookies.get(DEMO_SESSION_COOKIE)?.value;
+  const session = await parseDemoSession(token);
+  if (session) return session;
+
+  const legacyPassword = process.env.DEMO_ACCESS_PASSWORD?.trim();
+  if (legacyPassword && (await isLegacyDemoSession(token, legacyPassword))) {
+    return {
+      role: 'admin' as const,
+      email: 'admin@complai.local',
+      displayName: 'Demo Admin',
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 12,
+    };
+  }
+
+  return null;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const gateEnabled = isDemoGateEnabled();
+  const portalEnabled = isDemoPortalEnabled();
 
   if (pathname === '/demo/access' || pathname.startsWith('/demo/access/')) {
-    if (!gateEnabled) {
+    if (!portalEnabled) {
       return redirectToNext(request);
     }
 
-    const password = process.env.DEMO_ACCESS_PASSWORD!.trim();
-    const expected = await createDemoSessionToken(password);
-    const session = request.cookies.get(DEMO_SESSION_COOKIE)?.value;
-
-    if (session === expected) {
+    const session = await resolveSession(request);
+    if (session) {
       return redirectToNext(request);
     }
 
     return NextResponse.next();
   }
 
-  if (!gateEnabled) {
+  if (!portalEnabled) {
     return NextResponse.next();
   }
 
@@ -51,22 +70,39 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const password = process.env.DEMO_ACCESS_PASSWORD!.trim();
-  const expected = await createDemoSessionToken(password);
-  const session = request.cookies.get(DEMO_SESSION_COOKIE)?.value;
+  const session = await resolveSession(request);
 
-  if (session === expected) {
-    return NextResponse.next();
+  if (!session) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Demo sign-in required' }, { status: 401 });
+    }
+
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = '/demo/access';
+    loginUrl.searchParams.set('next', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.json({ error: 'Demo access required' }, { status: 401 });
+  if (session.role === 'customer') {
+    if (isAdminOnlyPagePath(pathname) || isAdminOnlyApiPath(pathname)) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+      }
+      const denied = request.nextUrl.clone();
+      denied.pathname = '/dashboard';
+      denied.searchParams.set('demo', 'admin-denied');
+      return NextResponse.redirect(denied);
+    }
+
+    if (isCustomerReadOnlyApiWrite(pathname, request.method)) {
+      return NextResponse.json(
+        { error: 'This area is view-only in the demo portal' },
+        { status: 403 }
+      );
+    }
   }
 
-  const loginUrl = request.nextUrl.clone();
-  loginUrl.pathname = '/demo/access';
-  loginUrl.searchParams.set('next', pathname);
-  return NextResponse.redirect(loginUrl);
+  return NextResponse.next();
 }
 
 export const config = {

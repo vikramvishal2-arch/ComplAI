@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { BarChart3, ChevronDown, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
 import { VULNERABILITY_SEVERITY_STYLES } from '@/lib/data/assurance-demo';
 import { cn } from '@/lib/utils';
+import { useDemoSession } from '@/hooks/use-demo-session';
 
 interface TermBucket {
   key: string;
@@ -221,6 +222,7 @@ function RagChart({ buckets }: { buckets: TermBucket[] }) {
 }
 
 export function KibanaEmbed() {
+  const { isCustomer } = useDemoSession();
   const [status, setStatus] = useState<ElasticStatus | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -312,15 +314,17 @@ export function KibanaEmbed() {
             Retry
           </button>
 
-          <button
-            type="button"
-            onClick={handleSync}
-            disabled={syncing || !esAvailable}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-100 disabled:opacity-50"
-          >
-            {syncing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-            Sync data
-          </button>
+          {!isCustomer && (
+            <button
+              type="button"
+              onClick={handleSync}
+              disabled={syncing || !esAvailable}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-100 disabled:opacity-50"
+            >
+              {syncing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+              Sync data
+            </button>
+          )}
 
           {kibanaAvailable && directUrl && (
             <a

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Boxes,
@@ -9,6 +9,7 @@ import {
   ListChecks,
   Settings,
   ChevronRight,
+  LogOut,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,15 +18,16 @@ import { PRODUCT_NAME } from '@/lib/brand';
 import { FRAMEWORKS } from '@/lib/data/frameworks';
 import { GRC_MODULES } from '@/lib/data/grc-modules';
 import { DemoEnvironmentBanner } from '@/components/layout/demo-environment-banner';
+import { useDemoSession } from '@/hooks/use-demo-session';
 
-type NavItem = { href: string; label: string; icon: LucideIcon };
+type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly?: boolean };
 
 const topNav: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/program', label: 'Program Modules', icon: Boxes },
   { href: '/frameworks', label: 'Frameworks', icon: Library },
   { href: '/controls', label: 'Control Catalog', icon: ListChecks },
-  { href: '/settings', label: 'Settings', icon: Settings },
+  { href: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -53,6 +55,19 @@ function isModuleActive(pathname: string, moduleHref: string, moduleId: string) 
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { isCustomer, canAccessSettings, displayName, signedIn, portalEnabled } = useDemoSession();
+
+  const visibleNav = topNav.filter((item) => {
+    if (item.adminOnly && (isCustomer || !canAccessSettings)) return false;
+    return true;
+  });
+
+  async function handleSignOut() {
+    await fetch('/api/demo/logout', { method: 'POST' });
+    router.push('/demo/access');
+    router.refresh();
+  }
 
   return (
     <aside className="app-sidebar fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-white/10">
@@ -62,7 +77,7 @@ export function Sidebar() {
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin">
         <ul className="space-y-0.5">
-          {topNav.map((item) => {
+          {visibleNav.map((item) => {
             const active = isActive(pathname, item.href);
             const Icon = item.icon;
             return (
@@ -108,6 +123,19 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-white/10 px-4 py-3">
+        {signedIn && portalEnabled && (
+          <div className="mb-2">
+            <p className="truncate text-xs font-medium text-zinc-200">{displayName || 'Demo user'}</p>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="mt-1 inline-flex items-center gap-1 text-[10px] text-zinc-400 hover:text-zinc-200"
+            >
+              <LogOut className="h-3 w-3" />
+              Sign out
+            </button>
+          </div>
+        )}
         <p className="text-xs font-medium text-zinc-300">{PRODUCT_NAME}</p>
         <p className="text-[10px] text-zinc-500">{FRAMEWORKS.length} frameworks · GRC program</p>
       </div>

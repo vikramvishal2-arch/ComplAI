@@ -7,8 +7,9 @@ import { Menu, X } from 'lucide-react';
 import { ComplAIStyled } from '@/components/marketing/complai-brand-link';
 import { useMarketingPathname } from '@/hooks/use-marketing-pathname';
 import { isMarketingNavActive, MARKETING_NAV_ITEMS } from '@/lib/marketing-nav-config';
-import { DEMO_ENTRY_PATH } from '@/lib/demo-access';
 import { cn } from '@/lib/utils';
+
+const DEMO_ENTRY_PATH = '/demo/access';
 
 const navLinkBase =
   'rounded-lg px-3 py-2 text-sm font-medium transition-colors';

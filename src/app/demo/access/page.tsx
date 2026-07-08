@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
   DEMO_SESSION_COOKIE,
-  isDemoGateEnabled,
+  isDemoPortalEnabled,
   isValidDemoSession,
 } from '@/lib/demo-access';
 import { DemoAccessForm } from './demo-access-form';
@@ -20,7 +20,7 @@ export default async function DemoAccessPage({ searchParams }: DemoAccessPagePro
   const params = await searchParams;
   const nextPath = resolveNextPath(params.next);
 
-  if (!isDemoGateEnabled()) {
+  if (!isDemoPortalEnabled()) {
     redirect(nextPath);
   }
 
