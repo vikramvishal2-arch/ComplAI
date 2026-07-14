@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppShell } from '@/components/layout/app-shell';
+import { TprmAppShell } from '@/components/tprm/tprm-app-shell';
 import { TprmPageHeader } from '@/components/tprm/tprm-sub-nav';
 import { TprmQuestionnaireHub } from '@/components/tprm/tprm-questionnaire-hub';
 import { Loader2 } from 'lucide-react';
@@ -54,7 +54,7 @@ export default function QuestionnairesPage() {
   const completed = items.length - pending;
 
   return (
-    <AppShell title="TPRM" subtitle="Questionnaire management">
+    <TprmAppShell title="TPRM" subtitle="Questionnaire management">
       <TprmPageHeader
         title="Security questionnaires"
         description="Send, track, and analyze vendor security questionnaires. Import completed CSV/JSON responses or use pre-defined templates. Risks are automatically identified from responses."
@@ -81,6 +81,6 @@ export default function QuestionnairesPage() {
           }
         />
       )}
-    </AppShell>
+    </TprmAppShell>
   );
 }

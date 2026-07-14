@@ -76,7 +76,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="app-sidebar fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-white/10">
+    <aside className="app-sidebar sticky top-0 z-40 flex h-dvh w-64 shrink-0 flex-col border-r border-white/10">
       <div className="border-b border-white/10 px-4 py-4">
         <ComplAILogo showTagline onDark href="/dashboard" />
       </div>
@@ -152,27 +152,33 @@ export function Sidebar() {
 export function AppShell({
   title,
   subtitle,
+  moduleNav,
   children,
 }: {
   title: string;
   subtitle?: string;
+  /** Secondary module tabs (e.g. TPRM) — rendered in the content column, never under the sidebar. */
+  moduleNav?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex min-h-dvh">
       <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col pl-64">
+      <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
         <DemoEnvironmentBanner />
-        <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/90 px-8 py-5 backdrop-blur">
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
-            <Link href="/dashboard" className="hover:text-brand-600">
-              {PRODUCT_NAME}
-            </Link>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-zinc-600">{title}</span>
+        <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/90 px-8 pt-5 backdrop-blur">
+          <div className="pb-5">
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              <Link href="/dashboard" className="hover:text-brand-600">
+                {PRODUCT_NAME}
+              </Link>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-zinc-600">{title}</span>
+            </div>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900">{title}</h1>
+            {subtitle && <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>}
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900">{title}</h1>
-          {subtitle && <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>}
+          {moduleNav ? <div className="min-w-0">{moduleNav}</div> : null}
         </header>
 
         <main className="flex-1 px-8 py-6">{children}</main>

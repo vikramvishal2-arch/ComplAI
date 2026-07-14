@@ -16,8 +16,8 @@ export function TprmSubNav() {
   const pathname = usePathname();
 
   return (
-    <div className="mb-6 border-b border-slate-200">
-      <div className="flex flex-wrap gap-1">
+    <nav aria-label="TPRM sections" className="min-w-0">
+      <div className="-mb-px flex gap-1 overflow-x-auto pb-0">
         {LINKS.map(({ href, label, icon: Icon, exact }) => {
           const active = exact ? pathname === href : pathname.startsWith(href);
           return (
@@ -25,7 +25,7 @@ export function TprmSubNav() {
               key={href}
               href={href}
               className={cn(
-                'inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors',
+                'inline-flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors',
                 active
                   ? 'border-brand-600 text-brand-600'
                   : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'
@@ -37,7 +37,7 @@ export function TprmSubNav() {
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }
 

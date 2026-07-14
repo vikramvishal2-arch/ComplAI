@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { AppShell } from '@/components/layout/app-shell';
+import { TprmAppShell } from '@/components/tprm/tprm-app-shell';
 import { TprmVendorHero, TprmVendorDetailTabs } from '@/components/tprm/tprm-vendor-hero';
 import { TprmExternalRiskGrid, TprmIntelligenceBanner } from '@/components/tprm/tprm-external-risk-grid';
 import { TprmBreachHistoryPanel } from '@/components/tprm/tprm-breach-history-panel';
@@ -441,28 +441,28 @@ export default function VendorDetailPage() {
 
   if (loading && !detail?.vendor) {
     return (
-      <AppShell title="TPRM" subtitle="Loading…">
+      <TprmAppShell title="TPRM" subtitle="Loading…">
         <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-      </AppShell>
+      </TprmAppShell>
     );
   }
 
   if (error && !vendor) {
     return (
-      <AppShell title="TPRM" subtitle="Error">
+      <TprmAppShell title="TPRM" subtitle="Error">
         <Link href="/vendors" className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800">
           <ArrowLeft className="h-4 w-4" /> Vendor portfolio
         </Link>
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>
-      </AppShell>
+      </TprmAppShell>
     );
   }
 
   if (!vendor) {
     return (
-      <AppShell title="TPRM" subtitle="Not found">
+      <TprmAppShell title="TPRM" subtitle="Not found">
         <Link href="/vendors" className="text-brand-600 hover:underline">← Back to portfolio</Link>
-      </AppShell>
+      </TprmAppShell>
     );
   }
 
@@ -470,7 +470,7 @@ export default function VendorDetailPage() {
     activeAssessment && selectedAssessment?.id === activeAssessment.id ? activeAssessment.responses : undefined;
 
   return (
-    <AppShell title={vendor.name} subtitle="Vendor security profile">
+    <TprmAppShell title={vendor.name} subtitle="Vendor security profile">
       <Link href="/vendors" className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800">
         <ArrowLeft className="h-4 w-4" /> Vendor portfolio
       </Link>
@@ -733,7 +733,7 @@ export default function VendorDetailPage() {
           </div>
         </div>
       )}
-    </AppShell>
+    </TprmAppShell>
   );
 }
 

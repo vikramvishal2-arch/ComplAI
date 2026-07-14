@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppShell } from '@/components/layout/app-shell';
+import { TprmAppShell } from '@/components/tprm/tprm-app-shell';
 import { TprmPageHeader } from '@/components/tprm/tprm-sub-nav';
 import { TprmPortfolioStats } from '@/components/tprm/tprm-portfolio-stats';
 import { TprmVendorTable } from '@/components/tprm/tprm-vendor-table';
@@ -214,7 +214,7 @@ export default function VendorsPage() {
   ];
 
   return (
-    <AppShell title="TPRM" subtitle="Third-party risk management platform">
+    <TprmAppShell title="TPRM" subtitle="Third-party risk management platform">
       <TprmPageHeader
         title="Vendor portfolio"
         description="Monitor security ratings, send questionnaires, track findings, and manage remediation — your third-party risk command center."
@@ -394,6 +394,6 @@ export default function VendorsPage() {
       ) : (
         <TprmVendorTable vendors={filtered} onDelete={async (id) => { await fetch(`/api/vendors/${id}`, { method: 'DELETE' }); load(); }} />
       )}
-    </AppShell>
+    </TprmAppShell>
   );
 }

@@ -104,25 +104,27 @@ export function TprmVendorDetailTabs({
   ];
 
   return (
-    <div className="mb-6 flex flex-wrap gap-1 border-b border-slate-200">
-      {tabs.map((t) => (
-        <button
-          key={t.id}
-          type="button"
-          onClick={() => onChange(t.id)}
-          className={cn(
-            'border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
-            active === t.id
-              ? 'border-brand-600 text-brand-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          )}
-        >
-          {t.label}
-          {t.id === 'findings' && findingCount > 0 && (
-            <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-xs text-red-700">{findingCount}</span>
-          )}
-        </button>
-      ))}
+    <div className="mb-6 min-w-0 border-b border-slate-200">
+      <div className="flex flex-wrap gap-1 overflow-x-auto">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => onChange(t.id)}
+            className={cn(
+              'shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
+              active === t.id
+                ? 'border-brand-600 text-brand-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            )}
+          >
+            {t.label}
+            {t.id === 'findings' && findingCount > 0 && (
+              <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-xs text-red-700">{findingCount}</span>
+            )}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

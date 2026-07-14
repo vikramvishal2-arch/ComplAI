@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { AppShell } from '@/components/layout/app-shell';
+import { TprmAppShell } from '@/components/tprm/tprm-app-shell';
 import { TprmPageHeader } from '@/components/tprm/tprm-sub-nav';
 import { TprmRatingBadge } from '@/components/tprm/tprm-rating-badge';
 import { VendorDomainBreakdown } from '@/components/vendors/vendor-domain-breakdown';
@@ -348,7 +348,7 @@ export function VendorCompareContent() {
   };
 
   return (
-    <AppShell title="TPRM" subtitle="Third-party risk management platform">
+    <TprmAppShell title="TPRM" subtitle="Third-party risk management platform">
       <TprmPageHeader
         title="Vendor comparison"
         description="Compare two vendors after risk assessment completion so leadership can decide from their risk portfolios."
@@ -597,7 +597,7 @@ export function VendorCompareContent() {
           </div>
         </>
       )}
-    </AppShell>
+    </TprmAppShell>
   );
 }
 
@@ -605,12 +605,12 @@ export default function VendorComparePage() {
   return (
     <Suspense
       fallback={
-        <AppShell title="TPRM" subtitle="Third-party risk management platform">
+        <TprmAppShell title="TPRM" subtitle="Third-party risk management platform">
           <div className="flex min-h-[40vh] items-center justify-center gap-2 text-slate-500">
             <Loader2 className="h-5 w-5 animate-spin" />
             Loading comparison…
           </div>
-        </AppShell>
+        </TprmAppShell>
       }
     >
       <VendorCompareContent />

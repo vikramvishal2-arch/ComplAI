@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppShell } from '@/components/layout/app-shell';
+import { TprmAppShell } from '@/components/tprm/tprm-app-shell';
 import { TprmPageHeader } from '@/components/tprm/tprm-sub-nav';
 import { VendorRemediationPanel } from '@/components/vendors/vendor-remediation-panel';
 import { parseRemediationItems, type VendorRemediationItem } from '@/lib/vendor/vendor-assessment-types';
@@ -40,7 +40,7 @@ export default function RemediationPage() {
   }, []);
 
   return (
-    <AppShell title="TPRM" subtitle="Remediation tracking">
+    <TprmAppShell title="TPRM" subtitle="Remediation tracking">
       <TprmPageHeader
         title="Remediation requests"
         description="Track vendor remediation requests identified from questionnaires and external risk monitoring."
@@ -68,6 +68,6 @@ export default function RemediationPage() {
           ))}
         </div>
       )}
-    </AppShell>
+    </TprmAppShell>
   );
 }
