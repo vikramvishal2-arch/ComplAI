@@ -205,7 +205,7 @@ export default function RiskDetailPage() {
           {error}
           <button
             type="button"
-            onClick={load}
+            onClick={() => load()}
             className="mt-4 block rounded-lg bg-brand-500 px-4 py-2 text-white hover:bg-brand-600"
           >
             Retry
