@@ -187,6 +187,9 @@ export async function getDefaultOrganization() {
     cachedActivatedFrameworkIds = null;
   }
 
+  // Heal columns/tables if a deploy skipped prisma db push (stale tools image).
+  await ensureRiskSchema();
+
   cachedDefaultOrg = org;
   return org;
 }
@@ -436,6 +439,7 @@ function mapIssue(row: {
 }
 
 export async function getControlIssues(controlId: string): Promise<ControlIssue[]> {
+  await ensureRiskSchema();
   const org = await getDefaultOrganization();
   const rows = await prisma.controlIssue.findMany({
     where: { organizationId: org.id, controlId },
