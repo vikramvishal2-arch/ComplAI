@@ -34,7 +34,7 @@ export function getIllConfig(): IllConfig {
     defaultFailMode: parseFailMode(process.env.ILL_DEFAULT_FAIL_MODE),
     cacheTtlSeconds: Number(process.env.ILL_CACHE_TTL_SECONDS ?? 900),
     syncIntervalMinutes: Number(process.env.ILL_SYNC_INTERVAL_MINUTES ?? 10),
-    apiKey: process.env.ILL_API_GATEWAY_KEY?.trim() ?? 'ill-dev-gateway-key',
+    apiKey: process.env.ILL_API_GATEWAY_KEY?.trim() || '',
     gatewayRateLimitPerMinute: Number(process.env.ILL_GATEWAY_RATE_LIMIT ?? 1000),
     cloudRegion: process.env.ILL_CLOUD_REGION ?? 'ap-south-1',
   };

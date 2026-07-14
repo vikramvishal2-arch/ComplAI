@@ -1,14 +1,29 @@
 import { NextResponse } from 'next/server';
 import { isElasticAvailable, isKibanaAvailable } from '@/lib/elastic/client';
 import {
-  getKibanaDashboardDirectUrl,
   getKibanaDashboardEmbedUrl,
+  getRiskAssessmentDashboardEmbedUrl,
   isKibanaDashboardReady,
+  isRiskAssessmentDashboardReady,
 } from '@/lib/elastic/kibana-urls';
 import { syncAllGrcData } from '@/lib/elastic/sync-grc-data';
 import { setupKibanaDashboards } from '@/lib/elastic/kibana-setup';
+import {
+  requireCronOrDemoAdmin,
+  requireDemoSession,
+} from '@/lib/server/require-demo-admin';
 
-export async function POST() {
+/**
+ * POST /api/elastic/sync
+ *
+ * Syncs GRC data into Elasticsearch and configures Kibana dashboards.
+ * Authorize with `Authorization: Bearer <CRON_SECRET>` / `X-Cron-Secret`,
+ * or a demo admin session (manual trigger from the UI).
+ */
+export async function POST(request: Request) {
+  const gate = await requireCronOrDemoAdmin(request);
+  if ('error' in gate) return gate.error;
+
   const available = await isElasticAvailable();
   if (!available) {
     return NextResponse.json(
@@ -31,9 +46,15 @@ export async function POST() {
   });
 }
 
+/** Status probe for Elastic/Kibana connectivity and dashboard URLs. */
 export async function GET() {
+  const auth = await requireDemoSession();
+  if ('error' in auth) return auth.error;
+
   const [esUp, kibanaUp] = await Promise.all([isElasticAvailable(), isKibanaAvailable()]);
   const dashboardReady = esUp && kibanaUp ? await isKibanaDashboardReady() : false;
+  const riskAssessmentDashboardReady =
+    esUp && kibanaUp ? await isRiskAssessmentDashboardReady() : false;
 
   const publicKibana =
     process.env.KIBANA_PUBLIC_URL?.trim() || process.env.KIBANA_URL || 'http://localhost:5601';
@@ -46,6 +67,13 @@ export async function GET() {
     dashboardUrl: dashboardReady ? getKibanaDashboardEmbedUrl() : null,
     dashboardDirectUrl: kibanaUp
       ? `${publicKibana.replace(/\/$/, '')}/app/dashboards#/view/grc-leadership-dashboard`
+      : null,
+    riskAssessmentDashboardReady,
+    riskAssessmentDashboardUrl: riskAssessmentDashboardReady
+      ? getRiskAssessmentDashboardEmbedUrl()
+      : null,
+    riskAssessmentDashboardDirectUrl: kibanaUp
+      ? `${publicKibana.replace(/\/$/, '')}/app/dashboards#/view/grc-risk-assessment-dashboard`
       : null,
   });
 }

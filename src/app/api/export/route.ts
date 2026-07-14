@@ -17,6 +17,7 @@ import {
 } from '@/lib/store';
 import { csvDownloadResponse, rowsToCsv } from '@/lib/csv';
 import { resolvePresentRiskDisplay } from '@/lib/risk/scoring';
+import { requireDemoAdmin } from '@/lib/server/require-demo-admin';
 
 function defaultCompliance() {
   return {
@@ -141,6 +142,9 @@ async function buildRisksExport(searchParams: URLSearchParams) {
 }
 
 export async function GET(request: Request) {
+  const auth = await requireDemoAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') ?? 'json';

@@ -2,8 +2,12 @@ import { NextResponse } from 'next/server';
 import { seedPublicVendorPortfolio } from '@/lib/vendor/seed-public-profiles';
 import { listPublicVendorProfiles } from '@/lib/vendor/public-vendor-profiles';
 import { formatVendorDbError } from '@/lib/db/prisma-errors';
+import { requireDemoAdmin, requireDemoSession } from '@/lib/server/require-demo-admin';
 
 export async function GET() {
+  const auth = await requireDemoSession();
+  if ('error' in auth) return auth.error;
+
   const profiles = listPublicVendorProfiles().map((p) => ({
     domain: p.domain,
     name: p.name,
@@ -16,6 +20,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const auth = await requireDemoAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await request.json().catch(() => ({}));
     const replaceExisting = Boolean(body.replaceExisting);

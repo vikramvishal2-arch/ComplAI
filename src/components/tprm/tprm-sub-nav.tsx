@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Building2, ClipboardList, FileWarning, LayoutDashboard } from 'lucide-react';
+import { Building2, ClipboardList, FileWarning, LayoutDashboard, Scale } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const LINKS = [
   { href: '/vendors', label: 'Vendor portfolio', icon: LayoutDashboard, exact: true },
+  { href: '/vendors/compare', label: 'Compare vendors', icon: Scale },
   { href: '/vendors/questionnaires', label: 'Questionnaires', icon: ClipboardList },
   { href: '/vendors/remediation', label: 'Remediation', icon: FileWarning },
 ];

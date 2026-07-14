@@ -1,27 +1,87 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { AuditSubNav } from '@/components/audits/audit-sub-nav';
-import {
-  AUDIT_ENGAGEMENTS,
-  AUDIT_MILESTONES,
-  AUDIT_STATUS_LABELS,
-  EVIDENCE_REQUESTS,
-  EXTERNAL_READINESS_CHECKLIST,
-  READINESS_STATUS_LABELS,
-  READINESS_STATUS_STYLES,
-} from '@/lib/data/audits-demo';
 import { cn } from '@/lib/utils';
-import { Calendar, CheckCircle2, Circle, Clock, FileText } from 'lucide-react';
+import { Calendar, FileText } from 'lucide-react';
 
-const milestoneIcon = {
-  complete: CheckCircle2,
-  in_progress: Clock,
-  upcoming: Circle,
-} as const;
+type Engagement = {
+  id: string;
+  name: string;
+  auditor: string;
+  readiness: number;
+  status: string;
+};
+
+type ReadinessItem = {
+  id: string;
+  category: string;
+  task: string;
+  framework: string;
+  owner: string;
+  status: 'not_started' | 'in_progress' | 'ready' | 'blocked';
+  dueDate: string | null;
+};
+
+type EvidenceRequest = {
+  id: string;
+  engagement: string;
+  request: string;
+  controlRef: string;
+  assignee: string;
+  status: 'pending' | 'submitted' | 'accepted' | 'rejected';
+  dueDate: string | null;
+};
+
+const READINESS_STATUS_LABELS: Record<ReadinessItem['status'], string> = {
+  not_started: 'Not started',
+  in_progress: 'In progress',
+  ready: 'Ready',
+  blocked: 'Blocked',
+};
+
+const READINESS_STATUS_STYLES: Record<ReadinessItem['status'], string> = {
+  not_started: 'bg-slate-100 text-slate-700',
+  in_progress: 'bg-brand-50 text-brand-700',
+  ready: 'bg-green-50 text-green-700',
+  blocked: 'bg-red-50 text-red-700',
+};
+
+const AUDIT_STATUS_LABELS: Record<string, string> = {
+  planning: 'Planning',
+  fieldwork: 'Fieldwork',
+  reporting: 'Reporting',
+  closed: 'Closed',
+};
 
 export default function ExternalAuditReadinessPage() {
-  const externalEngagements = AUDIT_ENGAGEMENTS.filter((e) => e.type === 'external');
+  const [items, setItems] = useState<ReadinessItem[]>([]);
+  const [requests, setRequests] = useState<EvidenceRequest[]>([]);
+  const [engagements, setEngagements] = useState<Engagement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = () => {
+    setLoading(true);
+    setError(null);
+    fetch('/api/audits/external-readiness')
+      .then(async (r) => {
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error ?? 'Failed to load external readiness');
+        setItems(d.items ?? []);
+        setRequests(d.requests ?? []);
+        setEngagements(d.engagements ?? []);
+      })
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const externalEngagements = engagements;
   const avgReadiness =
     externalEngagements.length > 0
       ? Math.round(
@@ -29,12 +89,41 @@ export default function ExternalAuditReadinessPage() {
         )
       : 0;
 
+  const openRequests = useMemo(
+    () => requests.filter((e) => e.status === 'pending').length,
+    [requests]
+  );
+
+  const updateReadinessItem = async (id: string, patch: Partial<Pick<ReadinessItem, 'status' | 'owner'>>) => {
+    const res = await fetch('/api/audits/external-readiness', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'item', id, ...patch }),
+    });
+    if (res.ok) load();
+  };
+
+  const updateRequest = async (id: string, patch: Partial<Pick<EvidenceRequest, 'status'>>) => {
+    const res = await fetch('/api/audits/external-readiness', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'request', id, ...patch }),
+    });
+    if (res.ok) load();
+  };
+
   return (
     <AppShell
       title="External audit preparedness"
       subtitle="Readiness checklist, evidence requests, and milestones for SOC 2 and ISO engagements"
     >
       <AuditSubNav />
+
+      {error && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          {error}
+        </div>
+      )}
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -48,7 +137,7 @@ export default function ExternalAuditReadinessPage() {
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-slate-500">Open evidence requests</p>
           <p className="mt-1 text-3xl font-bold text-orange-600">
-            {EVIDENCE_REQUESTS.filter((e) => e.status === 'pending').length}
+            {openRequests}
           </p>
         </div>
       </div>
@@ -56,33 +145,53 @@ export default function ExternalAuditReadinessPage() {
       <section className="mb-8">
         <h2 className="mb-4 text-lg font-semibold text-slate-900">Readiness checklist</h2>
         <div className="grid gap-3">
-          {EXTERNAL_READINESS_CHECKLIST.map((item) => (
-            <article
-              key={item.id}
-              className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {item.category}
-                  </p>
-                  <h3 className="mt-1 font-medium text-slate-900">{item.task}</h3>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {item.framework} · Owner: {item.owner}
-                  </p>
+          {loading ? (
+            <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
+              Loading checklist…
+            </div>
+          ) : (
+            items.map((item) => (
+              <article
+                key={item.id}
+                className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {item.category}
+                    </p>
+                    <h3 className="mt-1 font-medium text-slate-900">{item.task}</h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {item.framework} · Owner:{' '}
+                      <input
+                        value={item.owner ?? ''}
+                        onChange={(e) => updateReadinessItem(item.id, { owner: e.target.value })}
+                        className="ml-1 inline-flex w-44 rounded-md border border-slate-200 px-2 py-1 text-sm text-slate-700"
+                      />
+                    </p>
+                  </div>
+                  <select
+                    value={item.status}
+                    onChange={(e) =>
+                      updateReadinessItem(item.id, {
+                        status: e.target.value as ReadinessItem['status'],
+                      })
+                    }
+                    className={cn(
+                      'rounded-full px-3 py-1 text-xs font-semibold',
+                      READINESS_STATUS_STYLES[item.status]
+                    )}
+                  >
+                    <option value="not_started">Not started</option>
+                    <option value="in_progress">In progress</option>
+                    <option value="ready">Ready</option>
+                    <option value="blocked">Blocked</option>
+                  </select>
                 </div>
-                <span
-                  className={cn(
-                    'rounded-full px-3 py-1 text-xs font-semibold',
-                    READINESS_STATUS_STYLES[item.status]
-                  )}
-                >
-                  {READINESS_STATUS_LABELS[item.status]}
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-slate-600">Due {item.dueDate}</p>
-            </article>
-          ))}
+                <p className="mt-3 text-sm text-slate-600">Due {item.dueDate}</p>
+              </article>
+            ))
+          )}
         </div>
       </section>
 
@@ -92,7 +201,7 @@ export default function ExternalAuditReadinessPage() {
           Evidence requests
         </h2>
         <div className="grid gap-3">
-          {EVIDENCE_REQUESTS.map((request) => (
+          {requests.map((request) => (
             <article
               key={request.id}
               className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
@@ -103,7 +212,23 @@ export default function ExternalAuditReadinessPage() {
                 {request.engagement} · {request.controlRef} · {request.assignee}
               </p>
               <p className="mt-2 text-xs capitalize text-slate-600">
-                Status: {request.status} · Due {request.dueDate}
+                Status:{' '}
+                <select
+                  value={request.status}
+                  onChange={(e) =>
+                    updateRequest(
+                      request.id,
+                      { status: e.target.value as EvidenceRequest['status'] }
+                    )
+                  }
+                  className="ml-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-700"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="submitted">Submitted</option>
+                  <option value="accepted">Accepted</option>
+                  <option value="rejected">Rejected</option>
+                </select>{' '}
+                · Due {request.dueDate}
               </p>
             </article>
           ))}
@@ -132,20 +257,9 @@ export default function ExternalAuditReadinessPage() {
               </p>
             </div>
           ))}
-          {AUDIT_MILESTONES.map((milestone) => {
-            const Icon = milestoneIcon[milestone.status];
-            return (
-              <div key={milestone.id} className="flex gap-4 pl-2">
-                <Icon className="mt-1 h-5 w-5 shrink-0 text-brand-500" />
-                <div>
-                  <p className="font-medium text-slate-900">{milestone.label}</p>
-                  <p className="text-sm text-slate-500">
-                    {milestone.engagement} · {milestone.date}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+            Timeline milestones are static in this MVP. Engagement and evidence request statuses are live and editable.
+          </div>
         </div>
       </section>
     </AppShell>

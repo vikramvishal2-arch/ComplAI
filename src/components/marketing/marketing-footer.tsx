@@ -129,6 +129,11 @@ export function MarketingFooter() {
                   Help Center
                 </Link>
               </li>
+              <li>
+                <Link href="/help/frameworks" prefetch={false} className="hover:text-scrut-teal">
+                  Framework guides
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

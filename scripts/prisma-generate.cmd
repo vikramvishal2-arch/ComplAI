@@ -10,10 +10,9 @@ echo [1/4] Stopping Next.js dev servers on ports 3000 and 3001...
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3000" ^| findstr "LISTENING"') do taskkill /F /PID %%a >nul 2>&1
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3001" ^| findstr "LISTENING"') do taskkill /F /PID %%a >nul 2>&1
 
-echo [2/4] Stopping Node.js dev processes (nodejs folder only)...
-for /f "skip=1 tokens=2 delims=," %%p in ('wmic process where "name='node.exe' and ExecutablePath like '%%\\nodejs\\node.exe'" get ProcessId /format:csv 2^>nul') do (
-  if not "%%p"=="" taskkill /F /PID %%p >nul 2>&1
-)
+echo [2/4] Stopping Node.js processes that may lock Prisma engine...
+for /f "tokens=2" %%p in ('tasklist /FI "IMAGENAME eq node.exe" /FO LIST ^| findstr /I "PID:"') do taskkill /F /PID %%p >nul 2>&1
+for /f "tokens=2" %%p in ('tasklist /FI "IMAGENAME eq query-engine-windows.exe" /FO LIST ^| findstr /I "PID:"') do taskkill /F /PID %%p >nul 2>&1
 
 ping -n 3 127.0.0.1 >nul
 
@@ -38,7 +37,17 @@ if errorlevel 1 (
   exit /b 1
 )
 
+findstr /C:"auditProgram" "node_modules\.prisma\client\index.d.ts" >nul 2>&1
+if errorlevel 1 (
+  echo.
+  echo FAILED — Prisma generated but audit models are still missing.
+  echo Check prisma\schema.prisma and run this script again.
+  echo.
+  pause
+  exit /b 1
+)
+
 echo.
-echo SUCCESS. Run: npm run dev
+echo SUCCESS — audit models found in Prisma client. Run: npm run dev
 echo.
 pause

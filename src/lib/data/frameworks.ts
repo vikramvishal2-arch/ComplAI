@@ -305,6 +305,66 @@ const FRAMEWORK_DEFINITIONS: Omit<Framework, 'controlCount'>[] = [
     popular: true,
     tags: ['Google', 'Chronicle', 'SIEM', 'SecOps', 'Detection'],
   },
+  {
+    id: 'un-r155',
+    name: 'UN Regulation No. 155',
+    shortName: 'UN R155',
+    description:
+      'UNECE uniform provisions for vehicle cyber security and Cyber Security Management System (CSMS) — type approval, threat assessment, and Annex 5 mitigations.',
+    category: 'manufacturing',
+    region: 'Global',
+    version: '2025/5',
+    popular: true,
+    tags: ['Automotive', 'UNECE', 'CSMS', 'Manufacturing', 'Type Approval'],
+  },
+  {
+    id: 'un-r156',
+    name: 'UN Regulation No. 156',
+    shortName: 'UN R156',
+    description:
+      'UNECE uniform provisions for vehicle software updates and Software Update Management System (SUMS) — RXSWIN, OTA safety, integrity, and traceability.',
+    category: 'manufacturing',
+    region: 'Global',
+    version: '2021/388',
+    popular: true,
+    tags: ['Automotive', 'UNECE', 'SUMS', 'OTA', 'Manufacturing'],
+  },
+  {
+    id: 'fda',
+    name: 'FDA — 21 CFR Part 11 & Device Cybersecurity',
+    shortName: 'FDA',
+    description:
+      'US FDA requirements for electronic records and signatures (21 CFR Part 11), medical device cybersecurity, and CGMP manufacturing controls.',
+    category: 'manufacturing',
+    region: 'United States',
+    version: '2024',
+    popular: true,
+    tags: ['FDA', 'GxP', 'Medical Devices', 'Pharma', 'Manufacturing'],
+  },
+  {
+    id: 'irdai',
+    name: 'IRDAI Cybersecurity Framework',
+    shortName: 'IRDAI',
+    description:
+      'Insurance Regulatory and Development Authority of India cybersecurity framework for insurers — governance, protection, detection, response, and third-party risk.',
+    category: 'financial',
+    region: 'India',
+    version: '2023',
+    popular: true,
+    tags: ['IRDAI', 'India', 'Insurance', 'Cyber Resilience'],
+  },
+  {
+    id: 'cert-in',
+    name: 'CERT-In Cyber Security Directions',
+    shortName: 'CERT-In',
+    description:
+      'Indian Computer Emergency Response Team directions — incident reporting, log retention, NTP sync, POC registration, and ICT security controls.',
+    category: 'government',
+    region: 'India',
+    version: '2022',
+    popular: true,
+    tags: ['CERT-In', 'India', 'Incident Reporting', 'Government'],
+  },
 ];
 
 export const FRAMEWORKS: Framework[] = FRAMEWORK_DEFINITIONS.map((framework) => ({

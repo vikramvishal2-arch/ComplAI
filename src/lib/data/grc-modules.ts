@@ -42,6 +42,22 @@ export const GRC_MODULES: GrcModule[] = [
     subLinks: [
       { href: '/frameworks', label: 'Frameworks' },
       { href: '/controls', label: 'Control library' },
+      { href: '/evidence', label: 'Evidence briefcase' },
+    ],
+  },
+  {
+    id: 'evidence',
+    name: 'Evidence Briefcase',
+    shortName: 'Evidence',
+    description:
+      'Search evidence across controls, risk, TPRM, internal audit, risk assessments, and policies in one place.',
+    href: '/evidence',
+    category: 'govern',
+    capabilities: [
+      'Unified evidence index',
+      'Keyword search assistant',
+      'Cross-module discovery',
+      'Download and source links',
     ],
   },
   {
@@ -103,12 +119,12 @@ export const GRC_MODULES: GrcModule[] = [
     name: 'Assurance & Vulnerability Management',
     shortName: 'Assurance',
     description:
-      'Infrastructure VM, application DAST, VA tool integrations, and Jira-backed remediation for identified vulnerabilities.',
+      'SAST, DAST, infrastructure, and cloud scanning with VA tool integrations and Jira-backed remediation for open vulnerabilities.',
     href: '/assurance',
     category: 'detect',
     capabilities: [
-      'Infrastructure vulnerability findings',
-      'Dynamic application security testing',
+      'SAST, DAST, infra, and cloud findings',
+      'Unified open vulnerability view',
       'Nessus, Qualys, AppScan, Nmap API sync',
       'Jira ticket workflow',
     ],

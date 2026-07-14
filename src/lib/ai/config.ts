@@ -118,5 +118,13 @@ export function getIntelligenceCapabilities() {
       status: 'active',
       requiresApiKey: false,
     },
+    evidenceValidation: {
+      id: 'evidence-validation',
+      name: 'AI Evidence Validation',
+      description:
+        'Review uploaded control/issue evidence (and TPRM answers) for fit, then recommend the correct artifacts to upload.',
+      status: ai.configured ? 'active' : 'partial',
+      requiresApiKey: ai.requiresApiKey,
+    },
   };
 }

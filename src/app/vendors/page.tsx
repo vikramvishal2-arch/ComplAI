@@ -10,8 +10,9 @@ import { TprmVendorPostureGrid } from '@/components/tprm/tprm-vendor-posture-gri
 import { TprmTemplatePicker } from '@/components/tprm/tprm-template-picker';
 import { computePortfolioStats } from '@/lib/vendor/tprm-rating';
 import { buildVendorPosture } from '@/lib/vendor/vendor-posture';
-import { Loader2, Plus, Radar, Search } from 'lucide-react';
+import { Loader2, Plus, Radar, Search, Scale } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 type Filter = 'all' | 'monitored' | 'high_risk' | 'needs_questionnaire';
 
@@ -219,6 +220,13 @@ export default function VendorsPage() {
         description="Monitor security ratings, send questionnaires, track findings, and manage remediation — your third-party risk command center."
         action={
           <div className="flex flex-wrap gap-2">
+            <Link
+              href="/vendors/compare"
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+            >
+              <Scale className="h-4 w-4" />
+              Compare vendors
+            </Link>
             <button
               type="button"
               onClick={async () => {
@@ -307,8 +315,9 @@ export default function VendorsPage() {
         <form onSubmit={createVendor} className="mb-6 rounded-2xl border border-brand-200 bg-brand-50/30 p-6">
           <h3 className="font-semibold text-slate-900">Add vendor to portfolio</h3>
           <p className="mt-1 text-xs text-slate-500">
-            Use a public domain (stripe.com, policybazaar.com, okta.com) for real internet intelligence, or
-            click Load demo portfolio.
+            Use a known demo domain (stripe.com, policybazaar.com, okta.com) for a curated illustrative
+            profile, or click Load demo portfolio. Live breach history comes from Have I Been Pwned
+            after you run a check — not from curated scores.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <input

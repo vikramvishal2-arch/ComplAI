@@ -29,6 +29,35 @@ export async function validateControlForOrganization(controlId: string): Promise
   return control;
 }
 
+/** Validate many controls with a single activated-framework lookup. */
+export async function validateControlsForOrganization(
+  controlIds: string[]
+): Promise<Control[]> {
+  const unique = Array.from(new Set(controlIds.map((id) => id.trim()).filter(Boolean)));
+  if (unique.length === 0) return [];
+
+  const activatedIds = await getActivatedFrameworkIds();
+  const controls: Control[] = [];
+
+  for (const controlId of unique) {
+    const control = getControlById(controlId);
+    if (!control) {
+      throw new ControlValidationError(
+        'Control not found. Select a control from an activated framework.'
+      );
+    }
+    if (!activatedIds.includes(control.frameworkId)) {
+      const fw = getFrameworkById(control.frameworkId);
+      throw new ControlValidationError(
+        `Framework "${fw?.shortName ?? control.frameworkId}" is not activated. Activate it in Framework Library first.`
+      );
+    }
+    controls.push(control);
+  }
+
+  return controls;
+}
+
 export async function getLinkableControlsForOrganization(): Promise<
   (Control & { frameworkShortName: string })[]
 > {

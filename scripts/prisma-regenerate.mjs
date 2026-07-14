@@ -2,7 +2,7 @@
  * Windows-safe Prisma generate: clears cache, uses binary engine (see schema.prisma).
  */
 import { execSync } from 'node:child_process';
-import { existsSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -33,9 +33,23 @@ function printHelp() {
   console.error('');
 }
 
+function verifyAuditModels() {
+  const clientTypes = join(root, 'node_modules', '.prisma', 'client', 'index.d.ts');
+  if (!existsSync(clientTypes)) return false;
+  const content = readFileSync(clientTypes, 'utf8');
+  return content.includes('auditProgram');
+}
+
 try {
   execSync(`node "${prismaCli}" generate`, { stdio: 'inherit', cwd: root, windowsHide: true });
-  console.log('Prisma Client generated successfully.');
+  if (!verifyAuditModels()) {
+    console.error('');
+    console.error('Prisma generate finished but audit models are still missing from the client.');
+    console.error('Run: npm run db:generate:win (stops dev servers and regenerates).');
+    console.error('');
+    process.exit(1);
+  }
+  console.log('Prisma Client generated successfully (audit models present).');
 } catch (error) {
   const msg = String(error?.message ?? error);
   if (msg.includes('EPERM') || msg.includes('operation not permitted') || msg === 'LOCKED') {

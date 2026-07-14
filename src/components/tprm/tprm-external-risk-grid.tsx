@@ -17,6 +17,8 @@ const STATUS_COLOR = {
   fail: 'text-red-600 bg-red-50 border-red-200',
 };
 
+export type AttackSurfaceMode = 'curated_demo' | 'simulated' | 'live_correlated';
+
 export function TprmIntelligenceBanner({
   sources,
   className,
@@ -29,16 +31,19 @@ export function TprmIntelligenceBanner({
   return (
     <div
       className={cn(
-        'mb-4 flex flex-wrap items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900',
+        'mb-4 flex flex-wrap items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950',
         className
       )}
     >
-      <Radar className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
+      <Radar className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">Public internet intelligence profile</p>
-        <p className="mt-0.5 text-xs text-sky-800/90">
-          Attack-surface scores below are sourced from publicly observable data — not simulated — for
-          customer demo walkthroughs.
+        <p className="font-semibold">
+          Demo / illustrative profile — not a live attack-surface scan
+        </p>
+        <p className="mt-0.5 text-xs text-amber-900/90">
+          Curated trust-center notes may still appear for demo domains. Live Shodan / Censys / VirusTotal /
+          NVD / EPSS / HIBP results are shown in the External intelligence panel when API keys are
+          configured and refresh succeeds.
         </p>
         <ul className="mt-2 space-y-1 text-xs">
           {sources.map((source) => (
@@ -47,13 +52,13 @@ export function TprmIntelligenceBanner({
                 href={source.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 font-medium text-sky-700 underline-offset-2 hover:underline"
+                className="inline-flex items-center gap-1 font-medium text-amber-800 underline-offset-2 hover:underline"
               >
                 {source.name}
                 <ExternalLink className="h-3 w-3" />
               </a>
-              <span className="text-sky-600">· verified {source.verifiedAt}</span>
-              {source.note && <span className="text-sky-700/80">— {source.note}</span>}
+              <span className="text-amber-700">· curated {source.verifiedAt}</span>
+              {source.note && <span className="text-amber-800/80">— {source.note}</span>}
             </li>
           ))}
         </ul>
@@ -64,17 +69,32 @@ export function TprmIntelligenceBanner({
 
 export function TprmExternalRiskGrid({
   vectors,
-  simulated,
+  mode = 'simulated',
 }: {
   vectors: ExternalRiskVector[];
-  simulated?: boolean;
+  /** curated_demo = known public profile; simulated = heuristic preview; live_correlated = API overlays */
+  mode?: AttackSurfaceMode;
 }) {
   return (
     <div>
-      {simulated && (
-        <p className="mb-3 text-xs text-slate-500">
-          Simulated preview — add a known public domain (e.g. stripe.com, policybazaar.com) or load
-          the demo portfolio for real internet intelligence.
+      {mode === 'simulated' && (
+        <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <span className="font-semibold">Demo / illustrative — not live scanned.</span> These
+          attack-surface scores are simulated until you refresh intelligence with provider API keys.
+        </p>
+      )}
+      {mode === 'curated_demo' && (
+        <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
+          <span className="font-semibold">Demo / illustrative baseline.</span> Non-live vectors may
+          come from a curated demo profile. Refresh intelligence to overlay Shodan / Censys / VirusTotal /
+          NVD / EPSS / HIBP.
+        </p>
+      )}
+      {mode === 'live_correlated' && (
+        <p className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+          <span className="font-semibold">Live correlated overlays applied.</span> Vectors below
+          include successful provider responses. Unconfigured providers remain excluded (not marked
+          clear).
         </p>
       )}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

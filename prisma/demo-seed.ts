@@ -7,6 +7,7 @@ import { DEFAULT_APPROVAL_MEMBERS } from '../src/lib/data/approval-members';
 import { getPolicyTemplate } from '../src/lib/data/policy-templates';
 import { getDefaultApprovalMatrix } from '../src/lib/policies/approval-matrix';
 import { seedOrganizationData } from '../src/lib/db/organization-seed';
+import { ensureAuditWorkflowSeed } from '../src/lib/db/audit-repository';
 import { listPublicVendorProfiles, publicProfileToSeedData } from '../src/lib/vendor/public-vendor-profiles';
 import { upsertDemoPortalAccount } from '../src/lib/db/demo-portal-repository';
 
@@ -350,6 +351,7 @@ export async function seedDemoEnvironment() {
 
   await seedApprovalMembers(org.id);
   await seedOrganizationData(prisma, org.id);
+  await ensureAuditWorkflowSeed(org.id);
   await seedExtraCompliance(org.id);
   await seedPolicies(org.id);
   await seedVendors(org.id);
@@ -370,12 +372,17 @@ export async function seedDemoEnvironment() {
 
 async function seedDemoPortalAccounts() {
   const customerEmail = process.env.DEMO_CUSTOMER_EMAIL?.trim() || 'demo.customer@acme-demo.com';
-  const customerPassword = process.env.DEMO_CUSTOMER_PASSWORD?.trim() || 'ComplAI-Demo-2026!';
+  const customerPassword = process.env.DEMO_CUSTOMER_PASSWORD?.trim();
   const adminEmail = process.env.DEMO_ADMIN_EMAIL?.trim() || 'admin@propelreadysolutions.in';
   const adminPassword =
-    process.env.DEMO_ADMIN_PASSWORD?.trim() ||
-    process.env.DEMO_ACCESS_PASSWORD?.trim() ||
-    'ComplAI-Admin-2026!';
+    process.env.DEMO_ADMIN_PASSWORD?.trim() || process.env.DEMO_ACCESS_PASSWORD?.trim();
+
+  if (!customerPassword || !adminPassword) {
+    console.warn(
+      '[demo-seed] Skipping demo portal accounts — set DEMO_CUSTOMER_PASSWORD and DEMO_ADMIN_PASSWORD (or DEMO_ACCESS_PASSWORD).'
+    );
+    return;
+  }
 
   await upsertDemoPortalAccount({
     email: customerEmail,

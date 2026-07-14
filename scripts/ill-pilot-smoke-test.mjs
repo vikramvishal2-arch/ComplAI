@@ -3,7 +3,11 @@
  * Smoke test for ILL threat intel APIs (no database required for auth/gateway checks).
  * Run after: npm run db:setup && npm run ill:seed && npm run dev
  */
-const API_KEY = process.env.ILL_API_GATEWAY_KEY ?? 'ill-dev-gateway-key';
+const API_KEY = process.env.ILL_API_GATEWAY_KEY?.trim();
+if (!API_KEY) {
+  console.error('Set ILL_API_GATEWAY_KEY before running this smoke test.');
+  process.exit(1);
+}
 const BASE = process.env.ILL_API_BASE ?? 'http://localhost:3000/api';
 
 async function request(path: string, init?: RequestInit) {

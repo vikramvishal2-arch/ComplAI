@@ -13,6 +13,8 @@ import type {
   RiskTreatment,
   RiskStatus,
   RiskRegisterEntry,
+  RiskControlMapping,
+  ControlEffectiveness,
   RemediationAction,
   AccessConnection,
   FrameworkActivation,
@@ -25,7 +27,7 @@ import type {
   ControlDomain,
   ComplianceStatus,
 } from '../types';
-import { ISSUE_SEVERITY_LABELS, DOMAIN_LABELS } from '../types';
+import { ISSUE_SEVERITY_LABELS, DOMAIN_LABELS, DEVIATION_EFFECTIVENESS } from '../types';
 import { ACCESS_INTEGRATION_PROVIDERS } from '../data/access-integrations';
 import { FRAMEWORKS } from '../data/frameworks';
 import {
@@ -35,6 +37,7 @@ import {
 } from '../data/controls';
 import { calculateRiskScore, formatRiskScoreDisplay, getPresentRiskScore, resolvePresentRiskDisplay, isHighOrCriticalDisplay, parseRiskScoreValue } from '../risk/scoring';
 import { validateClosedRiskResidual, resolvePresentRiskFields } from '../risk/validate';
+import { ensureRiskSchema } from './ensure-risk-schema';
 import {
   AuditReadyBlockedError,
   getAuditReadyBlockers,
@@ -150,13 +153,41 @@ async function ensureMvpFrameworksForOrg(orgId: string): Promise<void> {
   await ensureMvpFrameworks(prisma, orgId);
 }
 
+let cachedDefaultOrg: Awaited<ReturnType<typeof prisma.organization.findFirst>> | null =
+  null;
+let mvpFrameworksEnsured = false;
+let cachedActivatedFrameworkIds: string[] | null = null;
+
+/** Drop process caches after org/framework mutations (or tests). */
+export function resetOrganizationCaches(): void {
+  cachedDefaultOrg = null;
+  mvpFrameworksEnsured = false;
+  cachedActivatedFrameworkIds = null;
+}
+
 export async function getDefaultOrganization() {
-  let org = await prisma.organization.findFirst({ orderBy: { createdAt: 'asc' } });
-  if (!org) {
-    org = await prisma.organization.create({ data: { name: DEFAULT_ORG_NAME } });
-    await seedOrganizationData(org.id);
+  if (cachedDefaultOrg && mvpFrameworksEnsured) {
+    return cachedDefaultOrg;
   }
-  await ensureMvpFrameworksForOrg(org.id);
+
+  let org = cachedDefaultOrg;
+  if (!org) {
+    org = await prisma.organization.findFirst({ orderBy: { createdAt: 'asc' } });
+    if (!org) {
+      org = await prisma.organization.create({ data: { name: DEFAULT_ORG_NAME } });
+      await seedOrganizationData(org.id);
+      mvpFrameworksEnsured = true;
+      cachedActivatedFrameworkIds = null;
+    }
+  }
+
+  if (!mvpFrameworksEnsured) {
+    await ensureMvpFrameworksForOrg(org.id);
+    mvpFrameworksEnsured = true;
+    cachedActivatedFrameworkIds = null;
+  }
+
+  cachedDefaultOrg = org;
   return org;
 }
 
@@ -179,11 +210,13 @@ export async function setOrganizationName(name: string): Promise<string> {
 }
 
 export async function getActivatedFrameworkIds(): Promise<string[]> {
+  if (cachedActivatedFrameworkIds) return cachedActivatedFrameworkIds;
   const org = await getDefaultOrganization();
   const rows = await prisma.frameworkActivation.findMany({
     where: { organizationId: org.id },
   });
-  return rows.map((r) => r.frameworkId);
+  cachedActivatedFrameworkIds = rows.map((r) => r.frameworkId);
+  return cachedActivatedFrameworkIds;
 }
 
 export async function getActivations(): Promise<FrameworkActivation[]> {
@@ -217,6 +250,7 @@ export async function activateFramework(
       targetAuditDate: targetAuditDate !== undefined ? parseDateString(targetAuditDate) : undefined,
     },
   });
+  cachedActivatedFrameworkIds = null;
   return {
     frameworkId: row.frameworkId,
     activatedAt: row.activatedAt.toISOString(),
@@ -230,6 +264,7 @@ export async function deactivateFramework(frameworkId: string): Promise<void> {
   await prisma.frameworkActivation.deleteMany({
     where: { organizationId: org.id, frameworkId },
   });
+  cachedActivatedFrameworkIds = null;
 }
 
 export function isMvpRequiredFramework(frameworkId: string): boolean {
@@ -371,6 +406,7 @@ export async function updateControlRemediation(
 function mapIssue(row: {
   id: string;
   controlId: string;
+  riskId?: string | null;
   title: string;
   description: string;
   severity: string;
@@ -385,6 +421,7 @@ function mapIssue(row: {
   return {
     id: row.id,
     controlId: row.controlId,
+    riskId: row.riskId ?? null,
     title: row.title,
     description: row.description,
     severity: row.severity as ControlIssueSeverity,
@@ -439,6 +476,7 @@ export async function createControlIssue(
     raisedBy?: string;
     assignee?: string;
     dueDate?: string | null;
+    riskId?: string | null;
   }
 ): Promise<ControlIssue> {
   const org = await getDefaultOrganization();
@@ -446,6 +484,7 @@ export async function createControlIssue(
     data: {
       organizationId: org.id,
       controlId,
+      riskId: input.riskId?.trim() || null,
       title: input.title.trim(),
       description: input.description?.trim() ?? '',
       severity: input.severity ?? 'medium',
@@ -519,7 +558,14 @@ function mapEvidence(row: {
   sizeBytes: number;
   description: string;
   uploadedAt: Date;
+  validationVerdict?: string | null;
+  validationScore?: number | null;
+  validationSummary?: string | null;
+  validationAction?: string | null;
+  validatedAt?: Date | null;
 }): ControlEvidence {
+  const verdict = row.validationVerdict;
+  const action = row.validationAction;
   return {
     id: row.id,
     controlId: row.controlId,
@@ -531,6 +577,18 @@ function mapEvidence(row: {
     sizeBytes: row.sizeBytes,
     description: row.description,
     uploadedAt: row.uploadedAt.toISOString(),
+    validationVerdict:
+      verdict === 'strong' ||
+      verdict === 'acceptable' ||
+      verdict === 'weak' ||
+      verdict === 'mismatched'
+        ? verdict
+        : null,
+    validationScore: row.validationScore ?? null,
+    validationSummary: row.validationSummary ?? null,
+    validationAction:
+      action === 'keep' || action === 'replace' || action === 'supplement' ? action : null,
+    validatedAt: row.validatedAt?.toISOString() ?? null,
   };
 }
 
@@ -548,6 +606,57 @@ export async function getControlEvidence(
     orderBy: { uploadedAt: 'desc' },
   });
   return rows.map(mapEvidence);
+}
+
+export async function getEvidenceSummariesByControlIds(
+  controlIds: string[]
+): Promise<Map<string, ControlEvidence[]>> {
+  const map = new Map<string, ControlEvidence[]>();
+  if (controlIds.length === 0) return map;
+
+  const org = await getDefaultOrganization();
+  const rows = await prisma.controlEvidence.findMany({
+    where: {
+      organizationId: org.id,
+      controlId: { in: controlIds },
+    },
+    orderBy: { uploadedAt: 'desc' },
+  });
+
+  for (const row of rows) {
+    const list = map.get(row.controlId) ?? [];
+    list.push(mapEvidence(row));
+    map.set(row.controlId, list);
+  }
+  return map;
+}
+
+export async function saveControlEvidenceValidation(
+  evidenceId: string,
+  review: {
+    verdict: string;
+    score: number;
+    summary: string;
+    action: string;
+  }
+): Promise<ControlEvidence | null> {
+  const org = await getDefaultOrganization();
+  const existing = await prisma.controlEvidence.findFirst({
+    where: { id: evidenceId, organizationId: org.id },
+  });
+  if (!existing) return null;
+
+  const row = await prisma.controlEvidence.update({
+    where: { id: evidenceId },
+    data: {
+      validationVerdict: review.verdict,
+      validationScore: review.score,
+      validationSummary: review.summary,
+      validationAction: review.action,
+      validatedAt: new Date(),
+    },
+  });
+  return mapEvidence(row);
 }
 
 export async function hasControlEvidenceForContext(
@@ -617,6 +726,8 @@ export async function createControlEvidence(
       storagePath,
     },
   });
+  const { invalidateEvidenceBriefcaseCache } = await import('../evidence/briefcase-cache');
+  invalidateEvidenceBriefcaseCache();
   return mapEvidence(row);
 }
 
@@ -705,6 +816,8 @@ export async function deleteControlEvidence(evidenceId: string): Promise<boolean
 
   await deleteEvidenceFile(row.storagePath);
   await prisma.controlEvidence.delete({ where: { id: evidenceId } });
+  const { invalidateEvidenceBriefcaseCache } = await import('../evidence/briefcase-cache');
+  invalidateEvidenceBriefcaseCache();
   return true;
 }
 
@@ -754,6 +867,8 @@ function mapRisk(row: {
   treatment: string;
   status: string;
   owner: string;
+  reviewer?: string | null;
+  approver?: string | null;
   dueDate: Date | null;
   mitigationPlan: string;
   createdAt: Date;
@@ -783,11 +898,51 @@ function mapRisk(row: {
     treatment: row.treatment as RiskTreatment,
     status: row.status as RiskStatus,
     owner: row.owner,
+    reviewer: row.reviewer ?? '',
+    approver: row.approver ?? '',
     dueDate: toDateString(row.dueDate),
     mitigationPlan: row.mitigationPlan,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+/** Load reviewer/approver even when the Prisma client predates those columns. */
+async function loadRiskAssigneeMap(
+  riskIds: string[]
+): Promise<Map<string, { reviewer: string; approver: string }>> {
+  const map = new Map<string, { reviewer: string; approver: string }>();
+  if (riskIds.length === 0) return map;
+
+  const rows = await prisma.$queryRaw<
+    { id: string; reviewer: string | null; approver: string | null }[]
+  >`
+    SELECT id, reviewer, approver
+    FROM risks
+    WHERE id IN (${Prisma.join(riskIds)})
+  `;
+
+  for (const row of rows) {
+    map.set(row.id, {
+      reviewer: row.reviewer ?? '',
+      approver: row.approver ?? '',
+    });
+  }
+  return map;
+}
+
+async function mapRisksWithAssignees(
+  rows: Parameters<typeof mapRisk>[0][]
+): Promise<Risk[]> {
+  const assignees = await loadRiskAssigneeMap(rows.map((r) => r.id));
+  return rows.map((row) => {
+    const hit = assignees.get(row.id);
+    return mapRisk({
+      ...row,
+      reviewer: hit?.reviewer ?? row.reviewer ?? '',
+      approver: hit?.approver ?? row.approver ?? '',
+    });
+  });
 }
 
 function controlMeta(controlId: string) {
@@ -802,11 +957,19 @@ function controlMeta(controlId: string) {
 
 export async function getRisksByControlId(controlId: string): Promise<Risk[]> {
   const org = await getDefaultOrganization();
-  const rows = await prisma.risk.findMany({
+  const mapped = await prisma.riskControl.findMany({
     where: { organizationId: org.id, controlId },
+    select: { riskId: true },
+  });
+  const mappedIds = mapped.map((m) => m.riskId);
+  const rows = await prisma.risk.findMany({
+    where: {
+      organizationId: org.id,
+      OR: [{ controlId }, ...(mappedIds.length > 0 ? [{ id: { in: mappedIds } }] : [])],
+    },
     orderBy: { updatedAt: 'desc' },
   });
-  return rows.map(mapRisk);
+  return mapRisksWithAssignees(rows);
 }
 
 export async function getOpenRiskCountByControlIds(
@@ -816,40 +979,65 @@ export async function getOpenRiskCountByControlIds(
   const counts = new Map<string, number>();
   if (controlIds.length === 0) return counts;
 
-  const rows = await prisma.risk.findMany({
-    where: {
-      organizationId: org.id,
-      controlId: { in: controlIds },
-      status: { notIn: ['closed', 'accepted'] },
-    },
-    select: { controlId: true },
-  });
+  const [primaryRows, mappedRows] = await Promise.all([
+    prisma.risk.findMany({
+      where: {
+        organizationId: org.id,
+        controlId: { in: controlIds },
+        status: { notIn: ['closed', 'accepted'] },
+      },
+      select: { id: true, controlId: true },
+    }),
+    prisma.riskControl.findMany({
+      where: {
+        organizationId: org.id,
+        controlId: { in: controlIds },
+        risk: { status: { notIn: ['closed', 'accepted'] } },
+      },
+      select: { controlId: true, riskId: true },
+    }),
+  ]);
 
-  for (const row of rows) {
+  const seen = new Set<string>();
+  for (const row of primaryRows) {
+    const key = `${row.controlId}:${row.id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    counts.set(row.controlId, (counts.get(row.controlId) ?? 0) + 1);
+  }
+  for (const row of mappedRows) {
+    const key = `${row.controlId}:${row.riskId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
     counts.set(row.controlId, (counts.get(row.controlId) ?? 0) + 1);
   }
   return counts;
 }
 
 export async function getRisks(): Promise<Risk[]> {
+  await ensureRiskSchema();
   const org = await getDefaultOrganization();
   const rows = await prisma.risk.findMany({
     where: { organizationId: org.id },
     orderBy: { updatedAt: 'desc' },
   });
-  return rows.map(mapRisk);
+  return mapRisksWithAssignees(rows);
 }
 
 export async function getRiskById(riskId: string): Promise<Risk | null> {
+  await ensureRiskSchema();
   const org = await getDefaultOrganization();
   const row = await prisma.risk.findFirst({
     where: { id: riskId, organizationId: org.id },
   });
-  return row ? mapRisk(row) : null;
+  if (!row) return null;
+  const [mapped] = await mapRisksWithAssignees([row]);
+  return mapped ?? null;
 }
 
 export async function createRisk(input: {
   controlId: string;
+  controlIds?: string[];
   title: string;
   description?: string;
   category?: string;
@@ -860,9 +1048,12 @@ export async function createRisk(input: {
   treatment?: RiskTreatment;
   status?: RiskStatus;
   owner?: string;
+  reviewer?: string;
+  approver?: string;
   dueDate?: string | null;
   mitigationPlan?: string;
 }): Promise<Risk> {
+  await ensureRiskSchema();
   const org = await getDefaultOrganization();
   const likelihood = input.likelihood ?? 'possible';
   const impact = input.impact ?? 'moderate';
@@ -881,10 +1072,16 @@ export async function createRisk(input: {
     null
   );
 
+  const primaryControlId = input.controlId.trim();
+  const extraIds = (input.controlIds ?? [])
+    .map((id) => id.trim())
+    .filter((id) => id && id !== primaryControlId);
+  const allControlIds = [primaryControlId, ...Array.from(new Set(extraIds))];
+
   const row = await prisma.risk.create({
     data: {
       organizationId: org.id,
-      controlId: input.controlId,
+      controlId: primaryControlId,
       title: input.title.trim(),
       description: input.description?.trim() ?? '',
       category: input.category ?? 'compliance',
@@ -897,9 +1094,27 @@ export async function createRisk(input: {
       owner: input.owner?.trim() ?? '',
       dueDate: parseDateString(input.dueDate),
       mitigationPlan: input.mitigationPlan?.trim() ?? '',
+      controlMappings: {
+        create: allControlIds.map((controlId) => ({
+          organizationId: org.id,
+          controlId,
+          effectiveness: 'not_assessed',
+        })),
+      },
     },
   });
-  return mapRisk(row);
+
+  const reviewer = input.reviewer?.trim() ?? '';
+  const approver = input.approver?.trim() ?? '';
+  if (reviewer || approver) {
+    await prisma.$executeRaw`
+      UPDATE risks
+      SET reviewer = ${reviewer}, approver = ${approver}
+      WHERE id = ${row.id}
+    `;
+  }
+
+  return mapRisk({ ...row, reviewer, approver });
 }
 
 export async function updateRisk(
@@ -915,10 +1130,15 @@ export async function updateRisk(
     treatment: RiskTreatment;
     status: RiskStatus;
     owner: string;
+    reviewer: string;
+    approver: string;
     dueDate: string | null;
     mitigationPlan: string;
+    controlId: string;
+    controlIds: string[];
   }>
 ): Promise<Risk | null> {
+  await ensureRiskSchema();
   const org = await getDefaultOrganization();
   const existing = await prisma.risk.findFirst({
     where: { id: riskId, organizationId: org.id },
@@ -946,6 +1166,11 @@ export async function updateRisk(
     residualImpact,
     null
   );
+
+  const nextPrimary =
+    updates.controlId?.trim() ||
+    (updates.controlIds && updates.controlIds[0]?.trim()) ||
+    existing.controlId;
 
   const row = await prisma.risk.update({
     where: { id: riskId },
@@ -975,9 +1200,50 @@ export async function updateRisk(
       ...(updates.mitigationPlan !== undefined
         ? { mitigationPlan: updates.mitigationPlan.trim() }
         : {}),
+      ...(updates.controlId !== undefined || updates.controlIds !== undefined
+        ? { controlId: nextPrimary }
+        : {}),
     },
   });
-  return mapRisk(row);
+
+  const existingAssignees = await loadRiskAssigneeMap([riskId]);
+  const prior = existingAssignees.get(riskId);
+  const nextReviewer =
+    updates.reviewer !== undefined ? updates.reviewer.trim() : (prior?.reviewer ?? '');
+  const nextApprover =
+    updates.approver !== undefined ? updates.approver.trim() : (prior?.approver ?? '');
+  if (updates.reviewer !== undefined || updates.approver !== undefined) {
+    await prisma.$executeRaw`
+      UPDATE risks
+      SET reviewer = ${nextReviewer}, approver = ${nextApprover}
+      WHERE id = ${riskId}
+    `;
+  }
+
+  if (updates.controlIds !== undefined || updates.controlId !== undefined) {
+    const ids =
+      updates.controlIds !== undefined
+        ? updates.controlIds
+        : Array.from(
+            new Set([
+              nextPrimary,
+              ...(await prisma.riskControl.findMany({
+                where: { riskId, organizationId: org.id },
+                select: { controlId: true },
+              })).map((m) => m.controlId),
+            ])
+          );
+    await setRiskControlMappings(riskId, ids, nextPrimary);
+  }
+
+  const [mapped] = await mapRisksWithAssignees([
+    {
+      ...row,
+      reviewer: nextReviewer,
+      approver: nextApprover,
+    },
+  ]);
+  return mapped ?? null;
 }
 
 export async function deleteRisk(riskId: string): Promise<boolean> {
@@ -988,6 +1254,405 @@ export async function deleteRisk(riskId: string): Promise<boolean> {
   if (!existing) return false;
   await prisma.risk.delete({ where: { id: riskId } });
   return true;
+}
+
+const LIKELIHOOD_ORDER: RiskLikelihood[] = [
+  'rare',
+  'unlikely',
+  'possible',
+  'likely',
+  'almost_certain',
+];
+
+function bumpLikelihood(current: RiskLikelihood): RiskLikelihood {
+  const idx = LIKELIHOOD_ORDER.indexOf(current);
+  if (idx < 0 || idx >= LIKELIHOOD_ORDER.length - 1) return current;
+  return LIKELIHOOD_ORDER[idx + 1];
+}
+
+function severityFromEffectiveness(
+  effectiveness: ControlEffectiveness
+): ControlIssueSeverity {
+  if (effectiveness === 'failed') return 'critical';
+  if (effectiveness === 'non_compliant') return 'high';
+  return 'medium';
+}
+
+async function ensurePrimaryRiskControlMapping(
+  orgId: string,
+  riskId: string,
+  primaryControlId: string
+): Promise<void> {
+  const count = await prisma.riskControl.count({
+    where: { organizationId: orgId, riskId },
+  });
+  if (count > 0) return;
+  await prisma.riskControl.create({
+    data: {
+      organizationId: orgId,
+      riskId,
+      controlId: primaryControlId,
+      effectiveness: 'not_assessed',
+    },
+  });
+}
+
+export async function setRiskControlMappings(
+  riskId: string,
+  controlIds: string[],
+  primaryControlId?: string
+): Promise<RiskControlMapping[]> {
+  const org = await getDefaultOrganization();
+  const risk = await prisma.risk.findFirst({
+    where: { id: riskId, organizationId: org.id },
+  });
+  if (!risk) throw new Error('Risk not found');
+
+  const unique = Array.from(
+    new Set(
+      controlIds
+        .map((id) => id.trim())
+        .filter(Boolean)
+        .concat(primaryControlId?.trim() || risk.controlId)
+    )
+  );
+  if (unique.length === 0) {
+    throw new Error('At least one mapped control is required');
+  }
+
+  const primary = (primaryControlId?.trim() || unique[0] || risk.controlId).trim();
+  if (!unique.includes(primary)) unique.unshift(primary);
+
+  const existing = await prisma.riskControl.findMany({
+    where: { organizationId: org.id, riskId },
+  });
+  const existingByControl = new Map(existing.map((e) => [e.controlId, e]));
+  const keep = new Set(unique);
+
+  const toDelete = existing.filter((e) => !keep.has(e.controlId));
+  if (toDelete.length > 0) {
+    await prisma.riskControl.deleteMany({
+      where: { id: { in: toDelete.map((e) => e.id) } },
+    });
+  }
+
+  const toCreate = unique.filter((controlId) => !existingByControl.has(controlId));
+  if (toCreate.length > 0) {
+    await prisma.riskControl.createMany({
+      data: toCreate.map((controlId) => ({
+        organizationId: org.id,
+        riskId,
+        controlId,
+        effectiveness: 'not_assessed',
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  if (risk.controlId !== primary) {
+    await prisma.risk.update({
+      where: { id: riskId },
+      data: { controlId: primary },
+    });
+  }
+
+  return getRiskControlMappings(riskId);
+}
+
+export async function getRiskControlMappings(riskId: string): Promise<RiskControlMapping[]> {
+  const org = await getDefaultOrganization();
+  const risk = await prisma.risk.findFirst({
+    where: { id: riskId, organizationId: org.id },
+  });
+  if (!risk) return [];
+
+  await ensurePrimaryRiskControlMapping(org.id, riskId, risk.controlId);
+
+  const rows = await prisma.riskControl.findMany({
+    where: { organizationId: org.id, riskId },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  const issueIds = rows
+    .map((r) => r.linkedIssueId)
+    .filter((id): id is string => Boolean(id));
+  const issues =
+    issueIds.length > 0
+      ? await prisma.controlIssue.findMany({
+          where: { organizationId: org.id, id: { in: issueIds } },
+        })
+      : [];
+  const issueById = new Map(issues.map((i) => [i.id, mapIssue(i)]));
+
+  return rows.map((row) => {
+    const meta = controlMeta(row.controlId);
+    return {
+      id: row.id,
+      riskId: row.riskId,
+      controlId: row.controlId,
+      controlReference: meta.control?.reference ?? row.controlId,
+      controlTitle: meta.control?.title ?? 'Unknown control',
+      frameworkShortName: meta.frameworkShortName,
+      effectiveness: row.effectiveness as ControlEffectiveness,
+      assessmentNotes: row.assessmentNotes,
+      lastAssessedAt: row.lastAssessedAt?.toISOString() ?? null,
+      linkedIssueId: row.linkedIssueId,
+      linkedIssue: row.linkedIssueId ? issueById.get(row.linkedIssueId) ?? null : null,
+      isPrimary: row.controlId === risk.controlId,
+    };
+  });
+}
+
+export async function getRiskWorkflow(riskId: string): Promise<{
+  risk: Risk;
+  mappings: RiskControlMapping[];
+} | null> {
+  const risk = await getRiskById(riskId);
+  if (!risk) return null;
+  const mappings = await getRiskControlMappings(riskId);
+  return {
+    risk: {
+      ...risk,
+      controlIds: mappings.map((m) => m.controlId),
+    },
+    mappings,
+  };
+}
+
+export async function assessRiskControl(
+  riskId: string,
+  controlId: string,
+  input: {
+    effectiveness: ControlEffectiveness;
+    notes?: string;
+    assignee?: string;
+  }
+): Promise<{
+  mapping: RiskControlMapping;
+  issue: ControlIssue | null;
+  issueCreated: boolean;
+  risk: Risk;
+}> {
+  const org = await getDefaultOrganization();
+  const risk = await prisma.risk.findFirst({
+    where: { id: riskId, organizationId: org.id },
+  });
+  if (!risk) throw new Error('Risk not found');
+
+  await ensurePrimaryRiskControlMapping(org.id, riskId, risk.controlId);
+
+  let mapping = await prisma.riskControl.findFirst({
+    where: { organizationId: org.id, riskId, controlId },
+  });
+  if (!mapping) {
+    mapping = await prisma.riskControl.create({
+      data: {
+        organizationId: org.id,
+        riskId,
+        controlId,
+        effectiveness: 'not_assessed',
+      },
+    });
+  }
+
+  const notes = input.notes?.trim() ?? '';
+  const isDeviation = DEVIATION_EFFECTIVENESS.includes(input.effectiveness);
+  let issue: ControlIssue | null = null;
+  let issueCreated = false;
+  let linkedIssueId = mapping.linkedIssueId;
+
+  if (isDeviation) {
+    if (linkedIssueId) {
+      const existingIssue = await prisma.controlIssue.findFirst({
+        where: { id: linkedIssueId, organizationId: org.id },
+      });
+      if (
+        existingIssue &&
+        (existingIssue.status === 'open' || existingIssue.status === 'in_progress')
+      ) {
+        issue = mapIssue(existingIssue);
+      } else {
+        linkedIssueId = null;
+      }
+    }
+
+    if (!issue) {
+      const openExisting = await prisma.controlIssue.findFirst({
+        where: {
+          organizationId: org.id,
+          controlId,
+          riskId,
+          status: { in: ['open', 'in_progress'] },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (openExisting) {
+        issue = mapIssue(openExisting);
+        linkedIssueId = openExisting.id;
+      } else {
+        const control = getControlById(controlId);
+        const created = await createControlIssue(controlId, {
+          title: `Control deviation: ${control?.reference ?? controlId} — ${risk.title}`,
+          description:
+            notes ||
+            `Mapped control assessed as ${input.effectiveness.replace(/_/g, ' ')} for risk "${risk.title}". Remediation and re-test required.`,
+          severity: severityFromEffectiveness(input.effectiveness),
+          raisedBy: 'Risk workflow',
+          assignee: input.assignee?.trim() || risk.owner || '',
+          riskId,
+        });
+        issue = created;
+        linkedIssueId = created.id;
+        issueCreated = true;
+      }
+    }
+
+    if (risk.status === 'identified' || risk.status === 'accepted') {
+      await prisma.risk.update({
+        where: { id: riskId },
+        data: { status: 'treating' },
+      });
+    }
+  } else if (input.effectiveness === 'effective' && linkedIssueId) {
+    const linked = await prisma.controlIssue.findFirst({
+      where: { id: linkedIssueId, organizationId: org.id },
+    });
+    if (linked && (linked.status === 'open' || linked.status === 'in_progress')) {
+      // Keep open issues until explicit retest pass — only update assessment.
+    }
+  }
+
+  await prisma.riskControl.update({
+    where: { id: mapping.id },
+    data: {
+      effectiveness: input.effectiveness,
+      assessmentNotes: notes || mapping.assessmentNotes,
+      lastAssessedAt: new Date(),
+      linkedIssueId,
+    },
+  });
+
+  const mappings = await getRiskControlMappings(riskId);
+  const updatedMapping = mappings.find((m) => m.controlId === controlId)!;
+  const updatedRisk = (await getRiskById(riskId))!;
+
+  return {
+    mapping: updatedMapping,
+    issue: updatedMapping.linkedIssue ?? issue,
+    issueCreated,
+    risk: updatedRisk,
+  };
+}
+
+export async function retestRiskControl(
+  riskId: string,
+  controlId: string,
+  input: {
+    result: 'passed' | 'failed';
+    notes?: string;
+  }
+): Promise<{
+  mapping: RiskControlMapping;
+  issue: ControlIssue | null;
+  risk: Risk;
+  escalated: boolean;
+}> {
+  const org = await getDefaultOrganization();
+  const risk = await prisma.risk.findFirst({
+    where: { id: riskId, organizationId: org.id },
+  });
+  if (!risk) throw new Error('Risk not found');
+
+  const mapping = await prisma.riskControl.findFirst({
+    where: { organizationId: org.id, riskId, controlId },
+  });
+  if (!mapping) throw new Error('Control is not mapped to this risk');
+
+  const notes = input.notes?.trim() ?? '';
+  let escalated = false;
+  let issue: ControlIssue | null = null;
+
+  if (input.result === 'passed') {
+    if (mapping.linkedIssueId) {
+      const existing = await prisma.controlIssue.findFirst({
+        where: { id: mapping.linkedIssueId, organizationId: org.id },
+      });
+      if (existing) {
+        const closed = await prisma.controlIssue.update({
+          where: { id: existing.id },
+          data: {
+            status: 'closed',
+            resolutionNotes:
+              notes ||
+              existing.resolutionNotes ||
+              'Control re-test passed; issue closed by risk workflow.',
+          },
+        });
+        issue = mapIssue(closed);
+      }
+    }
+
+    await prisma.riskControl.update({
+      where: { id: mapping.id },
+      data: {
+        effectiveness: 'effective',
+        assessmentNotes: notes || mapping.assessmentNotes,
+        lastAssessedAt: new Date(),
+        linkedIssueId: null,
+      },
+    });
+  } else {
+    escalated = true;
+    const nextLikelihood = bumpLikelihood(risk.likelihood as RiskLikelihood);
+    await prisma.risk.update({
+      where: { id: riskId },
+      data: {
+        status: 'treating',
+        likelihood: nextLikelihood,
+        riskScore: calculateRiskScore(nextLikelihood, risk.impact as RiskImpact),
+      },
+    });
+
+    if (mapping.linkedIssueId) {
+      const existing = await prisma.controlIssue.findFirst({
+        where: { id: mapping.linkedIssueId, organizationId: org.id },
+      });
+      if (existing) {
+        const updated = await prisma.controlIssue.update({
+          where: { id: existing.id },
+          data: {
+            status: 'in_progress',
+            severity:
+              existing.severity === 'critical' ? 'critical' : 'high',
+            resolutionNotes:
+              notes ||
+              `${existing.resolutionNotes ? existing.resolutionNotes + '\n' : ''}Re-test failed — risk escalated.`,
+          },
+        });
+        issue = mapIssue(updated);
+      }
+    }
+
+    await prisma.riskControl.update({
+      where: { id: mapping.id },
+      data: {
+        effectiveness: 'failed',
+        assessmentNotes: notes || mapping.assessmentNotes,
+        lastAssessedAt: new Date(),
+      },
+    });
+  }
+
+  const mappings = await getRiskControlMappings(riskId);
+  const updatedMapping = mappings.find((m) => m.controlId === controlId)!;
+  const updatedRisk = (await getRiskById(riskId))!;
+
+  return {
+    mapping: updatedMapping,
+    issue: updatedMapping.linkedIssue ?? issue,
+    risk: updatedRisk,
+    escalated,
+  };
 }
 
 export async function getAllControlIssuesForOrg(): Promise<ControlIssue[]> {
@@ -1041,6 +1706,10 @@ export async function getRiskRegister(): Promise<RiskRegisterEntry[]> {
       inherentRisk: formatRiskScoreDisplay(risk.riskScore),
       presentRisk:
         presentScore != null ? formatRiskScoreDisplay(presentScore) : '—',
+      likelihood: risk.likelihood,
+      impact: risk.impact,
+      residualLikelihood: risk.residualLikelihood,
+      residualImpact: risk.residualImpact,
       status: risk.status,
       owner: risk.owner,
       assignee: '',

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
+import { FrameworkCatalogAdmin } from '@/components/settings/framework-catalog-admin';
 import { Download, Save } from 'lucide-react';
 
 export default function SettingsPage() {
@@ -85,10 +86,12 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        <FrameworkCatalogAdmin />
+
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="font-semibold text-slate-900">Framework library</h2>
           <p className="mt-1 text-sm text-slate-500">
-            {frameworkCount} prebuilt security and privacy frameworks included in this MVP
+            {frameworkCount} frameworks available in the library (built-in plus any custom entries above)
           </p>
           <p className="mt-3 text-sm text-slate-600">
             Activate frameworks from the{' '}

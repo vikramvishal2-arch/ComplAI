@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { updateRisk, deleteRisk, getRiskById } from '@/lib/store';
+import { updateRisk, deleteRisk, getRiskWorkflow, getRiskById } from '@/lib/store';
 import { validateControlForOrganization, ControlValidationError } from '@/lib/controls/validate';
-import { RiskValidationError } from '@/lib/risk/validate';
+import { RiskValidationError, validateRiskReviewerApprover } from '@/lib/risk/validate';
+import { notifyRiskStatusTransition } from '@/lib/email/send-risk-email';
 import { getControlById } from '@/lib/data/controls';
 import { getFrameworkById } from '@/lib/data/frameworks';
 import type {
@@ -16,11 +17,12 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
-    const risk = await getRiskById(id);
-    if (!risk) {
+    const workflow = await getRiskWorkflow(id);
+    if (!workflow) {
       return NextResponse.json({ error: 'Risk not found' }, { status: 404 });
     }
 
+    const { risk, mappings } = workflow;
     const control = getControlById(risk.controlId);
     const framework = control ? getFrameworkById(control.frameworkId) : null;
 
@@ -30,6 +32,7 @@ export async function GET(_request: Request, context: RouteContext) {
       framework: framework
         ? { id: framework.id, name: framework.name, shortName: framework.shortName }
         : null,
+      mappings,
     });
   } catch (error) {
     console.error('GET /api/risks/[id]', error);
@@ -42,9 +45,30 @@ export async function PATCH(request: Request, context: RouteContext) {
     const { id } = await context.params;
     const body = await request.json();
 
+    const controlIds: string[] | undefined = Array.isArray(body.controlIds)
+      ? body.controlIds
+      : undefined;
+
     if (body.controlId) {
       await validateControlForOrganization(body.controlId);
     }
+    if (controlIds) {
+      for (const controlId of controlIds) {
+        await validateControlForOrganization(controlId);
+      }
+    }
+
+    const previous = await getRiskById(id);
+    if (!previous) {
+      return NextResponse.json({ error: 'Risk not found' }, { status: 404 });
+    }
+    const previousStatus = previous.status;
+
+    const nextReviewer =
+      body.reviewer !== undefined ? body.reviewer : previous.reviewer;
+    const nextApprover =
+      body.approver !== undefined ? body.approver : previous.approver;
+    validateRiskReviewerApprover(nextReviewer, nextApprover);
 
     const risk = await updateRisk(id, {
       title: body.title,
@@ -57,14 +81,28 @@ export async function PATCH(request: Request, context: RouteContext) {
       treatment: body.treatment as RiskTreatment | undefined,
       status: body.status as RiskStatus | undefined,
       owner: body.owner,
+      reviewer: body.reviewer,
+      approver: body.approver,
       dueDate: body.dueDate,
       mitigationPlan: body.mitigationPlan,
+      controlId: body.controlId,
+      controlIds,
     });
     if (!risk) {
       return NextResponse.json({ error: 'Risk not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ risk });
+    if (previousStatus && body.status !== undefined && body.status !== previousStatus) {
+      void notifyRiskStatusTransition({ previousStatus, risk }).catch((err) => {
+        console.warn(
+          '[risk-email] notifyRiskStatusTransition failed:',
+          err instanceof Error ? err.message : err
+        );
+      });
+    }
+
+    const workflow = await getRiskWorkflow(id);
+    return NextResponse.json({ risk, mappings: workflow?.mappings ?? [] });
   } catch (error) {
     if (error instanceof ControlValidationError) {
       return NextResponse.json({ error: error.message }, { status: 400 });

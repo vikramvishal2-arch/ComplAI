@@ -55,6 +55,72 @@ export type AuditRiskAssessment = {
   linkedFindingIds: string[];
 };
 
+/** ISO 31000-style process phases created when launching a risk assessment cycle. */
+export const RISK_ASSESSMENT_PROCESS_PHASES: Omit<AuditRiskAssessment, 'id'>[] = [
+  {
+    area: '1. Risk Identification',
+    summary:
+      'The goal of this step is to find, recognize, and describe risks that might help or prevent an organization from achieving its objectives.',
+    inherentRisk: 'medium',
+    residualRisk: 'medium',
+    controlsTested: 0,
+    gapsIdentified: 0,
+    owner: 'GRC / Risk Management',
+    lastReviewed: '',
+    controlsInScope: [],
+    gaps: [],
+    recommendations: [
+      'Identify sources: Pinpoint internal and external triggers, vulnerabilities, and threats.',
+      'Determine consequences: Map out potential impacts, ripple effects, and cascaded results.',
+      'Track tangibles & intangibles: Account for hardware, software, reputation, and brand trust.',
+      'Use diverse tools: Apply checklists, historical data analysis, and expert interviews.',
+      'Involve stakeholders: Gather cross-functional teams to prevent blind spots.',
+    ],
+    linkedFindingIds: [],
+  },
+  {
+    area: '2. Risk Analysis',
+    summary:
+      'This step focuses on understanding the nature, characteristics, and level of the identified risks.',
+    inherentRisk: 'medium',
+    residualRisk: 'medium',
+    controlsTested: 0,
+    gapsIdentified: 0,
+    owner: 'GRC / Risk Management',
+    lastReviewed: '',
+    controlsInScope: [],
+    gaps: [],
+    recommendations: [
+      'Determine likelihood: Calculate how often or how likely an event is to occur.',
+      'Assess consequences: Quantify or qualify the severity of the potential impact.',
+      'Analyze controls: Evaluate the effectiveness of current measures already in place.',
+      'Review complexities: Look at dependencies, system connections, and risk combinations.',
+      'Select methods: Choose qualitative, semi-quantitative, or highly detailed quantitative techniques.',
+    ],
+    linkedFindingIds: [],
+  },
+  {
+    area: '3. Risk Evaluation',
+    summary:
+      'The final step uses the insights from the analysis to support decision-making about future actions.',
+    inherentRisk: 'medium',
+    residualRisk: 'medium',
+    controlsTested: 0,
+    gapsIdentified: 0,
+    owner: 'GRC / Risk Management',
+    lastReviewed: '',
+    controlsInScope: [],
+    gaps: [],
+    recommendations: [
+      'Compare results: Benchmark analyzed risk levels against established organizational risk criteria.',
+      'Prioritize risks: Rank issues to determine which require urgent treatment.',
+      'Make decisions: Determine if a risk is acceptable or requires further mitigation.',
+      'Log outcomes: Document the evaluation to provide a transparent audit trail.',
+    ],
+    linkedFindingIds: [],
+  },
+];
+
 export type ExternalReadinessItem = {
   id: string;
   category: string;
@@ -380,7 +446,16 @@ export const AUDIT_FINDINGS: AuditFinding[] = [
 
 export const EVIDENCE_REQUESTS: EvidenceRequest[] = [
   {
-    id: 'ER-88',
+    id: 'ER-89',
+    engagement: 'SOC 2 Type II — FY2026',
+    request: 'MFA enrollment report and authentication logs for workforce SSO',
+    controlRef: 'CC6.1',
+    assignee: 'IAM Team',
+    status: 'accepted',
+    dueDate: '2026-04-10',
+  },
+  {
+    id: 'ER-90',
     engagement: 'SOC 2 Type II — FY2026',
     request: 'PAM session logs for admin accounts (Jan–Mar 2026)',
     controlRef: 'CC6.7',

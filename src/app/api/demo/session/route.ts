@@ -9,7 +9,16 @@ import {
 
 export async function GET() {
   if (!isDemoPortalEnabled()) {
-    return NextResponse.json({ signedIn: false, portalEnabled: false });
+    return NextResponse.json({
+      signedIn: true,
+      portalEnabled: false,
+      role: 'admin',
+      email: 'admin@complai.local',
+      displayName: 'Administrator',
+      readOnlyAreas: [],
+      canAccessSettings: true,
+      canManageFrameworkCatalog: true,
+    });
   }
 
   const cookieStore = await cookies();
@@ -40,5 +49,6 @@ export async function GET() {
     displayName: session.displayName,
     readOnlyAreas: session.role === 'customer' ? ['dashboard', 'frameworks'] : [],
     canAccessSettings: session.role === 'admin',
+    canManageFrameworkCatalog: session.role === 'admin',
   });
 }

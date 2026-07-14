@@ -7,6 +7,11 @@ import { MIDDLE_EAST_PRIVACY_CONTROLS } from './middle-east-privacy-controls';
 import { GOOGLE_CHRONICLE_CONTROLS } from './google-chronicle-controls';
 import { ISO22301_CONTROLS } from './iso22301-controls';
 import { ISO31000_CONTROLS } from './iso31000-controls';
+import { UN_R155_CONTROLS } from './un-r155-controls';
+import { UN_R156_CONTROLS } from './un-r156-controls';
+import { FDA_CONTROLS } from './fda-controls';
+import { IRDAI_CONTROLS } from './irdai-controls';
+import { CERT_IN_CONTROLS } from './cert-in-controls';
 
 function c(
   id: string,
@@ -30,6 +35,11 @@ export const CONTROLS: Control[] = [
   ...GOOGLE_CHRONICLE_CONTROLS,
   ...ISO22301_CONTROLS,
   ...ISO31000_CONTROLS,
+  ...UN_R155_CONTROLS,
+  ...UN_R156_CONTROLS,
+  ...FDA_CONTROLS,
+  ...IRDAI_CONTROLS,
+  ...CERT_IN_CONTROLS,
 
   // ISO 27701 (subset)
 

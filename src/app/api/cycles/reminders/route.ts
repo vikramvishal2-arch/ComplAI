@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { checkDueReminders, recordReminder } from '@/lib/cycles/cycle-engine';
 import { sendCycleReminderEmail } from '@/lib/email/send-cycle-reminder';
-import { PROGRAM_TYPE_LABELS } from '@/lib/types';
+import { requireCronOrDemoAdmin } from '@/lib/server/require-demo-admin';
 
 /**
  * GET /api/cycles/reminders
@@ -10,13 +10,17 @@ import { PROGRAM_TYPE_LABELS } from '@/lib/types';
  * 1. Creates in-app reminder log entries (always)
  * 2. Sends email reminders via Resend/SMTP/stub
  *
- * Intended to be called by an external cron (Vercel, Railway, etc.)
- * or manually for testing. Pass ?dryRun=true to preview without sending.
+ * Authorize with `Authorization: Bearer <CRON_SECRET>` / `X-Cron-Secret`,
+ * or a demo admin session. Pass ?dryRun=true to preview without sending.
+ * Optional ?email= override is only applied for authorized callers.
  */
 export async function GET(request: Request) {
+  const gate = await requireCronOrDemoAdmin(request);
+  if ('error' in gate) return gate.error;
+
   const url = new URL(request.url);
   const dryRun = url.searchParams.get('dryRun') === 'true';
-  const recipientOverride = url.searchParams.get('email');
+  const recipientOverride = url.searchParams.get('email')?.trim() || '';
 
   try {
     const checks = await checkDueReminders();
@@ -61,7 +65,6 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('GET /api/cycles/reminders', error);
-    const message = error instanceof Error ? error.message : 'Failed to process reminders';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to process reminders' }, { status: 500 });
   }
 }

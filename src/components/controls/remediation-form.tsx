@@ -16,7 +16,7 @@ import type {
 import { REMEDIATION_STATUS_LABELS } from '@/lib/types';
 
 function newActionId(): string {
-  return `ra-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  return `ra-${crypto.randomUUID()}`;
 }
 
 interface RemediationFormProps {

@@ -1,4 +1,5 @@
-import type { ComplianceStatus, ComplianceMethod, RagStatus } from '../types';
+import type { ComplianceStatus, ComplianceMethod, RagStatus, EvidenceHealthStatus } from '../types';
+import { evidenceHealthToRagPressure } from '../evidence/evidence-health';
 
 export type { RagStatus };
 
@@ -8,51 +9,74 @@ export interface ControlRagInput {
   owner: string;
   openIssueCount: number;
   openRiskCount: number;
+  evidenceHealth?: EvidenceHealthStatus;
+}
+
+function worseRag(a: RagStatus, b: RagStatus): RagStatus {
+  const rank = { green: 0, amber: 1, red: 2 };
+  return rank[a] >= rank[b] ? a : b;
 }
 
 export function classifyControlRag(input: ControlRagInput): RagStatus {
   const { status, complianceMethod, owner, openIssueCount, openRiskCount } = input;
   const hasRegisterBlockers = openIssueCount > 0 || openRiskCount > 0;
 
+  let rag: RagStatus = 'amber';
+
   if (status === 'not_applicable') {
-    return 'green';
-  }
-
-  if (status === 'not_started') {
-    return 'red';
-  }
-
-  if (hasRegisterBlockers) {
+    rag = 'green';
+  } else if (status === 'not_started') {
+    rag = 'red';
+  } else if (hasRegisterBlockers) {
     if (status === 'audit_ready' || status === 'implemented') {
-      return 'amber';
+      rag = 'amber';
+    } else {
+      rag = 'red';
     }
-    if (status === 'needs_review' || status === 'implementing' || status === 'planning') {
-      return 'red';
-    }
-    return 'red';
-  }
-
-  if (status === 'audit_ready' || status === 'implemented') {
-    return 'green';
-  }
-
-  if (status === 'needs_review') {
-    return 'amber';
-  }
-
-  if (status === 'planning' || status === 'implementing') {
+  } else if (status === 'audit_ready' || status === 'implemented') {
+    rag = 'green';
+  } else if (status === 'needs_review') {
+    rag = 'amber';
+  } else if (status === 'planning' || status === 'implementing') {
     if (!complianceMethod || !owner.trim()) {
-      return 'red';
+      rag = 'red';
+    } else {
+      rag = 'amber';
     }
-    return 'amber';
   }
 
-  return 'amber';
+  if (input.evidenceHealth) {
+    const pressure = evidenceHealthToRagPressure(input.evidenceHealth);
+    if (pressure === 'red') {
+      rag = worseRag(rag, 'amber');
+      if (
+        input.evidenceHealth === 'mismatched' ||
+        (input.evidenceHealth === 'missing' &&
+          (status === 'implemented' || status === 'audit_ready' || status === 'needs_review'))
+      ) {
+        rag = worseRag(rag, 'red');
+      }
+    } else if (pressure === 'amber') {
+      rag = worseRag(rag, 'amber');
+    }
+  }
+
+  return rag;
 }
 
 export function getGoGreenActions(input: ControlRagInput): string[] {
   const actions: string[] = [];
   const rag = classifyControlRag(input);
+
+  if (input.evidenceHealth === 'missing') {
+    actions.push('Upload supporting evidence for this control');
+  } else if (input.evidenceHealth === 'unreviewed') {
+    actions.push('Run AI evidence review on uploaded files and replace weak artifacts');
+  } else if (input.evidenceHealth === 'weak') {
+    actions.push('Replace or supplement weak evidence with stronger audit artifacts');
+  } else if (input.evidenceHealth === 'mismatched') {
+    actions.push('Remove mismatched uploads and attach evidence that matches this control');
+  }
 
   if (input.openRiskCount > 0) {
     actions.push(
@@ -94,7 +118,7 @@ export function getGoGreenActions(input: ControlRagInput): string[] {
       break;
     case 'audit_ready':
       if (rag !== 'green') {
-        actions.push('Resolve register blockers to maintain Audit Ready status');
+        actions.push('Resolve evidence and register blockers to maintain Audit Ready status');
       }
       break;
     default:
@@ -106,6 +130,6 @@ export function getGoGreenActions(input: ControlRagInput): string[] {
 
 export const RAG_LABELS: Record<RagStatus, string> = {
   green: 'Green — Audit ready / compliant',
-  amber: 'Amber — In progress',
+  amber: 'Amber — In progress / evidence gaps',
   red: 'Red — Needs action',
 };

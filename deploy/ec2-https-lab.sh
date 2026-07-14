@@ -3,13 +3,13 @@
 # Usage: bash deploy/ec2-https-lab.sh [domain]
 #
 # Examples:
-#   bash deploy/ec2-https-lab.sh 13-233-254-149.sslip.io
+#   bash deploy/ec2-https-lab.sh 13-201-29-172.sslip.io
 #   bash deploy/ec2-https-lab.sh lab.propelreadysolutions.in
 
 set -euo pipefail
 
 APP_DIR="${APP_DIR:-/opt/complai}"
-DOMAIN="${1:-13-233-254-149.sslip.io}"
+DOMAIN="${1:-13-201-29-172.sslip.io}"
 LAB_PATH="/complAI/Lab"
 PUBLIC_URL="https://${DOMAIN}${LAB_PATH}"
 ENV_FILE="${APP_DIR}/.env.production"
@@ -58,4 +58,4 @@ echo ""
 echo "ComplAI Lab is live at:"
 echo "  ${PUBLIC_URL}/"
 echo ""
-echo "Old http://${DOMAIN}/ and http://13.233.254.149/ redirect to HTTPS + ${LAB_PATH}."
+echo "Old http://${DOMAIN}/ and http://13.201.29.172/ redirect to HTTPS + ${LAB_PATH}."

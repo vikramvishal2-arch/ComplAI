@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getVendors, createVendor } from '@/lib/db/vendor-repository';
+import { refreshVendorInternetIntelligence } from '@/lib/db/vendor-intelligence';
 import { formatVendorDbError } from '@/lib/db/prisma-errors';
 
 function vendorDbErrorResponse(error: unknown) {
@@ -43,7 +44,30 @@ export async function POST(request: Request) {
       labels: Array.isArray(body.labels) ? body.labels : undefined,
     });
 
-    return NextResponse.json({ vendor }, { status: 201 });
+    // Correlate external intel into posture when a primary domain is present
+    let intelligence: Awaited<ReturnType<typeof refreshVendorInternetIntelligence>> = null;
+    if (vendor.primaryDomain?.trim()) {
+      try {
+        intelligence = await refreshVendorInternetIntelligence(vendor.id);
+      } catch (intelError) {
+        console.warn('POST /api/vendors — intelligence refresh after create failed', intelError);
+      }
+    }
+
+    return NextResponse.json(
+      {
+        vendor: intelligence?.vendor ?? vendor,
+        intelligence: intelligence
+          ? {
+              externalIntel: intelligence.externalIntel,
+              breachIntel: intelligence.breachIntel,
+              elastic: intelligence.elastic,
+              refreshedAt: intelligence.refreshedAt,
+            }
+          : null,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     const response = vendorDbErrorResponse(error);
     if (response) return response;

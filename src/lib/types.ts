@@ -4,6 +4,7 @@ export type FrameworkCategory =
   | 'healthcare'
   | 'financial'
   | 'government'
+  | 'manufacturing'
   | 'ai';
 
 export type ControlDomain =
@@ -56,6 +57,30 @@ export interface Framework {
   controlCount: number;
   popular: boolean;
   tags: string[];
+}
+
+export type FrameworkCatalogSource = 'custom' | 'builtin_override';
+
+export interface FrameworkCatalogEntry {
+  id: string;
+  frameworkId: string;
+  source: FrameworkCatalogSource;
+  name: string;
+  shortName: string;
+  description: string;
+  category: FrameworkCategory;
+  region: string;
+  version: string;
+  popular: boolean;
+  published: boolean;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FrameworkWithCatalogMeta extends Framework {
+  catalogSource?: 'builtin' | FrameworkCatalogSource;
+  editable?: boolean;
 }
 
 export interface Control {
@@ -122,6 +147,7 @@ export interface ControlRemediation {
 export interface ControlIssue {
   id: string;
   controlId: string;
+  riskId: string | null;
   title: string;
   description: string;
   severity: ControlIssueSeverity;
@@ -132,6 +158,42 @@ export interface ControlIssue {
   resolutionNotes: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export type ControlEffectiveness =
+  | 'not_assessed'
+  | 'effective'
+  | 'ineffective'
+  | 'failed'
+  | 'non_compliant';
+
+export const CONTROL_EFFECTIVENESS_LABELS: Record<ControlEffectiveness, string> = {
+  not_assessed: 'Not assessed',
+  effective: 'Effective',
+  ineffective: 'Ineffective',
+  failed: 'Failed',
+  non_compliant: 'Non-compliant',
+};
+
+export const DEVIATION_EFFECTIVENESS: ControlEffectiveness[] = [
+  'ineffective',
+  'failed',
+  'non_compliant',
+];
+
+export interface RiskControlMapping {
+  id: string;
+  riskId: string;
+  controlId: string;
+  controlReference: string;
+  controlTitle: string;
+  frameworkShortName: string;
+  effectiveness: ControlEffectiveness;
+  assessmentNotes: string;
+  lastAssessedAt: string | null;
+  linkedIssueId: string | null;
+  linkedIssue: ControlIssue | null;
+  isPrimary: boolean;
 }
 
 export interface ControlEvidence {
@@ -145,6 +207,27 @@ export interface ControlEvidence {
   sizeBytes: number;
   description: string;
   uploadedAt: string;
+  validationVerdict?: 'strong' | 'acceptable' | 'weak' | 'mismatched' | null;
+  validationScore?: number | null;
+  validationSummary?: string | null;
+  validationAction?: 'keep' | 'replace' | 'supplement' | null;
+  validatedAt?: string | null;
+}
+
+export type EvidenceHealthStatus =
+  | 'ok'
+  | 'missing'
+  | 'unreviewed'
+  | 'weak'
+  | 'mismatched'
+  | 'not_required';
+
+export interface ControlEvidenceHealth {
+  status: EvidenceHealthStatus;
+  fileCount: number;
+  reviewedCount: number;
+  label: string;
+  detail: string;
 }
 
 export type RiskLikelihood =
@@ -158,11 +241,20 @@ export type RiskImpact = 'negligible' | 'minor' | 'moderate' | 'major' | 'critic
 
 export type RiskTreatment = 'mitigate' | 'accept' | 'transfer' | 'avoid';
 
-export type RiskStatus = 'identified' | 'assessing' | 'treating' | 'accepted' | 'closed';
+export type RiskStatus =
+  | 'identified'
+  | 'assessing'
+  | 'in_review'
+  | 'pending_approval'
+  | 'treating'
+  | 'accepted'
+  | 'closed';
 
 export interface Risk {
   id: string;
   controlId: string;
+  /** All mapped control IDs (primary first). Populated when workflow is loaded. */
+  controlIds?: string[];
   title: string;
   description: string;
   category: string;
@@ -175,6 +267,10 @@ export interface Risk {
   treatment: RiskTreatment;
   status: RiskStatus;
   owner: string;
+  /** Name, member id, or email of the designated reviewer. */
+  reviewer: string;
+  /** Name, member id, or email of the designated approver. */
+  approver: string;
   dueDate: string | null;
   mitigationPlan: string;
   createdAt: string;
@@ -197,6 +293,12 @@ export interface RiskRegisterEntry {
   severityOrScore: string;
   inherentRisk: string | null;
   presentRisk: string | null;
+  /** Inherent axes — used for heatmap when residual is unset */
+  likelihood?: RiskLikelihood | null;
+  impact?: RiskImpact | null;
+  /** Present / residual axes for open-risk heatmap */
+  residualLikelihood?: RiskLikelihood | null;
+  residualImpact?: RiskImpact | null;
   status: string;
   owner: string;
   assignee: string;
@@ -497,6 +599,7 @@ export const CATEGORY_LABELS: Record<FrameworkCategory, string> = {
   healthcare: 'Healthcare',
   financial: 'Financial',
   government: 'Government',
+  manufacturing: 'Manufacturing',
   ai: 'AI & Emerging',
 };
 
@@ -553,6 +656,8 @@ export const RISK_TREATMENT_LABELS: Record<RiskTreatment, string> = {
 export const RISK_STATUS_LABELS: Record<RiskStatus, string> = {
   identified: 'Identified',
   assessing: 'Assessing',
+  in_review: 'In review',
+  pending_approval: 'Pending approval',
   treating: 'Treating',
   accepted: 'Accepted',
   closed: 'Closed',

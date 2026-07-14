@@ -8,6 +8,7 @@ import {
   Library,
   ListChecks,
   Settings,
+  Briefcase,
   ChevronRight,
   LogOut,
   type LucideIcon,
@@ -27,6 +28,7 @@ const topNav: NavItem[] = [
   { href: '/program', label: 'Program Modules', icon: Boxes },
   { href: '/frameworks', label: 'Frameworks', icon: Library },
   { href: '/controls', label: 'Control Catalog', icon: ListChecks },
+  { href: '/evidence', label: 'Evidence', icon: Briefcase },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ];
 
@@ -43,6 +45,9 @@ function isActive(pathname: string, href: string) {
   if (href === '/frameworks') {
     return pathname === '/frameworks' || pathname.startsWith('/frameworks/');
   }
+  if (href === '/evidence') {
+    return pathname === '/evidence' || pathname.startsWith('/evidence/');
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -56,10 +61,11 @@ function isModuleActive(pathname: string, moduleHref: string, moduleId: string) 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { isCustomer, canAccessSettings, displayName, signedIn, portalEnabled } = useDemoSession();
+  const { isCustomer, canAccessSettings, canManageFrameworkCatalog, displayName, signedIn, portalEnabled } = useDemoSession();
 
   const visibleNav = topNav.filter((item) => {
-    if (item.adminOnly && (isCustomer || !canAccessSettings)) return false;
+    if (item.adminOnly && isCustomer) return false;
+    if (item.adminOnly && !canAccessSettings && !canManageFrameworkCatalog) return false;
     return true;
   });
 

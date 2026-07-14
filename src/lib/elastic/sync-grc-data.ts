@@ -16,7 +16,13 @@ import {
 } from '@/lib/data/assurance-demo';
 import { getCycles } from '@/lib/cycles/cycle-engine';
 import { parseFindings, parseRemediationItems } from '@/lib/vendor/vendor-assessment-types';
+import { parseExternalIntel } from '@/lib/vendor/intel/correlate';
+import { parseBreachIntel } from '@/lib/vendor/breach-intelligence-shared';
+import { syncVendorExternalIntelToElastic } from '@/lib/vendor/intel/elastic-sync';
 import { PROGRAM_TYPE_LABELS } from '@/lib/types';
+import { getDefaultOrganization } from '@/lib/db/repository';
+import { getRiskDomainsForElasticSync } from '@/lib/db/risk-assessment-repository';
+import { domainRiskSeverityBucket } from '@/lib/risk/domain-risk-item';
 
 export interface SyncResult {
   success: boolean;
@@ -141,6 +147,8 @@ async function syncVendors(): Promise<number> {
     const certs = Array.isArray(v.certifications)
       ? (v.certifications as Array<{ name: string }>).map((c) => c.name)
       : [];
+    const externalIntel = parseExternalIntel(v.externalIntel);
+    const breach = parseBreachIntel(v.breachIntel);
 
     return {
       id: v.id,
@@ -152,6 +160,7 @@ async function syncVendors(): Promise<number> {
       ratingGrade: v.ratingGrade,
       industry: v.industry,
       dataAccess: v.dataAccess,
+      primaryDomain: v.primaryDomain,
       certifications: certs,
       domainSecurity: ds.security ?? ds.Security ?? 0,
       domainPrivacy: ds.privacy ?? ds.Privacy ?? 0,
@@ -161,10 +170,33 @@ async function syncVendors(): Promise<number> {
       assessmentStatus: (v.assessments ?? [])[0]?.status ?? 'none',
       openFindings,
       openRemediations,
+      externalIntelScore: externalIntel?.correlatedScore100 ?? null,
+      externalIntelLive: Boolean(externalIntel?.live),
+      externalIntelFindingCount: externalIntel?.findings.length ?? 0,
+      externalIntelSources: externalIntel?.providers.filter((p) => p.live).map((p) => p.source) ?? [],
+      breachStatus: breach?.status ?? 'unknown',
       updatedAt: v.updatedAt?.toISOString() ?? new Date().toISOString(),
     };
   });
   return bulkIndex(GRC_INDICES.vendors, docs);
+}
+
+async function syncVendorExternalIntel(): Promise<number> {
+  await ensureIndex(GRC_INDICES.vendorIntel);
+  const vendors = await getVendors();
+  let total = 0;
+  for (const v of vendors) {
+    const intel = parseExternalIntel(v.externalIntel);
+    if (!intel) continue;
+    const result = await syncVendorExternalIntelToElastic({
+      vendorId: v.id,
+      vendorName: v.name,
+      primaryDomain: v.primaryDomain,
+      intel,
+    });
+    if (result.ok) total += result.indexed;
+  }
+  return total;
 }
 
 async function syncAudits(): Promise<number> {
@@ -285,6 +317,50 @@ async function syncAssuranceJira(): Promise<number> {
   return bulkIndex(GRC_INDICES.assuranceJira, docs);
 }
 
+async function syncRiskAssessment(): Promise<number> {
+  await ensureIndex(GRC_INDICES.riskAssessment);
+  const org = await getDefaultOrganization();
+  const domains = await getRiskDomainsForElasticSync(org.id);
+  const docs: Array<Record<string, unknown>> = [];
+
+  for (const domain of domains) {
+    docs.push({
+      id: `domain-${domain.id}`,
+      docType: 'domain_summary',
+      domainId: domain.id,
+      domainKey: domain.domainKey,
+      domainName: domain.name,
+      owner: domain.owner,
+      criticalCount: domain.severityCounts.critical,
+      highCount: domain.severityCounts.high,
+      mediumCount: domain.severityCounts.medium,
+      lowCount: domain.severityCounts.low,
+      identificationStatus: domain.identification.status,
+      analysisStatus: domain.analysis.status,
+      evaluationStatus: domain.evaluation.status,
+      updatedAt: domain.updatedAt,
+    });
+
+    for (const item of domain.riskItems) {
+      docs.push({
+        id: `${domain.id}-${item.id}`,
+        docType: 'risk_item',
+        domainId: domain.id,
+        domainKey: domain.domainKey,
+        domainName: domain.name,
+        severity: domainRiskSeverityBucket(item),
+        title: item.title,
+        status: item.status,
+        stage: item.stage,
+        owner: domain.owner,
+        updatedAt: domain.updatedAt,
+      });
+    }
+  }
+
+  return bulkIndex(GRC_INDICES.riskAssessment, docs);
+}
+
 export async function syncAllGrcData(): Promise<SyncResult> {
   const available = await isElasticAvailable();
   if (!available) {
@@ -296,11 +372,13 @@ export async function syncAllGrcData(): Promise<SyncResult> {
     indices.controls = await syncControls();
     indices.risks = await syncRisks();
     indices.vendors = await syncVendors();
+    indices['vendor-intel'] = await syncVendorExternalIntel();
     indices.audits = await syncAudits();
     indices.cycles = await syncCycles();
     indices.policies = await syncPolicies();
     indices.assurance = await syncAssurance();
     indices['assurance-jira'] = await syncAssuranceJira();
+    indices['risk-assessment'] = await syncRiskAssessment();
 
     return { success: true, indices };
   } catch (err) {

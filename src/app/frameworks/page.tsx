@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { AppShell } from '@/components/layout/app-shell';
 import { ReadinessBar } from '@/components/ui/badges';
 import { CATEGORY_LABELS, type Framework } from '@/lib/types';
-import { Globe, Plus, Star, Eye } from 'lucide-react';
+import { Globe, Plus, Star, Eye, Settings2, BookOpen } from 'lucide-react';
 import { useDemoSession } from '@/hooks/use-demo-session';
+import { frameworkHelpGuidePath } from '@/lib/brand';
 
 interface FrameworkWithMeta extends Framework {
   activated: boolean;
@@ -15,7 +16,7 @@ interface FrameworkWithMeta extends Framework {
 }
 
 export default function FrameworksPage() {
-  const { isCustomer, isReadOnlyArea } = useDemoSession();
+  const { isCustomer, isReadOnlyArea, canManageFrameworkCatalog } = useDemoSession();
   const readOnly = isCustomer || isReadOnlyArea('frameworks');
   const [frameworks, setFrameworks] = useState<FrameworkWithMeta[]>([]);
   const [filter, setFilter] = useState<string>('all');
@@ -107,10 +108,26 @@ export default function FrameworksPage() {
 
       {!initialLoad && !fetchError && (
       <>
+      {canManageFrameworkCatalog && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-900">
+          <span>Admin: activate frameworks, edit metadata, and add custom frameworks.</span>
+          <Link
+            href="/settings"
+            className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600"
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+            Manage framework catalog
+          </Link>
+        </div>
+      )}
       {readOnly && (
         <div className="mb-6 flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
           <Eye className="h-4 w-4 shrink-0 text-sky-600" />
-          Framework library is view-only in the customer demo. Explore controls without changing activations.
+          Framework library is view-only in the customer demo. Sign in as <strong>admin</strong> at{' '}
+          <Link href="/demo/access" className="font-medium text-sky-700 underline">
+            Demo Access
+          </Link>{' '}
+          for full rights including framework activation and catalog management.
         </div>
       )}
       <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -186,7 +203,16 @@ export default function FrameworksPage() {
               </div>
             )}
 
-            <div className="mt-5 flex gap-2">
+            <div className="mt-5 flex flex-wrap gap-2">
+              <a
+                href={frameworkHelpGuidePath(fw.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                <BookOpen className="h-4 w-4" />
+                Read more
+              </a>
               {fw.activated ? (
                 <>
                   <Link

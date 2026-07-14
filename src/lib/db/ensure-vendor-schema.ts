@@ -17,5 +17,15 @@ export async function ensureVendorSchema(force = false): Promise<void> {
     ADD COLUMN IF NOT EXISTS certifications JSONB NOT NULL DEFAULT '[]'::jsonb
   `;
 
+  await prisma.$executeRaw`
+    ALTER TABLE vendors
+    ADD COLUMN IF NOT EXISTS breach_intel JSONB NOT NULL DEFAULT '{}'::jsonb
+  `;
+
+  await prisma.$executeRaw`
+    ALTER TABLE vendors
+    ADD COLUMN IF NOT EXISTS external_intel JSONB NOT NULL DEFAULT '{}'::jsonb
+  `;
+
   schemaEnsured = true;
 }

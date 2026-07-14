@@ -16,16 +16,27 @@ import {
   type RiskStatus,
   type RiskTreatment,
   type Control,
+  type RiskControlMapping,
 } from '@/lib/types';
 import { calculateRiskScore, riskScoreLabel, isHighOrCriticalScore } from '@/lib/risk/scoring';
 import { ControlReference } from '@/components/controls/control-reference';
+import { RiskControlWorkflowPanel } from '@/components/risk/risk-control-workflow-panel';
+import { RiskRemediationGuidancePanel } from '@/components/risk/risk-remediation-guidance-panel';
 import { formatDateTime, cn } from '@/lib/utils';
 import { ArrowLeft, Save, Trash2, CheckCircle2, ExternalLink } from 'lucide-react';
+
+interface LinkableControl {
+  id: string;
+  reference: string;
+  title: string;
+  frameworkShortName: string;
+}
 
 interface RiskDetailData {
   risk: Risk;
   control: Control | null;
   framework: { id: string; name: string; shortName: string } | null;
+  mappings: RiskControlMapping[];
 }
 
 export default function RiskDetailPage() {
@@ -35,23 +46,32 @@ export default function RiskDetailPage() {
 
   const [data, setData] = useState<RiskDetailData | null>(null);
   const [form, setForm] = useState<Risk | null>(null);
+  const [controlOptions, setControlOptions] = useState<LinkableControl[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [highlightGuidance, setHighlightGuidance] = useState(false);
 
-  const load = () => {
-    setLoading(true);
+  const load = (opts?: { soft?: boolean }) => {
+    if (!opts?.soft) setLoading(true);
     setError(null);
-    fetch(`/api/risks/${id}`)
-      .then(async (r) => {
+    Promise.all([
+      fetch(`/api/risks/${id}`).then(async (r) => {
         const json = await r.json();
         if (!r.ok) throw new Error(json.error ?? 'Failed to load risk');
         return json as RiskDetailData;
-      })
-      .then((d) => {
+      }),
+      fetch('/api/risks/controls').then(async (r) => {
+        const json = await r.json();
+        if (!r.ok) return [] as LinkableControl[];
+        return (json.controls ?? []) as LinkableControl[];
+      }),
+    ])
+      .then(([d, controls]) => {
         const risk = d.risk;
-        setData(d);
+        setData({ ...d, mappings: d.mappings ?? [] });
+        setControlOptions(controls);
         setForm(
           risk.status === 'closed' && !risk.residualLikelihood
             ? {
@@ -74,8 +94,31 @@ export default function RiskDetailPage() {
     load();
   }, [id]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const show = params.get('guidance') === '1';
+    setHighlightGuidance(show);
+    if (show) {
+      requestAnimationFrame(() => {
+        document.getElementById('remediation-guidance')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      });
+    }
+  }, [id, loading]);
+
   const save = async () => {
     if (!form) return;
+    if (!form.reviewer?.trim()) {
+      setError('Reviewer name is required');
+      return;
+    }
+    if (!form.approver?.trim()) {
+      setError('Approver name is required');
+      return;
+    }
     setSaving(true);
     setSaved(false);
     setError(null);
@@ -102,6 +145,8 @@ export default function RiskDetailPage() {
           treatment: form.treatment,
           status: form.status,
           owner: form.owner,
+          reviewer: form.reviewer,
+          approver: form.approver,
           dueDate: form.dueDate,
           mitigationPlan: form.mitigationPlan,
         }),
@@ -110,7 +155,15 @@ export default function RiskDetailPage() {
       if (!res.ok) throw new Error(json.error ?? 'Failed to save');
 
       setForm(json.risk);
-      setData((prev) => (prev ? { ...prev, risk: json.risk } : prev));
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              risk: json.risk,
+              mappings: json.mappings ?? prev.mappings,
+            }
+          : prev
+      );
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -482,6 +535,31 @@ export default function RiskDetailPage() {
                 <input
                   value={form.owner}
                   onChange={(e) => setForm({ ...form, owner: e.target.value })}
+                  placeholder="Name, member id, or email"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Reviewer <span className="text-red-600">*</span>
+                </label>
+                <input
+                  required
+                  value={form.reviewer}
+                  onChange={(e) => setForm({ ...form, reviewer: e.target.value })}
+                  placeholder="Name, member id, or email"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Approver <span className="text-red-600">*</span>
+                </label>
+                <input
+                  required
+                  value={form.approver}
+                  onChange={(e) => setForm({ ...form, approver: e.target.value })}
+                  placeholder="Name, member id, or email"
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
                 />
               </div>
@@ -504,9 +582,17 @@ export default function RiskDetailPage() {
                 rows={4}
                 value={form.mitigationPlan}
                 onChange={(e) => setForm({ ...form, mitigationPlan: e.target.value })}
+                placeholder="Describe how this risk will be treated. Use Remediation guidance to seed a draft."
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
               />
             </div>
+
+            <RiskRemediationGuidancePanel
+              risk={form}
+              control={data.control}
+              highlight={highlightGuidance}
+              onApplyPlan={(draft) => setForm({ ...form, mitigationPlan: draft })}
+            />
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
@@ -532,6 +618,14 @@ export default function RiskDetailPage() {
               </button>
             </div>
           </section>
+
+          <RiskControlWorkflowPanel
+            riskId={id}
+            riskOwner={form.owner}
+            mappings={data.mappings ?? []}
+            controlOptions={controlOptions}
+            onChanged={() => load({ soft: true })}
+          />
         </div>
 
         <div className="space-y-6">
@@ -549,8 +643,28 @@ export default function RiskDetailPage() {
           </section>
 
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-sm font-semibold text-slate-900">Linked control</h3>
-            {data.control ? (
+            <h3 className="text-sm font-semibold text-slate-900">
+              Linked controls ({(data.mappings ?? []).length || 1})
+            </h3>
+            {(data.mappings ?? []).length > 0 ? (
+              <ul className="mt-3 space-y-3">
+                {(data.mappings ?? []).map((m) => (
+                  <li key={m.id}>
+                    <ControlReference
+                      controlId={m.controlId}
+                      reference={m.controlReference}
+                      title={m.controlTitle}
+                      className="text-sm"
+                    />
+                    {m.isPrimary && (
+                      <span className="mt-1 inline-block text-[10px] font-semibold uppercase text-brand-600">
+                        Primary
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : data.control ? (
               <>
                 <ControlReference
                   controlId={data.control.id}

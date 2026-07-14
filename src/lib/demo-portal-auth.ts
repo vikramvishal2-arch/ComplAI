@@ -56,6 +56,7 @@ const APP_ROUTE_PREFIXES = [
   '/security-learning',
   '/program',
   '/cycles',
+  '/evidence',
 ] as const;
 
 const ADMIN_ONLY_PAGE_PREFIXES = ['/settings'] as const;
@@ -90,6 +91,72 @@ export function isAdminOnlyApiPath(pathname: string): boolean {
   return false;
 }
 
+/** Mutating / privileged API paths that demo customers must not call. */
+export function isAdminOnlyApiWritePath(pathname: string): boolean {
+  if (pathname === '/api/assurance/jira/sync' || pathname.startsWith('/api/assurance/jira/sync/')) {
+    return true;
+  }
+  if (pathname === '/api/assurance/integrations' || pathname.startsWith('/api/assurance/integrations/')) {
+    return true;
+  }
+  if (pathname === '/api/vendors/refresh-intelligence') return true;
+  if (/^\/api\/vendors\/[^/]+\/refresh-intelligence\/?$/.test(pathname)) return true;
+  if (/^\/api\/vendors\/[^/]+\/breach-check\/?$/.test(pathname)) return true;
+  if (pathname === '/api/vendors/intel' || pathname.startsWith('/api/vendors/intel/')) return true;
+  if (pathname === '/api/vendors/demo-portfolio' || pathname.startsWith('/api/vendors/demo-portfolio/')) {
+    return true;
+  }
+  if (pathname === '/api/cycles/reminders' || pathname.startsWith('/api/cycles/reminders/')) {
+    return true;
+  }
+  if (pathname === '/api/monitoring/run' || pathname.startsWith('/api/monitoring/run/')) {
+    return true;
+  }
+  if (pathname === '/api/integrations/idam' || pathname.startsWith('/api/integrations/idam/')) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * True when a customer session must be denied for this API request.
+ * Always-admin paths (settings/export/members) apply to all methods;
+ * write-sensitive intel/assurance/mail paths apply to non-GET methods
+ * (and to all methods for reminders / intel search).
+ */
+export function isAdminOnlyApiRequest(pathname: string, method: string): boolean {
+  if (isAdminOnlyApiPath(pathname)) return true;
+
+  const upper = method.toUpperCase();
+  const isRead = upper === 'GET' || upper === 'HEAD' || upper === 'OPTIONS';
+
+  // Reminder + intel search + assurance integrations: always admin.
+  if (pathname === '/api/cycles/reminders' || pathname.startsWith('/api/cycles/reminders/')) {
+    return true;
+  }
+  if (pathname === '/api/vendors/intel' || pathname.startsWith('/api/vendors/intel/')) {
+    return true;
+  }
+  if (pathname === '/api/assurance/integrations' || pathname.startsWith('/api/assurance/integrations/')) {
+    return true;
+  }
+  if (pathname === '/api/assurance/jira/sync' || pathname.startsWith('/api/assurance/jira/sync/')) {
+    return true;
+  }
+  if (pathname === '/api/monitoring/run' || pathname.startsWith('/api/monitoring/run/')) {
+    return true;
+  }
+  if (pathname === '/api/vendors/demo-portfolio' || pathname.startsWith('/api/vendors/demo-portfolio/')) {
+    return !isRead;
+  }
+  if (pathname === '/api/integrations/idam' || pathname.startsWith('/api/integrations/idam/')) {
+    return !isRead;
+  }
+
+  if (isRead) return false;
+  return isAdminOnlyApiWritePath(pathname);
+}
+
 export function isCustomerReadOnlyApiWrite(pathname: string, method: string): boolean {
   if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') return false;
   return CUSTOMER_READ_ONLY_API_PREFIXES.some(
@@ -102,10 +169,12 @@ export function isCustomerRole(session: DemoSession | null): boolean {
 }
 
 export function demoSessionCookieOptions() {
+  const appUrl = process.env.APP_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim() || '';
+  const secureByUrl = appUrl.startsWith('https://');
   return {
     httpOnly: true,
     sameSite: 'lax' as const,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === 'production' || secureByUrl,
     path: '/',
     maxAge: demoSessionMaxAgeSeconds(),
   };

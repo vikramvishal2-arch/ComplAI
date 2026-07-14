@@ -2,6 +2,9 @@ node_modules/
 .next/
 out/
 .env
+.env.*
+!.env.example
+!.env.production.example
 .env*.local
 *.log
 .DS_Store

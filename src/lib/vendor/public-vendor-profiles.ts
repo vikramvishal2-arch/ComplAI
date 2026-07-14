@@ -101,7 +101,7 @@ function cert(
   return { id, name, framework, status, ...opts };
 }
 
-/** Curated profiles from public internet sources — safe for customer demos. */
+/** Curated demo profiles from public trust-center notes — illustrative only, not live scans. */
 export const PUBLIC_VENDOR_PROFILES: PublicVendorProfile[] = [
   {
     domain: 'stripe.com',
@@ -113,7 +113,7 @@ export const PUBLIC_VENDOR_PROFILES: PublicVendorProfile[] = [
     website: 'https://stripe.com',
     contactEmail: 'security@stripe.com',
     status: 'monitoring',
-    labels: ['demo', 'public-intelligence', 'payments'],
+    labels: ['demo', 'curated-demo-profile', 'payments'],
     securityRating100: 98,
     ratingGrade: 'A',
     sources: [
@@ -259,7 +259,7 @@ export const PUBLIC_VENDOR_PROFILES: PublicVendorProfile[] = [
     website: 'https://www.policybazaar.com',
     contactEmail: 'security@policybazaar.com',
     status: 'monitoring',
-    labels: ['demo', 'public-intelligence', 'insurtech'],
+    labels: ['demo', 'curated-demo-profile', 'insurtech'],
     securityRating100: 65,
     ratingGrade: 'D',
     sources: [
@@ -415,7 +415,7 @@ export const PUBLIC_VENDOR_PROFILES: PublicVendorProfile[] = [
     website: 'https://www.okta.com',
     contactEmail: 'security@okta.com',
     status: 'monitoring',
-    labels: ['demo', 'public-intelligence', 'identity'],
+    labels: ['demo', 'curated-demo-profile', 'identity'],
     securityRating100: 52,
     ratingGrade: 'F',
     sources: [
@@ -573,7 +573,7 @@ export const PUBLIC_VENDOR_PROFILES: PublicVendorProfile[] = [
     website: 'https://www.cloudflare.com',
     contactEmail: 'security@cloudflare.com',
     status: 'monitoring',
-    labels: ['demo', 'public-intelligence', 'infrastructure'],
+    labels: ['demo', 'curated-demo-profile', 'infrastructure'],
     securityRating100: 94,
     ratingGrade: 'A',
     sources: [
@@ -655,7 +655,7 @@ export const PUBLIC_VENDOR_PROFILES: PublicVendorProfile[] = [
     website: 'https://www.vfirst.com',
     contactEmail: 'dpo@vfirst.com',
     status: 'monitoring',
-    labels: ['demo', 'public-intelligence', 'cpaas', 'india'],
+    labels: ['demo', 'curated-demo-profile', 'cpaas', 'india'],
     securityRating100: 78,
     ratingGrade: 'B',
     sources: [
@@ -756,7 +756,9 @@ export interface ResolvedExternalRisk {
   } | null;
 }
 
-/** Prefer curated public internet profile; fall back to simulated vectors. */
+/** Prefer curated public internet profile; fall back to simulated vectors.
+ *  Both modes are illustrative for pilot — only live HIBP breach checks are real-time facts.
+ */
 export function resolveExternalRiskVectors(input: {
   primaryDomain?: string | null;
   securityRating100: number | null;

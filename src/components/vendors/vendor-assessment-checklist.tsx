@@ -1,6 +1,7 @@
 'use client';
 
-import { CheckCircle2, Circle, MinusCircle, XCircle } from 'lucide-react';
+import { useState } from 'react';
+import { CheckCircle2, Circle, MinusCircle, XCircle, Sparkles, Loader2 } from 'lucide-react';
 import { ControlReference } from '@/components/controls/control-reference';
 import { cn } from '@/lib/utils';
 
@@ -18,6 +19,15 @@ export interface VendorChecklistItem {
   minTier?: string;
   dataAccess?: string[];
 }
+
+type EvidenceReview = {
+  verdict: 'strong' | 'acceptable' | 'weak' | 'mismatched';
+  score: number;
+  summary: string;
+  recommendedUploads: { title: string; why: string; examples: string }[];
+  action: 'keep' | 'replace' | 'supplement';
+  source: 'ai' | 'rules';
+};
 
 const STATUS_OPTIONS: {
   value: Exclude<ChecklistStatus, ''>;
@@ -48,6 +58,9 @@ export function VendorAssessmentChecklist({
   title = 'Vendor assessment checklist',
   description,
 }: VendorAssessmentChecklistProps) {
+  const [reviews, setReviews] = useState<Record<string, EvidenceReview>>({});
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
+
   if (items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
@@ -60,6 +73,48 @@ export function VendorAssessmentChecklist({
     (acc[item.category] ??= []).push(item);
     return acc;
   }, {});
+
+  const reviewEvidence = async (item: VendorChecklistItem) => {
+    const response = responses[item.id] ?? { status: '' as ChecklistStatus, notes: '' };
+    setReviewingId(item.id);
+    try {
+      const res = await fetch('/api/vendors/evidence-validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: item.question,
+          answer: response.notes,
+          evidenceGuidance: item.evidenceGuidance,
+          controlRefs: item.controlRefs,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Review failed');
+      setReviews((prev) => ({ ...prev, [item.id]: data.review }));
+    } catch {
+      setReviews((prev) => ({
+        ...prev,
+        [item.id]: {
+          verdict: 'weak',
+          score: 30,
+          summary: 'Could not complete evidence review. Add notes describing the supporting artifact.',
+          recommendedUploads: item.evidenceGuidance
+            ? [
+                {
+                  title: item.evidenceGuidance,
+                  why: 'Expected evidence for this questionnaire item.',
+                  examples: 'PDF, attestation, or ticket export',
+                },
+              ]
+            : [],
+          action: 'supplement',
+          source: 'rules',
+        },
+      }));
+    } finally {
+      setReviewingId(null);
+    }
+  };
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -79,6 +134,7 @@ export function VendorAssessmentChecklist({
               {categoryItems.map((item, index) => {
                 const response = responses[item.id] ?? { status: '' as ChecklistStatus, notes: '' };
                 const label = item.checklistLabel ?? item.question;
+                const review = reviews[item.id];
 
                 return (
                   <li
@@ -144,6 +200,34 @@ export function VendorAssessmentChecklist({
                               value={response.notes}
                               onChange={(e) => onChange(item.id, { notes: e.target.value })}
                             />
+                            <button
+                              type="button"
+                              onClick={() => reviewEvidence(item)}
+                              disabled={reviewingId === item.id}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-800 hover:bg-violet-100 disabled:opacity-50"
+                            >
+                              {reviewingId === item.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Sparkles className="h-3 w-3" />
+                              )}
+                              Check evidence fit
+                            </button>
+                            {review && (
+                              <div className="rounded-lg border border-violet-200 bg-white p-2.5 text-xs text-slate-700">
+                                <p className="font-semibold text-violet-900">
+                                  {review.verdict} · {review.score}/100 · {review.action}
+                                </p>
+                                <p className="mt-1">{review.summary}</p>
+                                {review.recommendedUploads.length > 0 && (
+                                  <ul className="mt-2 space-y-1 text-slate-600">
+                                    {review.recommendedUploads.slice(0, 2).map((rec) => (
+                                      <li key={rec.title}>• Upload: {rec.title}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

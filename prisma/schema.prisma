@@ -21,6 +21,7 @@ model Organization {
   controlIssues        ControlIssue[]
   controlEvidence      ControlEvidence[]
   risks                Risk[]
+  riskControls         RiskControl[]
   vendors              Vendor[]
   vendorAssessments    VendorAssessment[]
   monitorCheckRuns     MonitorCheckRun[]
@@ -29,6 +30,13 @@ model Organization {
   programCycles            ProgramCycle[]
   organizationIntegrations OrganizationIntegration[]
   endpointAgents           EndpointAgent[]
+  auditEngagements         AuditEngagement[]
+  auditPrograms            AuditProgram[]
+  auditFindings            AuditFinding[]
+  externalReadinessItems   ExternalReadinessItem[]
+  auditEvidenceRequests    AuditEvidenceRequest[]
+  auditRiskAssessments     AuditRiskAssessment[]
+  auditRiskDomains         AuditRiskDomain[]
 
   @@map("organizations")
 }
@@ -94,6 +102,25 @@ model FrameworkActivation {
   @@map("framework_activations")
 }
 
+model FrameworkCatalogEntry {
+  id          String   @id @default(cuid())
+  frameworkId String   @unique @map("framework_id")
+  source      String   @default("custom")
+  name        String
+  shortName   String   @map("short_name")
+  description String
+  category    String
+  region      String   @default("Global")
+  version     String   @default("")
+  popular     Boolean  @default(false)
+  published   Boolean  @default(true)
+  tags        Json     @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("framework_catalog_entries")
+}
+
 model ControlCompliance {
   id                     String    @id @default(cuid())
   organizationId         String    @map("organization_id")
@@ -135,6 +162,7 @@ model ControlIssue {
   id               String    @id @default(cuid())
   organizationId   String    @map("organization_id")
   controlId        String    @map("control_id")
+  riskId           String?   @map("risk_id")
   title            String
   description      String    @default("")
   severity         String    @default("medium")
@@ -149,6 +177,7 @@ model ControlIssue {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, controlId])
+  @@index([organizationId, riskId])
   @@map("control_issues")
 }
 
@@ -165,6 +194,11 @@ model ControlEvidence {
   description    String   @default("")
   storagePath    String   @map("storage_path")
   uploadedAt     DateTime @default(now()) @map("uploaded_at")
+  validationVerdict  String?   @map("validation_verdict")
+  validationScore    Int?      @map("validation_score")
+  validationSummary  String?   @map("validation_summary")
+  validationAction   String?   @map("validation_action")
+  validatedAt        DateTime? @map("validated_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -188,16 +222,189 @@ model Risk {
   treatment      String    @default("mitigate")
   status         String    @default("identified")
   owner          String    @default("")
+  reviewer       String    @default("")
+  approver       String    @default("")
   dueDate        DateTime? @map("due_date") @db.Date
   mitigationPlan String    @default("") @map("mitigation_plan")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  controlMappings RiskControl[]
 
   @@index([organizationId, controlId])
   @@index([organizationId, status])
   @@map("risks")
+}
+
+/// Many-to-many: a risk must map to one or more controls; effectiveness drives auto-issues.
+model RiskControl {
+  id              String    @id @default(cuid())
+  organizationId  String    @map("organization_id")
+  riskId          String    @map("risk_id")
+  controlId       String    @map("control_id")
+  effectiveness   String    @default("not_assessed") // not_assessed | effective | ineffective | failed | non_compliant
+  assessmentNotes String    @default("") @map("assessment_notes")
+  lastAssessedAt  DateTime? @map("last_assessed_at")
+  linkedIssueId   String?   @map("linked_issue_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  risk         Risk         @relation(fields: [riskId], references: [id], onDelete: Cascade)
+
+  @@unique([riskId, controlId])
+  @@index([organizationId, controlId])
+  @@index([organizationId, riskId])
+  @@map("risk_controls")
+}
+
+model AuditEngagement {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  name           String
+  framework      String   @default("")
+  auditor        String   @default("")
+  type           String   @default("external") // internal | external
+  status         String   @default("planning") // planning | fieldwork | reporting | closed
+  startDate      DateTime? @map("start_date") @db.Date
+  endDate        DateTime? @map("end_date") @db.Date
+  readiness      Int      @default(0)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, type])
+  @@index([organizationId, status])
+  @@map("audit_engagements")
+}
+
+model AuditProgram {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  name           String
+  scope          String   @default("")
+  lead           String   @default("")
+  status         String   @default("scheduled") // scheduled | in_progress | complete
+  startDate      DateTime? @map("start_date") @db.Date
+  endDate        DateTime? @map("end_date") @db.Date
+  coverage       Int      @default(0)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@map("audit_programs")
+}
+
+model AuditFinding {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  source         String   @default("internal") // internal | external
+  engagement     String   @default("")
+  severity       String   @default("medium") // critical | high | medium | low
+  title          String
+  controlRef     String   @default("") @map("control_ref")
+  owner          String   @default("")
+  status         String   @default("open") // open | in_progress | remediated | accepted
+  dueDate        DateTime? @map("due_date") @db.Date
+  notes          String   @default("")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, source])
+  @@index([organizationId, status])
+  @@index([organizationId, controlRef])
+  @@map("audit_findings")
+}
+
+model ExternalReadinessItem {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  category       String   @default("")
+  task           String
+  framework      String   @default("")
+  owner          String   @default("")
+  status         String   @default("not_started") // not_started | in_progress | ready | blocked
+  dueDate        DateTime? @map("due_date") @db.Date
+  notes          String   @default("")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@map("external_readiness_items")
+}
+
+model AuditEvidenceRequest {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  engagement     String   @default("")
+  request        String
+  controlRef     String   @default("") @map("control_ref")
+  assignee       String   @default("")
+  status         String   @default("pending") // pending | submitted | accepted | rejected
+  dueDate        DateTime? @map("due_date") @db.Date
+  notes          String   @default("")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@index([organizationId, controlRef])
+  @@map("audit_evidence_requests")
+}
+
+model AuditRiskAssessment {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  area           String
+  summary        String   @default("")
+  inherentRisk   String   @default("medium") @map("inherent_risk")
+  residualRisk   String   @default("medium") @map("residual_risk")
+  controlsTested Int      @default(0) @map("controls_tested")
+  gapsIdentified Int      @default(0) @map("gaps_identified")
+  owner          String   @default("")
+  lastReviewed   DateTime? @map("last_reviewed") @db.Date
+  controlsInScope Json     @default("[]") @map("controls_in_scope")
+  gaps            Json     @default("[]")
+  recommendations Json     @default("[]")
+  linkedFindingIds Json    @default("[]") @map("linked_finding_ids")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("audit_risk_assessments")
+}
+
+model AuditRiskDomain {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  domainKey      String   @map("domain_key")
+  name           String
+  controlRefs    Json     @default("[]") @map("control_refs")
+  owner          String   @default("")
+  status         String   @default("not_started")
+  identification Json     @default("{}")
+  analysis       Json     @default("{}")
+  evaluation     Json     @default("{}")
+  riskItems      Json     @default("[]") @map("risk_items")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, domainKey])
+  @@index([organizationId])
+  @@map("audit_risk_domains")
 }
 
 model Vendor {
@@ -220,6 +427,8 @@ model Vendor {
   domainScores      Json      @default("{}") @map("domain_scores")
   labels            Json      @default("[]")
   certifications Json      @default("[]")
+  breachIntel       Json      @default("{}") @map("breach_intel")
+  externalIntel     Json      @default("{}") @map("external_intel")
   lastAssessedAt    DateTime? @map("last_assessed_at")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")

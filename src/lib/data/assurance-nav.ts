@@ -1,8 +1,11 @@
 export const ASSURANCE_NAV_ITEMS = [
   { href: '/assurance', label: 'Overview', exact: true },
+  { href: '/assurance/vulnerabilities', label: 'Open vulns' },
+  { href: '/assurance/sast', label: 'SAST' },
+  { href: '/assurance/dast', label: 'DAST' },
+  { href: '/assurance/infrastructure', label: 'Infra' },
+  { href: '/assurance/cloud', label: 'Cloud' },
   { href: '/assurance/integrations', label: 'VA integrations' },
-  { href: '/assurance/infrastructure', label: 'Infrastructure VM' },
-  { href: '/assurance/dast', label: 'Application DAST' },
   { href: '/assurance/jira', label: 'Jira tickets' },
 ] as const;
 

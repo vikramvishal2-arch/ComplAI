@@ -3,8 +3,12 @@ import {
   connectIdamTool,
   getIdamIntegrationOverview,
 } from '@/lib/db/idam-integration-repository';
+import { requireDemoAdmin, requireDemoSession } from '@/lib/server/require-demo-admin';
 
 export async function GET() {
+  const auth = await requireDemoSession();
+  if ('error' in auth) return auth.error;
+
   try {
     const overview = await getIdamIntegrationOverview();
     return NextResponse.json(overview);
@@ -15,6 +19,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const auth = await requireDemoAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await request.json();
     const action = body.action as string;

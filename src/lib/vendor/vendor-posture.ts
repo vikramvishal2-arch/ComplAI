@@ -11,6 +11,10 @@ import {
 import { type RatingBand } from './tprm-rating';
 import { parseDomainScores } from './vendor-assessment-types';
 import type { VendorDomainScore } from './vendor-assessment-types';
+import { parseBreachIntel } from './breach-intelligence-shared';
+import type { VendorBreachIntel } from './breach-intelligence-types';
+import { applyExternalIntelToVectors, parseExternalIntel } from './intel/correlate';
+import type { VendorExternalIntel } from './external-intel-types';
 
 export type VendorPostureInput = {
   id: string;
@@ -23,6 +27,8 @@ export type VendorPostureInput = {
   domainScores?: unknown;
   aiRiskSummary?: string;
   certifications?: unknown;
+  breachIntel?: unknown;
+  externalIntel?: unknown;
 };
 
 export type VendorPostureSummary = {
@@ -38,6 +44,10 @@ export type VendorPostureSummary = {
   certifications: ReturnType<typeof resolveVendorCertifications>['certifications'];
   certificationsVerifiedOverInternet: boolean;
   fromPublicIntelligence: boolean;
+  /** Curated demo profile vs simulated — live overlays applied when externalIntel is present */
+  attackSurfaceMode: 'curated_demo' | 'simulated' | 'live_correlated';
+  breachIntel: VendorBreachIntel | null;
+  externalIntel: VendorExternalIntel | null;
   scoreComponents: ScoreComponent[];
   certificationMetSecurityBaseline: boolean;
   band: RatingBand;
@@ -54,8 +64,13 @@ export function buildVendorPosture(
   options?: { questionnaireCompleted?: boolean }
 ): VendorPostureSummary {
   const profile = getPublicVendorProfile(vendor.primaryDomain);
+  const externalIntel = parseExternalIntel(vendor.externalIntel);
   const rawBase =
-    vendor.securityRating ?? vendor.aiRiskScore ?? profile?.securityRating100 ?? null;
+    externalIntel?.correlatedScore100 ??
+    vendor.securityRating ??
+    vendor.aiRiskScore ??
+    profile?.securityRating100 ??
+    null;
 
   const { certifications, verifiedOverInternet } = resolveVendorCertifications(
     vendor.primaryDomain,
@@ -68,6 +83,9 @@ export function buildVendorPosture(
     tier: vendor.tier,
   });
 
+  const breachIntel = parseBreachIntel(vendor.breachIntel) ?? parseBreachIntel(externalIntel?.breachIntel);
+  const vectors = applyExternalIntelToVectors(external.vectors, externalIntel);
+
   const storedDomains = parseDomainScores(vendor.domainScores);
   const profileDomains = Object.fromEntries(
     (profile?.domainScores ?? []).map((d) => [d.domain, d.percentage])
@@ -78,7 +96,7 @@ export function buildVendorPosture(
     baseScore100: rawBase,
     domainScores: mergedDomains,
     certifications,
-    externalVectors: external.vectors,
+    externalVectors: vectors,
     questionnaireCompleted: options?.questionnaireCompleted,
   });
 
@@ -87,11 +105,12 @@ export function buildVendorPosture(
     domainScores.push(...profile.domainScores);
   }
 
-  const vectors = external.vectors;
   const topRisks = vectors
     .filter((v) => v.status !== 'pass')
     .slice(0, 3)
     .map((v) => ({ label: v.label, status: v.status }));
+
+  const liveCorrelated = Boolean(externalIntel?.live);
 
   return {
     vendorId: vendor.id,
@@ -101,11 +120,18 @@ export function buildVendorPosture(
     score100: scoreResult.score100,
     score950: scoreResult.score950,
     grade: scoreResult.grade,
-    summary: vendor.aiRiskSummary?.trim() || profile?.aiSummary || '',
+    summary: vendor.aiRiskSummary?.trim() || externalIntel?.summary || profile?.aiSummary || '',
     domainScores,
     certifications,
     certificationsVerifiedOverInternet: verifiedOverInternet,
     fromPublicIntelligence: external.intelligence != null,
+    attackSurfaceMode: liveCorrelated
+      ? 'live_correlated'
+      : external.intelligence
+        ? 'curated_demo'
+        : 'simulated',
+    breachIntel,
+    externalIntel,
     scoreComponents: scoreResult.components,
     certificationMetSecurityBaseline: scoreResult.certificationMetSecurityBaseline,
     band: scoreResult.band,

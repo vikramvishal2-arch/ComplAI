@@ -10,6 +10,7 @@ import { AccessConnectionsPanel } from '@/components/controls/access-connections
 import { ControlIssuesPanel } from '@/components/controls/control-issues-panel';
 import { ControlLinkedRisksPanel } from '@/components/controls/control-linked-risks-panel';
 import { EvidenceUploadPanel } from '@/components/controls/evidence-upload-panel';
+import { ControlComplianceGuidancePanel } from '@/components/controls/control-compliance-guidance';
 import {
   COMPLIANCE_STATUS_LABELS,
   COMPLIANCE_METHOD_LABELS,
@@ -30,9 +31,10 @@ import {
   hasEvidenceForContext,
   EVIDENCE_REQUIRED_MESSAGES,
 } from '@/lib/evidence/validation';
-import { ArrowLeft, Save, Lightbulb, CheckCircle2, Wrench, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Save, CheckCircle2, Wrench, ShieldCheck, AlertTriangle, Lightbulb } from 'lucide-react';
 import { isOpenRiskStatus } from '@/lib/risk/status';
 import { getAuditReadyBlockers } from '@/lib/compliance/audit-ready';
+import { buildControlComplianceGuidance } from '@/lib/controls/compliance-recommendations';
 
 type TabId = 'compliance' | 'remediation' | 'issues';
 
@@ -360,22 +362,7 @@ export default function ControlDetailPage() {
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Control requirement</h2>
-            <p className="mt-3 text-sm text-slate-600">{control.description}</p>
-            <div className="mt-4 rounded-lg bg-brand-50 p-4">
-              <div className="flex items-start gap-2">
-                <Lightbulb className="h-5 w-5 text-brand-500 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-brand-800">Implementation guidance</p>
-                  <p className="mt-1 text-sm text-brand-700">{control.guidance}</p>
-                </div>
-              </div>
-            </div>
-            <p className="mt-4 text-xs text-slate-500">
-              Domain: {DOMAIN_LABELS[control.domain]}
-            </p>
-          </section>
+          <ControlComplianceGuidancePanel control={control} />
 
           <ControlLinkedRisksPanel controlId={id} risks={risks} />
 
@@ -605,6 +592,36 @@ export default function ControlDetailPage() {
         </div>
 
         <div className="space-y-6">
+          <section className="rounded-xl border border-brand-200 bg-brand-50 p-5 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-brand-600" />
+              <h3 className="text-sm font-semibold text-brand-900">Quick recommendation</h3>
+            </div>
+            {(() => {
+              const tip = buildControlComplianceGuidance(control);
+              return (
+                <div className="mt-3 space-y-3 text-sm text-brand-900">
+                  <p className="leading-relaxed">{tip.summary}</p>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+                      Start with
+                    </p>
+                    <ul className="mt-1 space-y-1">
+                      {tip.recommendedMethods.slice(0, 3).map((m) => (
+                        <li key={m.method} className="text-xs text-brand-800">
+                          • {m.label}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <p className="text-xs text-brand-700">
+                    Domain: {DOMAIN_LABELS[control.domain]}
+                  </p>
+                </div>
+              );
+            })()}
+          </section>
+
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-sm font-semibold text-slate-900">Current status</h3>
             <div className="mt-4 space-y-3">

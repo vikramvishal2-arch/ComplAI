@@ -6,7 +6,16 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/app-shell';
 import { TprmVendorHero, TprmVendorDetailTabs } from '@/components/tprm/tprm-vendor-hero';
 import { TprmExternalRiskGrid, TprmIntelligenceBanner } from '@/components/tprm/tprm-external-risk-grid';
+import { TprmBreachHistoryPanel } from '@/components/tprm/tprm-breach-history-panel';
+import { TprmExternalIntelPanel } from '@/components/tprm/tprm-external-intel-panel';
 import { TprmFindingsBoard } from '@/components/tprm/tprm-findings-board';
+import {
+  applyLiveBreachToVectors,
+  parseBreachIntel,
+} from '@/lib/vendor/breach-intelligence-shared';
+import type { VendorBreachIntel } from '@/lib/vendor/breach-intelligence-types';
+import { applyExternalIntelToVectors, parseExternalIntel } from '@/lib/vendor/intel/correlate';
+import type { VendorExternalIntel } from '@/lib/vendor/external-intel-types';
 import { TprmRatingTrend } from '@/components/tprm/tprm-rating-badge';
 import { VendorDomainBreakdown } from '@/components/vendors/vendor-domain-breakdown';
 import { VendorRemediationPanel } from '@/components/vendors/vendor-remediation-panel';
@@ -67,6 +76,8 @@ export default function VendorDetailPage() {
   const [remediationItems, setRemediationItems] = useState<VendorRemediationItem[]>([]);
   const [remediationAssessmentId, setRemediationAssessmentId] = useState<string | null>(null);
   const [refreshingIntel, setRefreshingIntel] = useState(false);
+  const [checkingBreaches, setCheckingBreaches] = useState(false);
+  const [intelMessage, setIntelMessage] = useState<string | null>(null);
 
   async function fetchDetail(vendorId: string) {
     const r = await fetch(`/api/vendors/${vendorId}`);
@@ -89,6 +100,8 @@ export default function VendorDetailPage() {
         ratingGrade: string;
         domainScores: unknown;
         certifications: unknown;
+        breachIntel?: unknown;
+        externalIntel?: unknown;
         aiRiskScore: number | null;
         aiRiskSummary: string;
         lastAssessedAt: string | null;
@@ -173,17 +186,42 @@ export default function VendorDetailPage() {
   );
   const openFindings = allFindings.filter((f) => f.status !== 'resolved' && f.status !== 'accepted');
 
-  const externalRisk = useMemo(
-    () =>
-      vendor
-        ? resolveExternalRiskVectors({
-            primaryDomain: vendor.primaryDomain,
-            securityRating100: score100,
-            tier: vendor.tier,
-          })
-        : { vectors: [], intelligence: null },
-    [vendor, score100]
-  );
+  const externalRisk = useMemo(() => {
+    if (!vendor) {
+      return {
+        vectors: [] as ReturnType<typeof resolveExternalRiskVectors>['vectors'],
+        intelligence: null as ReturnType<typeof resolveExternalRiskVectors>['intelligence'],
+        mode: 'simulated' as const,
+        breachIntel: null as VendorBreachIntel | null,
+        externalIntel: null as VendorExternalIntel | null,
+      };
+    }
+    const resolved = resolveExternalRiskVectors({
+      primaryDomain: vendor.primaryDomain,
+      securityRating100: score100,
+      tier: vendor.tier,
+    });
+    const externalIntel = parseExternalIntel(vendor.externalIntel);
+    const intel =
+      parseBreachIntel(vendor.breachIntel) ?? parseBreachIntel(externalIntel?.breachIntel);
+    const vectors = externalIntel
+      ? applyExternalIntelToVectors(resolved.vectors, externalIntel)
+      : applyLiveBreachToVectors(resolved.vectors, intel);
+    return {
+      vectors,
+      intelligence: resolved.intelligence,
+      mode: (externalIntel?.live
+        ? 'live_correlated'
+        : resolved.intelligence
+          ? 'curated_demo'
+          : 'simulated') as 'curated_demo' | 'simulated' | 'live_correlated',
+      breachIntel: intel,
+      externalIntel,
+    };
+  }, [vendor, score100]);
+
+  const breachIntel = externalRisk.breachIntel;
+  const externalIntel = externalRisk.externalIntel;
 
   const vendorCertifications = useMemo(
     () =>
@@ -280,15 +318,34 @@ export default function VendorDetailPage() {
   const refreshInternetIntelligence = async () => {
     setRefreshingIntel(true);
     setError(null);
+    setIntelMessage(null);
     try {
       const r = await fetch(`/api/vendors/${id}/refresh-intelligence`, { method: 'POST' });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error ?? 'Refresh failed');
+      setIntelMessage(typeof d.message === 'string' ? d.message : 'Intelligence refreshed.');
       load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Refresh failed');
     } finally {
       setRefreshingIntel(false);
+    }
+  };
+
+  const checkBreachesNow = async () => {
+    setCheckingBreaches(true);
+    setError(null);
+    setIntelMessage(null);
+    try {
+      const r = await fetch(`/api/vendors/${id}/breach-check`, { method: 'POST' });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? 'Breach check failed');
+      setIntelMessage(typeof d.message === 'string' ? d.message : 'Breach check complete.');
+      load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Breach check failed');
+    } finally {
+      setCheckingBreaches(false);
     }
   };
 
@@ -441,9 +498,17 @@ export default function VendorDetailPage() {
           className="inline-flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-900 hover:bg-sky-100 disabled:opacity-60"
         >
           <RefreshCw className={cn('h-4 w-4', refreshingIntel && 'animate-spin')} />
-          {refreshingIntel ? 'Syncing…' : 'Sync certifications & score from internet'}
+          {refreshingIntel
+            ? 'Syncing…'
+            : 'Refresh intelligence (Shodan · Censys · VirusTotal · NVD/EPSS · HIBP)'}
         </button>
       </div>
+
+      {intelMessage && (
+        <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900">
+          {intelMessage}
+        </div>
+      )}
 
       <TprmVendorDetailTabs
         active={tab}
@@ -458,8 +523,9 @@ export default function VendorDetailPage() {
               <h3 className="text-sm font-semibold text-slate-900">Security posture summary</h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-700">{posture.summary}</p>
               {posture.fromPublicIntelligence && (
-                <p className="mt-2 text-xs text-sky-700">
-                  Based on public internet intelligence for {vendor.primaryDomain}
+                <p className="mt-2 text-xs text-amber-800">
+                  Summary includes a curated demo profile for {vendor.primaryDomain} — not a live
+                  attack-surface scan. Breach history uses live HIBP when checked.
                 </p>
               )}
             </div>
@@ -496,16 +562,22 @@ export default function VendorDetailPage() {
           <div>
             <h3 className="mb-3 text-sm font-semibold text-slate-900">External attack surface</h3>
             <p className="mb-3 text-xs text-slate-500">
-              Continuous monitoring of internet-facing risk factors (network, DNS, SSL, email, breaches, web security)
+              Attack-surface grid with live overlays from Shodan / Censys / VirusTotal / NVD / EPSS / HIBP when
+              refresh succeeds. Unconfigured APIs stay unconfigured — never faked as clear.
             </p>
             {externalRisk.intelligence && (
               <TprmIntelligenceBanner sources={externalRisk.intelligence.profile.sources} />
             )}
-            <TprmExternalRiskGrid
-              vectors={externalRisk.vectors}
-              simulated={!externalRisk.intelligence}
-            />
+            <TprmExternalRiskGrid vectors={externalRisk.vectors} mode={externalRisk.mode} />
           </div>
+
+          <TprmExternalIntelPanel intel={externalIntel} />
+
+          <TprmBreachHistoryPanel
+            intel={breachIntel}
+            checking={checkingBreaches}
+            onCheck={checkBreachesNow}
+          />
 
           {vendor.aiRiskSummary && !posture?.summary && (
             <div className="rounded-2xl border border-brand-200 bg-brand-50/40 p-5">

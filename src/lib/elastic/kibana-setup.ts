@@ -223,6 +223,7 @@ export async function setupKibanaDashboards(): Promise<{
       { id: 'grc-cycles', title: 'GRC Program Cycles', pattern: GRC_INDICES.cycles, time: 'dueDate' },
       { id: 'grc-policies', title: 'GRC Policies', pattern: GRC_INDICES.policies, time: 'updatedAt' },
       { id: 'grc-assurance', title: 'GRC Assurance Findings', pattern: GRC_INDICES.assurance, time: 'detectedAt' },
+      { id: 'grc-risk-assessment', title: 'GRC Risk Assessment', pattern: GRC_INDICES.riskAssessment, time: 'updatedAt' },
     ];
     for (const dv of dataViews) {
       if (await createDataView(dv.id, dv.title, dv.pattern, dv.time)) result.dataViews++;
@@ -414,6 +415,49 @@ export async function setupKibanaDashboards(): Promise<{
           ],
         },
       },
+      {
+        id: 'grc-ra-severity-by-domain',
+        title: 'Risk Items by Domain & Severity',
+        dataViewId: 'grc-risk-assessment',
+        kueryFilter: 'docType: risk_item',
+        visState: {
+          type: 'horizontal_bar',
+          title: 'Risk Items by Domain & Severity',
+          aggs: [
+            { id: '1', type: 'count', schema: 'metric' },
+            { id: '2', type: 'terms', schema: 'segment', params: { field: 'domainName', size: 20 } },
+            { id: '3', type: 'terms', schema: 'group', params: { field: 'severity', size: 5 } },
+          ],
+        },
+      },
+      {
+        id: 'grc-ra-critical-by-domain',
+        title: 'Critical Risks by Domain',
+        dataViewId: 'grc-risk-assessment',
+        kueryFilter: 'docType: domain_summary',
+        visState: {
+          type: 'horizontal_bar',
+          title: 'Critical Risks by Domain',
+          aggs: [
+            { id: '1', type: 'sum', schema: 'metric', params: { field: 'criticalCount' } },
+            { id: '2', type: 'terms', schema: 'segment', params: { field: 'domainName', size: 20 } },
+          ],
+        },
+      },
+      {
+        id: 'grc-ra-severity-pie',
+        title: 'Risk Assessment Severity Mix',
+        dataViewId: 'grc-risk-assessment',
+        kueryFilter: 'docType: risk_item',
+        visState: {
+          type: 'pie',
+          title: 'Risk Assessment Severity Mix',
+          aggs: [
+            { id: '1', type: 'count', schema: 'metric' },
+            { id: '2', type: 'terms', schema: 'segment', params: { field: 'severity', size: 5 } },
+          ],
+        },
+      },
     ];
 
     for (const viz of visualizations) {
@@ -442,6 +486,17 @@ export async function setupKibanaDashboards(): Promise<{
       ]
     );
     if (mainDashboard) result.dashboards++;
+
+    const riskDashboard = await createDashboard(
+      'grc-risk-assessment-dashboard',
+      'GRC Risk Assessment Dashboard',
+      [
+        { vizId: 'grc-ra-severity-pie', x: 0, y: 0, w: 16, h: 12 },
+        { vizId: 'grc-ra-critical-by-domain', x: 16, y: 0, w: 32, h: 12 },
+        { vizId: 'grc-ra-severity-by-domain', x: 0, y: 12, w: 48, h: 16 },
+      ]
+    );
+    if (riskDashboard) result.dashboards++;
 
     result.success = result.dataViews > 0;
     return result;

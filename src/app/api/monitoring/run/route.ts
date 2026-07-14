@@ -1,8 +1,19 @@
 import { NextResponse } from 'next/server';
 import { getAwsMonitorConfig, getAzureMonitorConfig } from '@/lib/monitoring/config';
 import { executeMonitorRun } from '@/lib/monitoring/runner';
+import { requireCronOrDemoAdmin } from '@/lib/server/require-demo-admin';
 
+/**
+ * POST /api/monitoring/run
+ *
+ * Triggers an AWS/Azure monitoring check run.
+ * Authorize with `Authorization: Bearer <CRON_SECRET>` / `X-Cron-Secret`,
+ * or a demo admin session.
+ */
 export async function POST(request: Request) {
+  const gate = await requireCronOrDemoAdmin(request);
+  if ('error' in gate) return gate.error;
+
   try {
     const body = await request.json();
     const provider = body.provider as 'aws' | 'azure';

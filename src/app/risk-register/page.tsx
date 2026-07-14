@@ -20,10 +20,12 @@ import {
   type ControlIssueSeverity,
 } from '@/lib/types';
 import { calculateRiskScore, riskScoreLabel, isHighOrCriticalScore, parseRiskScoreLabel, resolvePresentRiskDisplay, isHighOrCriticalDisplay } from '@/lib/risk/scoring';
-import { AlertTriangle, Download, Plus, ShieldAlert, Upload, X } from 'lucide-react';
+import { buildRiskRaiseTips } from '@/lib/risk/remediation-guidance';
+import { AlertTriangle, Download, Lightbulb, Plus, ShieldAlert, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RiskRegisterImportDialog } from '@/components/risk-register/risk-register-import-dialog';
 import { ControlReference } from '@/components/controls/control-reference';
+import { RiskHeatmap } from '@/components/risk-register/risk-heatmap';
 
 interface LinkableControl {
   id: string;
@@ -64,6 +66,7 @@ export default function RiskRegisterPage() {
 
   const [form, setForm] = useState({
     controlId: '',
+    additionalControlIds: [] as string[],
     title: '',
     description: '',
     category: 'compliance',
@@ -75,6 +78,8 @@ export default function RiskRegisterPage() {
     status: 'identified' as RiskStatus,
     severity: 'medium' as ControlIssueSeverity,
     owner: '',
+    reviewer: '',
+    approver: '',
     assignee: '',
     raisedBy: '',
     dueDate: '',
@@ -130,6 +135,21 @@ export default function RiskRegisterPage() {
     (e) => !['closed', 'resolved', 'accepted'].includes(e.status)
   ).length;
 
+  const openRiskHeatmap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const entry of entries) {
+      if (entry.entryType !== 'risk') continue;
+      if (['closed', 'accepted'].includes(entry.status)) continue;
+      // Present risk axes: residual when set, otherwise inherent
+      const l = entry.residualLikelihood ?? entry.likelihood;
+      const i = entry.residualImpact ?? entry.impact;
+      if (!l || !i) continue;
+      const key = `${l}:${i}`;
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return map;
+  }, [entries]);
+
   const riskEntries = entries.filter((e) => e.entryType === 'risk');
   const riskSummary = useMemo(() => {
     return {
@@ -151,6 +171,7 @@ export default function RiskRegisterPage() {
   const resetForm = () => {
     setForm({
       controlId: '',
+      additionalControlIds: [],
       title: '',
       description: '',
       category: 'compliance',
@@ -162,6 +183,8 @@ export default function RiskRegisterPage() {
       status: 'identified',
       severity: 'medium',
       owner: '',
+      reviewer: '',
+      approver: '',
       assignee: '',
       raisedBy: '',
       dueDate: '',
@@ -177,6 +200,16 @@ export default function RiskRegisterPage() {
     if (!form.title.trim()) {
       setError('Title is required');
       return;
+    }
+    if (formType === 'risk') {
+      if (!form.reviewer.trim()) {
+        setError('Reviewer name is required');
+        return;
+      }
+      if (!form.approver.trim()) {
+        setError('Approver name is required');
+        return;
+      }
     }
 
     if (formType === 'risk' && form.status === 'closed') {
@@ -210,6 +243,10 @@ export default function RiskRegisterPage() {
           }
         : {
             controlId: form.controlId,
+            controlIds: [
+              form.controlId,
+              ...form.additionalControlIds.filter((id) => id !== form.controlId),
+            ],
             title: form.title,
             description: form.description,
             category: form.category,
@@ -220,6 +257,8 @@ export default function RiskRegisterPage() {
             treatment: form.treatment,
             status: form.status,
             owner: form.owner,
+            reviewer: form.reviewer,
+            approver: form.approver,
             dueDate: form.dueDate || null,
             mitigationPlan: form.mitigationPlan,
           };
@@ -235,6 +274,12 @@ export default function RiskRegisterPage() {
 
       resetForm();
       setShowForm(false);
+
+      if (formType === 'risk' && data.risk?.id) {
+        router.push(`/risk-register/risks/${data.risk.id}?guidance=1`);
+        return;
+      }
+
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save');
@@ -246,7 +291,7 @@ export default function RiskRegisterPage() {
   return (
     <AppShell
       title="Risk Register"
-      subtitle="Central register of risks and control issues — every entry must link to a framework control"
+      subtitle="Risk → mapped controls → assess → auto-issue on deviation → remediate → re-test"
     >
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap gap-3 text-sm text-slate-600">
@@ -328,7 +373,15 @@ export default function RiskRegisterPage() {
             </label>
             <select
               value={form.controlId}
-              onChange={(e) => setForm({ ...form, controlId: e.target.value })}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  controlId: e.target.value,
+                  additionalControlIds: form.additionalControlIds.filter(
+                    (id) => id !== e.target.value
+                  ),
+                })
+              }
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
             >
               <option value="">Select control...</option>
@@ -345,6 +398,40 @@ export default function RiskRegisterPage() {
               ))}
             </select>
           </div>
+
+          {formType === 'risk' && form.controlId && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Additional mapped controls{' '}
+                <span className="font-normal text-slate-500">(optional)</span>
+              </label>
+              <select
+                multiple
+                value={form.additionalControlIds}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    additionalControlIds: Array.from(e.target.selectedOptions).map(
+                      (o) => o.value
+                    ),
+                  })
+                }
+                className="h-32 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              >
+                {controls
+                  .filter((c) => c.id !== form.controlId)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.frameworkShortName} · {c.reference} — {c.title}
+                    </option>
+                  ))}
+              </select>
+              <p className="mt-1 text-xs text-slate-500">
+                Hold Ctrl/Cmd to select multiple. Every risk must stay linked to one or more
+                controls.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
@@ -606,8 +693,30 @@ export default function RiskRegisterPage() {
                   rows={2}
                   value={form.mitigationPlan}
                   onChange={(e) => setForm({ ...form, mitigationPlan: e.target.value })}
+                  placeholder="Optional — after save, remediation guidance can draft this for you"
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
                 />
+              </div>
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <div className="flex items-start gap-2">
+                  <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                  <div>
+                    <p className="text-xs font-semibold text-amber-900">
+                      Remediation guidance ({RISK_TREATMENT_LABELS[form.treatment]})
+                    </p>
+                    <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-amber-800">
+                      {buildRiskRaiseTips({
+                        treatment: form.treatment,
+                        category: form.category,
+                      }).map((tip) => (
+                        <li key={tip.slice(0, 48)}>{tip}</li>
+                      ))}
+                    </ul>
+                    <p className="mt-2 text-xs text-amber-700">
+                      After you save, you will open the risk with full remediation steps and an option to apply a draft mitigation plan.
+                    </p>
+                  </div>
+                </div>
               </div>
             </>
           ) : (
@@ -655,6 +764,7 @@ export default function RiskRegisterPage() {
               <input
                 value={form.owner}
                 onChange={(e) => setForm({ ...form, owner: e.target.value })}
+                placeholder="Name, member id, or email"
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
               />
             </div>
@@ -668,6 +778,35 @@ export default function RiskRegisterPage() {
               />
             </div>
           </div>
+
+          {formType === 'risk' && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Reviewer <span className="text-red-600">*</span>
+                </label>
+                <input
+                  required
+                  value={form.reviewer}
+                  onChange={(e) => setForm({ ...form, reviewer: e.target.value })}
+                  placeholder="Name, member id, or email"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Approver <span className="text-red-600">*</span>
+                </label>
+                <input
+                  required
+                  value={form.approver}
+                  onChange={(e) => setForm({ ...form, approver: e.target.value })}
+                  placeholder="Name, member id, or email"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+          )}
 
           <button
             type="button"
@@ -722,6 +861,12 @@ export default function RiskRegisterPage() {
             </p>
             <p className="mt-1 text-2xl font-bold text-emerald-900">{riskSummary.presentHigh}</p>
           </div>
+        </div>
+      )}
+
+      {(typeFilter === 'all' || typeFilter === 'risk') && (
+        <div className="mb-6">
+          <RiskHeatmap counts={openRiskHeatmap} />
         </div>
       )}
 

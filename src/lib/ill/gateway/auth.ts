@@ -10,7 +10,7 @@ export function validateGatewayApiKey(request: Request): { ok: true; clientId: s
     provided = authHeader.slice(7).trim();
   }
 
-  if (!provided || provided !== apiKey) {
+  if (!provided || !apiKey || provided !== apiKey) {
     return { ok: false, error: 'Invalid or missing API gateway credentials' };
   }
 

@@ -76,7 +76,7 @@ export function computeVendorSecurityScore(input: {
       weight: '40%',
       score: attackSurface,
       detail:
-        'Derived from internet-facing signals: web headers, SSL/TLS, DNS, email security (SPF/DMARC), and breach exposure — sourced from public intelligence where available.',
+        'Live Shodan / Censys / VirusTotal / NVD / EPSS / HIBP overlays when configured and refreshed; otherwise curated demo or simulated vectors — never fake clear on provider errors.',
     },
     {
       id: 'questionnaire',

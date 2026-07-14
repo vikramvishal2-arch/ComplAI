@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prepareAgentInstallBundle } from '@/lib/db/idam-integration-repository';
+import { requireDemoAdmin } from '@/lib/server/require-demo-admin';
 
 export async function POST() {
+  const auth = await requireDemoAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const bundle = await prepareAgentInstallBundle();
     return NextResponse.json({ ok: true, bundle });

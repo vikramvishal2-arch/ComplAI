@@ -54,6 +54,8 @@ export type VendorRecord = {
   domainScores: unknown;
   labels: unknown;
   certifications: unknown;
+  breachIntel: unknown;
+  externalIntel: unknown;
   lastAssessedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -103,6 +105,8 @@ type VendorRow = {
   domain_scores: unknown;
   labels: unknown;
   certifications?: unknown;
+  breach_intel?: unknown;
+  external_intel?: unknown;
   last_assessed_at: Date | null;
   created_at: Date;
   updated_at: Date;
@@ -140,6 +144,8 @@ function normalizeVendorFields<T extends VendorRecord>(vendor: T): T {
     contactEmail: vendor.contactEmail ?? '',
     description: vendor.description ?? '',
     certifications: vendor.certifications ?? [],
+    breachIntel: vendor.breachIntel ?? {},
+    externalIntel: vendor.externalIntel ?? {},
   };
 }
 
@@ -172,6 +178,8 @@ function mapVendorRow(row: VendorRow): VendorRecord {
     domainScores: row.domain_scores,
     labels: row.labels,
     certifications: row.certifications ?? [],
+    breachIntel: row.breach_intel ?? {},
+    externalIntel: row.external_intel ?? {},
     lastAssessedAt: row.last_assessed_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

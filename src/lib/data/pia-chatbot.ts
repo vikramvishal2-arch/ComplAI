@@ -110,7 +110,7 @@ export function createPiaMessage(
   payload: Omit<PiaChatMessage, 'id' | 'role'>
 ): PiaChatMessage {
   return {
-    id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: `${role}-${crypto.randomUUID()}`,
     role,
     ...payload,
   };

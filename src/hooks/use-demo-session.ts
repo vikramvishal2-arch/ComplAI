@@ -10,6 +10,7 @@ export type DemoSessionInfo = {
   displayName: string;
   readOnlyAreas: string[];
   canAccessSettings: boolean;
+  canManageFrameworkCatalog: boolean;
 };
 
 const DEFAULT_SESSION: DemoSessionInfo = {
@@ -20,6 +21,7 @@ const DEFAULT_SESSION: DemoSessionInfo = {
   displayName: '',
   readOnlyAreas: [],
   canAccessSettings: false,
+  canManageFrameworkCatalog: false,
 };
 
 export function useDemoSession() {
@@ -40,6 +42,7 @@ export function useDemoSession() {
           displayName: data.displayName ?? '',
           readOnlyAreas: Array.isArray(data.readOnlyAreas) ? data.readOnlyAreas : [],
           canAccessSettings: Boolean(data.canAccessSettings),
+          canManageFrameworkCatalog: Boolean(data.canManageFrameworkCatalog ?? data.canAccessSettings),
         });
       })
       .catch(() => {

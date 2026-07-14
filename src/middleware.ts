@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import {
   DEMO_SESSION_COOKIE,
-  isAdminOnlyApiPath,
+  isAdminOnlyApiRequest,
   isAdminOnlyPagePath,
   isCustomerReadOnlyApiWrite,
   isDemoPortalEnabled,
@@ -84,7 +84,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (session.role === 'customer') {
-    if (isAdminOnlyPagePath(pathname) || isAdminOnlyApiPath(pathname)) {
+    if (
+      isAdminOnlyPagePath(pathname) ||
+      isAdminOnlyApiRequest(pathname, request.method)
+    ) {
       if (pathname.startsWith('/api/')) {
         return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
       }
@@ -123,6 +126,8 @@ export const config = {
     '/security-learning/:path*',
     '/program/:path*',
     '/cycles/:path*',
+    '/evidence',
+    '/evidence/:path*',
     '/api/:path*',
   ],
 };

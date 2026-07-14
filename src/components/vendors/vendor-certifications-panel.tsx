@@ -8,7 +8,7 @@ const STATUS_STYLES: Record<
   VendorCertification['status'],
   { label: string; className: string }
 > = {
-  verified: { label: 'Internet verified', className: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
+  verified: { label: 'Publicly listed', className: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
   claimed: { label: 'Claimed', className: 'bg-sky-100 text-sky-800 border-sky-200' },
   in_progress: { label: 'In progress', className: 'bg-amber-100 text-amber-800 border-amber-200' },
   expired: { label: 'Expired', className: 'bg-slate-100 text-slate-600 border-slate-200' },
@@ -33,9 +33,9 @@ export function VendorCertificationsPanel({
         <div>
           <h3 className="text-sm font-semibold text-slate-900">Certifications & attestations</h3>
           {verifiedOverInternet && (
-            <p className="mt-1 inline-flex items-center gap-1 text-xs text-sky-700">
+            <p className="mt-1 inline-flex items-center gap-1 text-xs text-amber-800">
               <Globe className="h-3.5 w-3.5" />
-              Checked against public trust centers and corporate disclosures on the internet
+              Curated from public trust-center pages for demos — not a continuous live audit feed
             </p>
           )}
         </div>

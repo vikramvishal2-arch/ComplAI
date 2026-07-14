@@ -108,7 +108,7 @@ export async function connectIdamTool(input: {
     return {
       ok: true,
       message: `Successfully validated ${tool.name} connection settings`,
-      latencyMs: Math.floor(Math.random() * 140) + 60,
+      latencyMs: 60 + (crypto.getRandomValues(new Uint8Array(1))[0] % 140),
     };
   }
 

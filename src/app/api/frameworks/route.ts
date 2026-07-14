@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { FRAMEWORKS } from '@/lib/data/frameworks';
+import { getMergedFrameworks } from '@/lib/frameworks/merge-framework-catalog';
 import {
   activateFramework,
   deactivateFramework,
@@ -11,13 +11,14 @@ import {
 
 export async function GET() {
   try {
-    const [activatedIds, activations, summary] = await Promise.all([
+    const [activatedIds, activations, summary, mergedFrameworks] = await Promise.all([
       getActivatedFrameworkIds(),
       getActivations(),
       getDashboardSummary(),
+      getMergedFrameworks(),
     ]);
 
-    const frameworks = FRAMEWORKS.map((f) => ({
+    const frameworks = mergedFrameworks.map((f) => ({
       ...f,
       activated: activatedIds.includes(f.id),
       mvpRequired: isMvpRequiredFramework(f.id),

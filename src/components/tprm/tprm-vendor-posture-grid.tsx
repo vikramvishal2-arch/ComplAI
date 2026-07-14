@@ -96,7 +96,7 @@ function PostureCard({ vendor }: { vendor: VendorPostureInput }) {
         <div className="mt-4">
           <p className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <Shield className="h-3.5 w-3.5" />
-            Internet-verified certifications
+            Internet-listed certifications
           </p>
           <div className="flex flex-wrap gap-1.5">
             {posture.certifications.slice(0, 4).map((cert) => (
@@ -135,7 +135,8 @@ export function TprmVendorPostureGrid({ vendors }: { vendors: VendorPostureInput
       <div className="mb-4">
         <h2 className="text-sm font-semibold text-slate-900">Vendor security posture</h2>
         <p className="mt-1 text-xs text-slate-500">
-          Continuous ratings, domain scores, attack-surface signals, and certifications for each monitored vendor
+          Ratings, domain scores, illustrative attack-surface signals, and certifications. Breach
+          history is live HIBP when checked; other attack-surface vectors are demo/illustrative.
         </p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4">

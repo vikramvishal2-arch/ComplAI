@@ -49,3 +49,16 @@ export function integrationHelpGuidePath(toolId: string): string {
 export function integrationHelpGuideUrl(toolId: string): string {
   return `${INTEGRATION_HELP_BASE_URL}/${toolId}`;
 }
+
+/** Public help centre base for framework guides (Propel Ready Solutions). */
+export const FRAMEWORK_HELP_BASE_URL =
+  process.env.NEXT_PUBLIC_FRAMEWORK_HELP_BASE_URL ??
+  'https://propelreadysolutions.in/help/frameworks';
+
+export function frameworkHelpGuidePath(frameworkId: string): string {
+  return `/help/frameworks/${frameworkId}`;
+}
+
+export function frameworkHelpGuideUrl(frameworkId: string): string {
+  return `${FRAMEWORK_HELP_BASE_URL}/${frameworkId}`;
+}

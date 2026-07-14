@@ -4,14 +4,14 @@ import { parseCertifications } from './vendor-assessment-types';
 
 export type ResolvedVendorCertifications = {
   certifications: VendorCertification[];
-  /** Curated from public internet / trust-center intelligence */
+  /** From curated demo trust-center profile (not a live continuous scan) */
   fromPublicProfile: boolean;
   verifiedOverInternet: boolean;
 };
 
 /**
  * Resolve vendor certifications for the risk profile.
- * Prefers internet-verified public intelligence; falls back to stored vendor records; otherwise blank.
+ * Prefers curated public trust-center entries for known demo domains; falls back to stored records.
  */
 export function resolveVendorCertifications(
   primaryDomain: string | null | undefined,

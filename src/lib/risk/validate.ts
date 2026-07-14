@@ -46,3 +46,16 @@ export function validateClosedRiskResidual(
     );
   }
 }
+
+/** Reviewer and approver names are mandatory on risk create/update. */
+export function validateRiskReviewerApprover(
+  reviewer?: string | null,
+  approver?: string | null
+): void {
+  if (!reviewer?.trim()) {
+    throw new RiskValidationError('Reviewer name is required');
+  }
+  if (!approver?.trim()) {
+    throw new RiskValidationError('Approver name is required');
+  }
+}

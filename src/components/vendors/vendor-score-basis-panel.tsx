@@ -25,8 +25,10 @@ export function VendorScoreBasisPanel({
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-slate-900">How this score is calculated</h3>
           <p className="mt-1 text-xs text-slate-500">
-            Security rating (0–950 scale) combines public attack-surface intelligence, TPRM questionnaire
-            results, and verified certifications. Scores refresh when you sync internet intelligence.
+            Security rating (0–950 scale) combines illustrative attack-surface signals, TPRM
+            questionnaire results, and certifications. Live Have I Been Pwned breach checks update
+            the breach vector when run; other attack-surface scores are demo/illustrative unless
+            separately scanned.
           </p>
         </div>
         <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-bold uppercase text-white', bandConfig.bg)}>

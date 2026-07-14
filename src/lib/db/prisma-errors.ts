@@ -22,6 +22,10 @@ const STALE_VENDOR_FIELD_MARKERS = [
   'questionnaire_status',
   'remediationItems',
   'remediation_items',
+  'breachIntel',
+  'breach_intel',
+  'externalIntel',
+  'external_intel',
 ];
 
 function isPrismaValidationError(error: unknown): error is Prisma.PrismaClientValidationError {

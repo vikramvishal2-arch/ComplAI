@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getFrameworkById } from '@/lib/data/frameworks';
+import { getMergedFrameworkById } from '@/lib/frameworks/merge-framework-catalog';
 import { getControlsByFramework } from '@/lib/data/controls';
 import {
   getControlComplianceBatch,
@@ -28,7 +28,7 @@ function defaultCompliance(controlId: string): ControlCompliance {
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
-    const framework = getFrameworkById(id);
+    const framework = await getMergedFrameworkById(id);
     if (!framework) {
       return NextResponse.json({ error: 'Framework not found' }, { status: 404 });
     }

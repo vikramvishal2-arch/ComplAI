@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getVaToolById, VA_TOOL_DEFINITIONS } from '@/lib/data/va-tool-integrations';
+import { parseSafeHttpsUrl } from '@/lib/security/url-guards';
+import { requireDemoAdmin } from '@/lib/server/require-demo-admin';
 
 type ConnectionRecord = {
   toolId: string;
@@ -26,10 +28,9 @@ function validateCredentials(
 
   const baseUrl = credentials.apiBaseUrl?.trim();
   if (baseUrl) {
-    try {
-      new URL(baseUrl);
-    } catch {
-      return { ok: false, error: 'API base URL must be a valid URL' };
+    const parsed = parseSafeHttpsUrl(baseUrl);
+    if (!parsed.ok) {
+      return { ok: false, error: `API base URL: ${parsed.error}` };
     }
   }
 
@@ -47,6 +48,9 @@ function mockSyncCount(toolId: string): number {
 }
 
 export async function GET() {
+  const auth = await requireDemoAdmin();
+  if ('error' in auth) return auth.error;
+
   const tools = VA_TOOL_DEFINITIONS.map((tool) => {
     const conn = connections.get(tool.id);
     return {
@@ -63,6 +67,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const auth = await requireDemoAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await request.json();
     const action = body.action as string;
@@ -83,7 +90,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         ok: true,
         message: `Successfully authenticated with ${tool.name} API`,
-        latencyMs: Math.floor(Math.random() * 120) + 80,
+        latencyMs: 80 + (crypto.getRandomValues(new Uint8Array(1))[0] % 120),
       });
     }
 

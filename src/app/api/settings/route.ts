@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getOrganizationName, setOrganizationName } from '@/lib/store';
+import { requireDemoAdmin } from '@/lib/server/require-demo-admin';
 
 export async function GET() {
+  const auth = await requireDemoAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const organizationName = await getOrganizationName();
     return NextResponse.json({ organizationName });
@@ -12,6 +16,9 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  const auth = await requireDemoAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await request.json();
     let organizationName = await getOrganizationName();

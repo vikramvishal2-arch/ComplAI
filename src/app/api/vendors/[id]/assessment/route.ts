@@ -20,6 +20,10 @@ import {
   generateFindingsFromResponses,
   generateRemediationItems,
 } from '@/lib/vendor/vendor-rating';
+import {
+  sendVendorAssessmentCompletedNotice,
+  sendVendorQuestionnaireInvite,
+} from '@/lib/email/send-tprm-email';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -55,7 +59,54 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         questionnaireStatus: 'in_progress',
       });
 
-      return NextResponse.json({ assessment: updated, questions, template });
+      let email = null;
+      const inviteTo =
+        (typeof body.inviteEmail === 'string' && body.inviteEmail.trim()) ||
+        vendor.contactEmail?.trim() ||
+        '';
+      if (inviteTo && updated) {
+        email = await sendVendorQuestionnaireInvite({
+          vendorName: vendor.name,
+          vendorEmail: inviteTo,
+          assessmentId: updated.id,
+          vendorId: vendor.id,
+          templateName: template.name,
+          dueDate: typeof body.dueDate === 'string' ? body.dueDate : null,
+        });
+      }
+
+      return NextResponse.json({ assessment: updated, questions, template, email });
+    }
+
+    if (action === 'send_invite') {
+      const assessmentId = body.assessmentId as string;
+      const assessment = await getVendorAssessment(assessmentId);
+      if (!assessment || assessment.vendorId !== vendorId) {
+        return NextResponse.json({ error: 'Assessment not found' }, { status: 404 });
+      }
+
+      const inviteTo =
+        (typeof body.inviteEmail === 'string' && body.inviteEmail.trim()) ||
+        vendor.contactEmail?.trim() ||
+        '';
+      if (!inviteTo) {
+        return NextResponse.json(
+          { error: 'Vendor contact email is required to send the questionnaire invite' },
+          { status: 400 }
+        );
+      }
+
+      const template = getVendorAssessmentTemplate(assessment.templateId || 'tprm-standard');
+      const email = await sendVendorQuestionnaireInvite({
+        vendorName: vendor.name,
+        vendorEmail: inviteTo,
+        assessmentId: assessment.id,
+        vendorId: vendor.id,
+        templateName: template.name,
+        dueDate: typeof body.dueDate === 'string' ? body.dueDate : null,
+      });
+
+      return NextResponse.json({ ok: email.ok, email });
     }
 
     if (action === 'save') {
@@ -187,6 +238,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         remediationItems,
       });
 
+      let email = null;
+      const notifyTo =
+        (typeof body.notifyEmail === 'string' && body.notifyEmail.trim()) ||
+        process.env.TPRM_NOTIFY_EMAIL?.trim() ||
+        vendor.contactEmail?.trim() ||
+        '';
+      if (notifyTo && updated) {
+        email = await sendVendorAssessmentCompletedNotice({
+          vendorName: vendor.name,
+          vendorId: vendor.id,
+          assessmentId: updated.id,
+          score: aggregateScore,
+          notifyEmail: notifyTo,
+        });
+      }
+
       return NextResponse.json({
         assessment: updated,
         result: {
@@ -196,6 +263,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           findings,
           remediationItems,
         },
+        email,
       });
     }
 
