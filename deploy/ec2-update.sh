@@ -14,6 +14,7 @@ echo "==> Pulling latest..."
 git pull --ff-only
 
 echo "==> Applying database schema..."
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" --profile tools build tools
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" --profile tools run --rm --entrypoint npx tools prisma db push --skip-generate
 
 echo "==> Rebuilding app container..."
