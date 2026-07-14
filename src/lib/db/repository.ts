@@ -172,7 +172,23 @@ export async function getDefaultOrganization() {
 
   let org = cachedDefaultOrg;
   if (!org) {
-    org = await prisma.organization.findFirst({ orderBy: { createdAt: 'asc' } });
+    // Prefer the org that already holds operational data when lab deploys
+    // accidentally create duplicate "Propel Ready" rows.
+    const ranked = await prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT o.id
+      FROM organizations o
+      LEFT JOIN vendors v ON v.organization_id = o.id
+      LEFT JOIN control_evidence e ON e.organization_id = o.id
+      GROUP BY o.id, o.created_at
+      ORDER BY (COUNT(DISTINCT v.id) + COUNT(DISTINCT e.id)) DESC, o.created_at ASC
+      LIMIT 1
+    `;
+    if (ranked[0]?.id) {
+      org = await prisma.organization.findUnique({ where: { id: ranked[0].id } });
+    }
+    if (!org) {
+      org = await prisma.organization.findFirst({ orderBy: { createdAt: 'asc' } });
+    }
     if (!org) {
       org = await prisma.organization.create({ data: { name: DEFAULT_ORG_NAME } });
       await seedOrganizationData(org.id);
