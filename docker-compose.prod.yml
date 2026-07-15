@@ -66,6 +66,17 @@ services:
       VIRUSTOTAL_API_KEY: ${VIRUSTOTAL_API_KEY:-}
       NVD_API_KEY: ${NVD_API_KEY:-}
       HIBP_API_KEY: ${HIBP_API_KEY:-}
+      # Jira (Assurance open vulns — personal API token, not org API key)
+      JIRA_BASE_URL: ${JIRA_BASE_URL:-}
+      JIRA_EMAIL: ${JIRA_EMAIL:-}
+      JIRA_USER: ${JIRA_USER:-}
+      JIRA_API_TOKEN: ${JIRA_API_TOKEN:-}
+      JIRA_PROJECT_KEY: ${JIRA_PROJECT_KEY:-}
+      JIRA_JQL: ${JIRA_JQL:-}
+      JIRA_JQL_SAST: ${JIRA_JQL_SAST:-}
+      JIRA_JQL_DAST: ${JIRA_JQL_DAST:-}
+      JIRA_JQL_INFRA: ${JIRA_JQL_INFRA:-}
+      JIRA_JQL_CLOUD: ${JIRA_JQL_CLOUD:-}
     volumes:
       - grc_uploads:/app/uploads
     healthcheck:

@@ -229,7 +229,7 @@ export const JIRA_TICKETS: JiraTicket[] = [
     createdAt: '2026-07-02',
     updatedAt: '2026-07-04',
     slaDue: '2026-07-09',
-    url: 'https://propelready.atlassian.net/browse/SEC-1861',
+    url: 'https://propelreadysolutions.atlassian.net/browse/SEC-1861',
   },
   {
     id: 'jira-002',
@@ -245,7 +245,7 @@ export const JIRA_TICKETS: JiraTicket[] = [
     createdAt: '2026-06-29',
     updatedAt: '2026-07-03',
     slaDue: '2026-07-06',
-    url: 'https://propelready.atlassian.net/browse/SEC-1859',
+    url: 'https://propelreadysolutions.atlassian.net/browse/SEC-1859',
   },
   {
     id: 'jira-003',
@@ -261,7 +261,7 @@ export const JIRA_TICKETS: JiraTicket[] = [
     createdAt: '2026-07-02',
     updatedAt: '2026-07-02',
     slaDue: '2026-07-07',
-    url: 'https://propelready.atlassian.net/browse/SEC-1856',
+    url: 'https://propelreadysolutions.atlassian.net/browse/SEC-1856',
   },
   {
     id: 'jira-004',
@@ -277,7 +277,7 @@ export const JIRA_TICKETS: JiraTicket[] = [
     createdAt: '2026-06-21',
     updatedAt: '2026-07-01',
     slaDue: '2026-07-14',
-    url: 'https://propelready.atlassian.net/browse/SEC-1847',
+    url: 'https://propelreadysolutions.atlassian.net/browse/SEC-1847',
   },
   {
     id: 'jira-005',
@@ -293,7 +293,7 @@ export const JIRA_TICKETS: JiraTicket[] = [
     createdAt: '2026-06-19',
     updatedAt: '2026-06-19',
     slaDue: '2026-07-12',
-    url: 'https://propelready.atlassian.net/browse/SEC-1844',
+    url: 'https://propelreadysolutions.atlassian.net/browse/SEC-1844',
   },
   {
     id: 'jira-006',
@@ -309,7 +309,7 @@ export const JIRA_TICKETS: JiraTicket[] = [
     createdAt: '2026-03-13',
     updatedAt: '2026-07-04',
     slaDue: '2026-07-05',
-    url: 'https://propelready.atlassian.net/browse/SEC-1842',
+    url: 'https://propelreadysolutions.atlassian.net/browse/SEC-1842',
   },
   {
     id: 'jira-007',
@@ -325,7 +325,7 @@ export const JIRA_TICKETS: JiraTicket[] = [
     createdAt: '2026-02-19',
     updatedAt: '2026-06-30',
     slaDue: '2026-07-15',
-    url: 'https://propelready.atlassian.net/browse/SEC-1798',
+    url: 'https://propelreadysolutions.atlassian.net/browse/SEC-1798',
   },
   {
     id: 'jira-008',
@@ -341,7 +341,7 @@ export const JIRA_TICKETS: JiraTicket[] = [
     createdAt: '2026-01-21',
     updatedAt: '2026-06-10',
     slaDue: '2026-02-04',
-    url: 'https://propelready.atlassian.net/browse/SEC-1720',
+    url: 'https://propelreadysolutions.atlassian.net/browse/SEC-1720',
   },
 ];
 
@@ -390,5 +390,9 @@ export function getJiraTicketByKey(key: string) {
 }
 
 export function getJiraTicketUrl(key: string) {
-  return getJiraTicketByKey(key)?.url ?? `https://propelready.atlassian.net/browse/${key}`;
+  const base =
+    process.env.JIRA_BASE_URL?.trim().replace(/\/$/, '') ||
+    process.env.NEXT_PUBLIC_JIRA_BASE_URL?.trim().replace(/\/$/, '') ||
+    'https://propelreadysolutions.atlassian.net';
+  return getJiraTicketByKey(key)?.url ?? `${base}/browse/${key}`;
 }

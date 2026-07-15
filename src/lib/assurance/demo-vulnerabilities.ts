@@ -1,5 +1,15 @@
 import type { AssuranceSource, AssuranceVulnerability } from '@/lib/assurance/types';
 
+/** Demo / fallback browse host — live tickets use JIRA_BASE_URL from env. */
+const DEMO_JIRA_BROWSE =
+  (process.env.JIRA_BASE_URL?.trim().replace(/\/$/, '') ||
+    process.env.NEXT_PUBLIC_JIRA_BASE_URL?.trim().replace(/\/$/, '') ||
+    'https://propelreadysolutions.atlassian.net') + '/browse';
+
+function demoBrowseUrl(key: string): string {
+  return `${DEMO_JIRA_BROWSE}/${key}`;
+}
+
 /**
  * Sample open vulnerabilities for localhost when Jira is not configured.
  * Always marked demo: true — never presented as live Jira sync.
@@ -15,7 +25,7 @@ export const DEMO_OPEN_VULNERABILITIES: AssuranceVulnerability[] = [
     source: 'sast',
     createdAt: '2026-07-08T10:00:00.000Z',
     updatedAt: '2026-07-12T09:00:00.000Z',
-    url: 'https://propelready.atlassian.net/browse/SEC-1901',
+    url: demoBrowseUrl('SEC-1901'),
     assignee: 'AppSec Squad',
     labels: ['sast', 'secrets'],
     demo: true,
@@ -30,7 +40,7 @@ export const DEMO_OPEN_VULNERABILITIES: AssuranceVulnerability[] = [
     source: 'sast',
     createdAt: '2026-07-05T14:20:00.000Z',
     updatedAt: '2026-07-11T16:30:00.000Z',
-    url: 'https://propelready.atlassian.net/browse/SEC-1902',
+    url: demoBrowseUrl('SEC-1902'),
     assignee: 'Backend Platform',
     labels: ['sast', 'injection'],
     demo: true,
@@ -45,7 +55,7 @@ export const DEMO_OPEN_VULNERABILITIES: AssuranceVulnerability[] = [
     source: 'sast',
     createdAt: '2026-06-28T11:00:00.000Z',
     updatedAt: '2026-07-10T08:15:00.000Z',
-    url: 'https://propelready.atlassian.net/browse/SEC-1895',
+    url: demoBrowseUrl('SEC-1895'),
     assignee: 'AppSec Squad',
     labels: ['sast'],
     demo: true,
@@ -60,7 +70,7 @@ export const DEMO_OPEN_VULNERABILITIES: AssuranceVulnerability[] = [
     source: 'dast',
     createdAt: '2026-06-29T09:00:00.000Z',
     updatedAt: '2026-07-03T12:00:00.000Z',
-    url: 'https://propelready.atlassian.net/browse/SEC-1859',
+    url: demoBrowseUrl('SEC-1859'),
     assignee: 'AppSec Squad',
     labels: ['dast'],
     demo: true,
@@ -75,7 +85,7 @@ export const DEMO_OPEN_VULNERABILITIES: AssuranceVulnerability[] = [
     source: 'dast',
     createdAt: '2026-06-21T10:00:00.000Z',
     updatedAt: '2026-07-01T15:00:00.000Z',
-    url: 'https://propelready.atlassian.net/browse/SEC-1847',
+    url: demoBrowseUrl('SEC-1847'),
     assignee: 'Document Hub Team',
     labels: ['dast'],
     demo: true,
@@ -90,7 +100,7 @@ export const DEMO_OPEN_VULNERABILITIES: AssuranceVulnerability[] = [
     source: 'dast',
     createdAt: '2026-06-19T08:00:00.000Z',
     updatedAt: '2026-06-19T08:00:00.000Z',
-    url: 'https://propelready.atlassian.net/browse/SEC-1844',
+    url: demoBrowseUrl('SEC-1844'),
     assignee: 'Admin Console Team',
     labels: ['dast'],
     demo: true,
@@ -105,7 +115,7 @@ export const DEMO_OPEN_VULNERABILITIES: AssuranceVulnerability[] = [
     source: 'infra',
     createdAt: '2026-07-02T10:00:00.000Z',
     updatedAt: '2026-07-02T10:00:00.000Z',
-    url: 'https://propelready.atlassian.net/browse/SEC-1856',
+    url: demoBrowseUrl('SEC-1856'),
     assignee: 'Web Platform',
     labels: ['infra', 'vm'],
     demo: true,
@@ -120,7 +130,7 @@ export const DEMO_OPEN_VULNERABILITIES: AssuranceVulnerability[] = [
     source: 'infra',
     createdAt: '2026-03-13T09:00:00.000Z',
     updatedAt: '2026-07-04T11:00:00.000Z',
-    url: 'https://propelready.atlassian.net/browse/SEC-1842',
+    url: demoBrowseUrl('SEC-1842'),
     assignee: 'Infrastructure Ops',
     labels: ['infra'],
     demo: true,
@@ -135,7 +145,7 @@ export const DEMO_OPEN_VULNERABILITIES: AssuranceVulnerability[] = [
     source: 'infra',
     createdAt: '2026-02-19T10:00:00.000Z',
     updatedAt: '2026-06-30T14:00:00.000Z',
-    url: 'https://propelready.atlassian.net/browse/SEC-1798',
+    url: demoBrowseUrl('SEC-1798'),
     assignee: 'Identity Team',
     labels: ['infrastructure'],
     demo: true,
@@ -150,7 +160,7 @@ export const DEMO_OPEN_VULNERABILITIES: AssuranceVulnerability[] = [
     source: 'cloud',
     createdAt: '2026-07-09T07:30:00.000Z',
     updatedAt: '2026-07-12T10:00:00.000Z',
-    url: 'https://propelready.atlassian.net/browse/SEC-1910',
+    url: demoBrowseUrl('SEC-1910'),
     assignee: 'Cloud Security',
     labels: ['cloud', 'cspm'],
     demo: true,
@@ -165,7 +175,7 @@ export const DEMO_OPEN_VULNERABILITIES: AssuranceVulnerability[] = [
     source: 'cloud',
     createdAt: '2026-07-07T12:00:00.000Z',
     updatedAt: '2026-07-11T09:45:00.000Z',
-    url: 'https://propelready.atlassian.net/browse/SEC-1908',
+    url: demoBrowseUrl('SEC-1908'),
     assignee: 'Network Security',
     labels: ['cloud'],
     demo: true,
@@ -180,7 +190,7 @@ export const DEMO_OPEN_VULNERABILITIES: AssuranceVulnerability[] = [
     source: 'cloud',
     createdAt: '2026-07-01T16:00:00.000Z',
     updatedAt: '2026-07-08T11:20:00.000Z',
-    url: 'https://propelready.atlassian.net/browse/SEC-1904',
+    url: demoBrowseUrl('SEC-1904'),
     assignee: 'Identity Team',
     labels: ['cloud', 'iam'],
     demo: true,

@@ -18,7 +18,11 @@ export function JiraTicketLink({
   className,
 }: JiraTicketLinkProps) {
   const ticket = getJiraTicketByKey(ticketKey);
-  const href = url ?? ticket?.url ?? `https://propelready.atlassian.net/browse/${ticketKey}`;
+  const href =
+    url ||
+    ticket?.url ||
+    `${(process.env.NEXT_PUBLIC_JIRA_BASE_URL?.replace(/\/$/, '') ||
+      'https://propelreadysolutions.atlassian.net')}/browse/${ticketKey}`;
 
   const base =
     'inline-flex items-center gap-1.5 font-mono font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500';
