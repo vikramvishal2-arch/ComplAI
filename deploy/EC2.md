@@ -61,46 +61,35 @@ This will:
 3. Auto-apply schema on app startup (`prisma db push`)
 4. Seed demo data (disable with `SEED_ON_DEPLOY=false`)
 
-## Nginx + HTTPS (ComplAI Lab at `/complAI/Lab`)
+## Nginx + HTTPS (ComplAI Lab subdomain)
 
 Browsers mark plain **HTTP on port 80** as “Not secure”. Use **HTTPS on port 443** instead.
 
-You cannot get a trusted certificate for a bare IP (`13.233.254.149`). Use one of:
-
-| Option | Domain | Setup |
-|--------|--------|--------|
-| **Immediate** | `13-233-254-149.sslip.io` | Resolves to your EC2 IP — no DNS change |
-| **Recommended** | `lab.propelreadysolutions.in` | Add DNS **A record** → EC2 public IP |
+| Setting | Value |
+|---------|--------|
+| Brand URL | `https://complAI-Lab.propelreadysolutions.in/` |
+| DNS hostname | `complai-lab.propelreadysolutions.in` (DNS is case-insensitive) |
+| DNS record | **A** → EC2 public IP |
 
 Open inbound ports **443** (HTTPS) and **80** (redirect + cert renewal) in the EC2 security group.
 
-After deploy, on EC2:
+After DNS points at the instance:
 
 ```bash
 cd /opt/complai
-bash deploy/ec2-https-lab.sh 13-233-254-149.sslip.io
-# or: bash deploy/ec2-https-lab.sh lab.propelreadysolutions.in
+bash deploy/ec2-https-lab.sh complai-lab.propelreadysolutions.in
 ```
 
 Your lab URL becomes:
 
 ```text
-https://13-233-254-149.sslip.io/complAI/Lab/
-```
-
-Manual Nginx install:
-
-```bash
-sudo cp deploy/nginx-complai-lab.conf /etc/nginx/sites-available/complai-lab
-sudo ln -sf /etc/nginx/sites-available/complai-lab /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d 13-233-254-149.sslip.io
+https://complai-lab.propelreadysolutions.in/
+https://complai-lab.propelreadysolutions.in/demo/access
 ```
 
 ## Nginx + HTTPS (main site at domain root)
 
-For production at `propelreadysolutions.in` without the `/complAI/Lab` path:
+For production at `propelreadysolutions.in` (marketing + app on apex):
 
 ## Subsequent updates
 
