@@ -47,8 +47,9 @@ export async function GET() {
     role: session.role,
     email: session.email,
     displayName: session.displayName,
-    readOnlyAreas: session.role === 'customer' ? ['dashboard', 'frameworks'] : [],
+    readOnlyAreas: session.role === 'customer' ? ['dashboard'] : [],
     canAccessSettings: session.role === 'admin',
+    // Catalog CRUD stays admin-only; activation is allowed for customer POC accounts.
     canManageFrameworkCatalog: session.role === 'admin',
   });
 }

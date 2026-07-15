@@ -56,7 +56,8 @@ export function DemoAccessForm({ nextPath }: { nextPath: string }) {
           <h1 className="text-xl font-bold text-slate-900">Sign in to ComplAI Lab</h1>
           <p className="mt-2 text-sm text-slate-500">
             Use the demo credentials provided by your Propel Ready contact to explore{' '}
-            {PRODUCT_NAME} modules. Dashboard and frameworks are view-only for customer demos.
+            {PRODUCT_NAME} modules. Customer accounts can activate frameworks for a full POC;
+            the executive dashboard stays view-only.
           </p>
         </div>
 

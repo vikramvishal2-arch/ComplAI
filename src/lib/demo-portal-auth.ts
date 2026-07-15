@@ -61,7 +61,7 @@ const APP_ROUTE_PREFIXES = [
 
 const ADMIN_ONLY_PAGE_PREFIXES = ['/settings'] as const;
 
-const CUSTOMER_READ_ONLY_API_PREFIXES = ['/api/frameworks', '/api/elastic/sync'] as const;
+const CUSTOMER_READ_ONLY_API_PREFIXES = ['/api/elastic/sync'] as const;
 
 export function isProtectedAppPath(pathname: string): boolean {
   if (pathname.startsWith('/api/')) {

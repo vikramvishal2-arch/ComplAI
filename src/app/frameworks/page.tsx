@@ -16,8 +16,9 @@ interface FrameworkWithMeta extends Framework {
 }
 
 export default function FrameworksPage() {
-  const { isCustomer, isReadOnlyArea, canManageFrameworkCatalog } = useDemoSession();
-  const readOnly = isCustomer || isReadOnlyArea('frameworks');
+  const { isReadOnlyArea, canManageFrameworkCatalog } = useDemoSession();
+  // Customers may activate frameworks for POC; catalog management stays admin-only.
+  const readOnly = isReadOnlyArea('frameworks');
   const [frameworks, setFrameworks] = useState<FrameworkWithMeta[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [loading, setLoading] = useState<string | null>(null);
@@ -123,11 +124,17 @@ export default function FrameworksPage() {
       {readOnly && (
         <div className="mb-6 flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
           <Eye className="h-4 w-4 shrink-0 text-sky-600" />
-          Framework library is view-only in the customer demo. Sign in as <strong>admin</strong> at{' '}
+          Framework library is view-only for this session. Sign in as <strong>admin</strong> at{' '}
           <Link href="/demo/access" className="font-medium text-sky-700 underline">
             Demo Access
           </Link>{' '}
-          for full rights including framework activation and catalog management.
+          for catalog management.
+        </div>
+      )}
+      {!readOnly && !canManageFrameworkCatalog && (
+        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          Activate any frameworks you need for this POC. Controls and evidence then unlock in the Control
+          Catalog for those frameworks.
         </div>
       )}
       <div className="mb-6 flex flex-wrap items-center gap-3">
